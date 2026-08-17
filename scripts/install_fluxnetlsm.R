@@ -2,7 +2,7 @@
 # Install FluxnetLSM (aukkola/FluxnetLSM) and its R dependencies.
 #
 # This is the exact recipe validated on 2026-08-17 against a fresh macOS/
-# Homebrew R install (R 4.6.1). Two things needed a workaround that a plain
+# Homebrew R install (R 4.6.1). Three things needed a workaround that a plain
 # `remotes::install_github("aukkola/FluxnetLSM")` will NOT hit on every
 # platform, but did here -- kept as explicit steps rather than hidden inside
 # a single install_github() call so a future failure is easier to diagnose:
@@ -24,12 +24,22 @@
 #     costs a cosmetic "unknown" time_zone attribute instead of aborting the
 #     whole conversion.
 #
+#  3. `convert_fluxnet_to_netcdf()`'s documented `site_csv_file` argument is
+#     dead code in FluxnetLSM 1.1: it's never forwarded to the internal
+#     `get_site_metadata()` call (R/ConvertSpreadsheetToNcdf.R), so passing a
+#     custom metadata CSV (e.g. scripts/build_site_metadata.py's merged
+#     output, needed for any site outside FluxnetLSM's bundled ~874-site
+#     table) silently has no effect -- confirmed 2026-08-17 by observing the
+#     "Loading metadata... from csv_data cache" message still naming
+#     FluxnetLSM's own packaged path regardless of --site-csv. This script
+#     patches that one call site to actually forward site_csv_file through.
+#
 # System prerequisites (install separately, not handled by this script):
 #   brew install r netcdf gdal
 #
 # Usage:
 #   Rscript scripts/install_fluxnetlsm.R
-#   Rscript scripts/install_fluxnetlsm.R --patch-lutz=false   # skip the patch,
+#   Rscript scripts/install_fluxnetlsm.R --patch-lutz=false   # skip the sf/lutz patch,
 #     e.g. if you've confirmed sf installs cleanly on your platform.
 
 args <- commandArgs(trailingOnly = TRUE)
@@ -70,6 +80,26 @@ if (patch_lutz) {
   cat("Patched lutz::tz_lookup_coords() call sites with a tryCatch fallback ",
       "(see script header for why).\n", sep = "")
 }
+
+# Fix #3: thread site_csv_file through to get_site_metadata() so a custom
+# metadata CSV (--site-csv) actually takes effect.
+convert_path <- file.path(src_dir, "R", "ConvertSpreadsheetToNcdf.R")
+convert_content <- readLines(convert_path)
+before <- sum(grepl(
+  "site_info <- get_site_metadata(site_code, model=conv_opts$model)",
+  convert_content, fixed = TRUE))
+if (before != 1) {
+  stop("Expected exactly 1 occurrence of the get_site_metadata() call site to patch, found ",
+       before, " -- FluxnetLSM's source may have changed; update this script's patch.")
+}
+convert_content <- gsub(
+  "site_info <- get_site_metadata(site_code, model=conv_opts$model)",
+  "site_info <- get_site_metadata(site_code, model=conv_opts$model, site_csv_file=site_csv_file)",
+  convert_content, fixed = TRUE
+)
+writeLines(convert_content, convert_path)
+cat("Patched convert_fluxnet_to_netcdf() to forward site_csv_file to get_site_metadata() ",
+    "(see script header for why).\n", sep = "")
 
 cat("Installing FluxnetLSM from local source...\n")
 remotes::install_local(src_dir, dependencies = FALSE, upgrade = "never", force = TRUE)

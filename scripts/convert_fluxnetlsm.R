@@ -21,6 +21,13 @@
 # --era-file=<path> to try ERA5 gapfilling if you've verified the column
 # format matches.
 #
+# --site-csv: FluxnetLSM's own bundled Site_metadata.csv only covers ~874
+# sites (mostly pre-2017) -- most Shuttle-only sites aren't in it, and
+# FluxnetLSM silently proceeds with NA lat/lon/IGBP rather than erroring (see
+# build_site_metadata.py's header). Pass the merged CSV from
+# scripts/build_site_metadata.py here for any site outside the original
+# FLUXNET2015 pool.
+#
 # Usage:
 #   Rscript scripts/convert_fluxnetlsm.R \
 #     --site=ES-LJu \
@@ -28,9 +35,10 @@
 #     --outdir=fluxnetlsm_out
 #
 #   Rscript scripts/convert_fluxnetlsm.R \
-#     --site=US-Seg \
-#     --infile=downloads/US-Seg/AMF_US-Seg_FLUXNET_FLUXMET_HH_2007-2025_v1.3_r1.csv \
+#     --site=ID-PaB \
+#     --infile=downloads/ID-PaB/EUF_ID-PaB_FLUXNET_FLUXMET_HH_2004-2016_v1.3_r1.csv \
 #     --outdir=fluxnetlsm_out \
+#     --site-csv=reference/site_metadata_merged.csv \
 #     --min-years=1
 
 suppressMessages(library(FluxnetLSM))
@@ -49,12 +57,17 @@ out_path    <- parse_flag(args, "outdir", "fluxnetlsm_out")
 gapfill     <- parse_flag(args, "gapfill", "statistical")
 era_file    <- parse_flag(args, "era-file", NA)
 min_years   <- as.integer(parse_flag(args, "min-years", "2"))
+site_csv    <- parse_flag(args, "site-csv", NA)
 
 if (is.na(site_code) || is.na(infile)) {
   cat("Usage: Rscript convert_fluxnetlsm.R --site=SITE --infile=PATH.csv ",
       "[--outdir=DIR] [--gapfill=statistical|erainterim] [--era-file=PATH] ",
-      "[--min-years=N]\n", sep = "")
+      "[--min-years=N] [--site-csv=PATH]\n", sep = "")
   quit(status = 2)
+}
+if (!is.na(site_csv) && !file.exists(site_csv)) {
+  cat("ERROR: --site-csv not found:", site_csv, "\n")
+  quit(status = 1)
 }
 if (!file.exists(infile)) {
   cat("ERROR: infile not found:", infile, "\n")
@@ -70,15 +83,20 @@ opts$met_gapfill <- gapfill
 opts$flux_gapfill <- gapfill
 opts$min_yrs <- min_years
 
+convert_args <- list(
+  site_code = site_code,
+  infile = infile,
+  era_file = if (identical(gapfill, "erainterim")) era_file else NA,
+  out_path = out_path,
+  conv_opts = opts,
+  plot = NA
+)
+if (!is.na(site_csv)) {
+  convert_args$site_csv_file <- site_csv
+}
+
 result <- tryCatch({
-  convert_fluxnet_to_netcdf(
-    site_code = site_code,
-    infile = infile,
-    era_file = if (identical(gapfill, "erainterim")) era_file else NA,
-    out_path = out_path,
-    conv_opts = opts,
-    plot = NA
-  )
+  do.call(convert_fluxnet_to_netcdf, convert_args)
 }, error = function(e) {
   cat("ERROR:", conditionMessage(e), "\n")
   NULL
