@@ -37,9 +37,9 @@ fluxnet-shuttle listall                              # live site inventory -> sn
 
 ```
 fluxnet-shuttle-ecland/
-├── clim/<group>/            # ecLand static/climatology inputs (NetCDF) — BLOCKED for new sites, see Status
-├── forcing/<group>/         # Meteorological forcing, ecLand-ready (NetCDF)
-├── flux/<group>/            # Observed flux (evaluation) data, FLUXNET2015-schema
+├── clim/<group>/            # ecLand static/climatology inputs (NetCDF, Git LFS) — BLOCKED for new sites, see Status
+├── forcing/<group>/         # Meteorological forcing, ecLand-ready (NetCDF, Git LFS)
+├── flux/<group>/            # Observed flux (evaluation) data, FLUXNET2015-schema (NetCDF, Git LFS)
 ├── namelists/               # ecLand namelist configuration files (forked as-is from plumber2-ecland)
 ├── reference/                # Site-ID lists
 │   ├── plumber2_170_site_ids.txt   # Copy of plumber2-ecland's 170-site list, used as the exclude-list
@@ -69,6 +69,17 @@ fluxnet-shuttle-ecland/
 ```
 
 ## Getting started
+
+Clone with Git LFS support so NetCDF pointer files resolve correctly (`.nc`/`.nc4`/`.cdf` under `clim/`, `forcing/`, `flux/` are LFS-tracked — see `.gitattributes` — matching `plumber2-ecland`'s convention):
+
+```bash
+# Install Git LFS if not already available
+# brew install git-lfs
+git lfs install
+
+git clone git@github.com:gpbalsamo/fluxnet-shuttle-ecland.git
+cd fluxnet-shuttle-ecland
+```
 
 ### 1. Pull the live Shuttle inventory and build a candidate shortlist
 
