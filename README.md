@@ -15,8 +15,9 @@ This is a pilot, not a finished benchmark. What's real and validated vs. what's 
 - Real evidence that PLUMBER2-style QC screening is strict against the expanded pool: ES-LJu's real 21-year record only yielded 2 usable years under statistical gapfilling. Expect similar attrition elsewhere — thresholds may need revisiting, or accept shorter per-site records at scale.
 
 **Blocked, not yet solved:**
-- **No script generates `clim/<group>/surfclim_<site>.nc` / `surfinit_<site>.nc`** (soil, vegetation cover fractions, orography, LAI climatology — ecLand's non-meteorological static inputs) for a new site coordinate. `plumber2-ecland`'s versions of these files were produced externally and only ever fetched from Git LFS; FluxnetLSM doesn't produce them either (it only converts met/flux data). Gianpaolo has asked Gabriele Arduini (ECMWF) about this directly.
-- **ecLand itself needs an ECMWF HPC build** (see `scripts/ecland_run.sh`'s module loads) — nothing here can actually run ecLand outside that environment; everything above was validated as far as testable off-HPC.
+- **No script generates `clim/<group>/surfclim_<site>.nc` / `surfinit_<site>.nc`** (soil, vegetation cover fractions, orography, LAI climatology — ecLand's non-meteorological static inputs) for a new site coordinate. `plumber2-ecland`'s versions of these files were produced externally and only ever fetched from Git LFS; FluxnetLSM doesn't produce them either (it only converts met/flux data).
+
+This is the only real blocker. ecLand itself runs locally on macOS — `scripts/run_parallel_local.sh` already produced the full 170-site PLUMBER2 benchmark on this machine (GPU-accelerated, 8 concurrent workers; see `plumber2-ecland/benchmark/dashboards/`), so once surfclim/surfinit exist for a site, running ecLand and postprocessing/benchmarking it is not an open problem here.
 
 ## Pipeline
 
@@ -28,7 +29,7 @@ fluxnet-shuttle listall                              # live site inventory -> sn
   -> scripts/convert_fluxnetlsm.R                      # FLUXMET CSV -> ALMA-CF Met/Flux NetCDF
   -> scripts/regenerate_forcing.sh                     # -> ecLand forcing convention (lon/lat/time, PSurf/Rainf)
   -> [BLOCKED: surfclim/surfinit for the new coordinate — see Status above]
-  -> scripts/ecland_run_experiment.sh                  # [ECMWF HPC only]
+  -> scripts/ecland_run_experiment.sh / run_parallel_local.sh   # runs locally on macOS (or HPC via ecland_run.sh)
   -> scripts/postproc.py                               # raw ecLand output -> common schema
   -> scripts/benchmark.py                              # score vs. flux obs -> dashboard
 ```
@@ -132,7 +133,7 @@ python3 scripts/benchmark.py --model-dir benchmark/models/shuttle-pilot20 \
 
 ## Requirements
 
-- ecLand executable (built separately; see [ECMWF ecLand](https://github.com/ecmwf-ifs/ecland)), on ECMWF HPC — see [Status](#status-2026-08-17).
+- ecLand executable (built separately; see [ECMWF ecLand](https://github.com/ecmwf-ifs/ecland)) — runs on ECMWF HPC or locally on macOS (already validated for the 170-site PLUMBER2 benchmark, see `plumber2-ecland`'s README).
 - Python: `numpy`, `xarray`, `netCDF4`, `pandas`, plus the [`fluxnet-shuttle`](https://github.com/fluxnet/shuttle) CLI.
 - R + [FluxnetLSM](https://github.com/aukkola/FluxnetLSM) — `scripts/install_fluxnetlsm.R` installs both (needs `brew install r netcdf gdal` first on macOS).
 - NCO tools (`ncrename`, `ncks`, `ncatted`, `nccopy`) for `scripts/regenerate_forcing.sh`.
