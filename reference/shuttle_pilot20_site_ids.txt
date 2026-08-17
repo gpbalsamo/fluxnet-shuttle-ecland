@@ -1,0 +1,25 @@
+# Fire/vegetation-stress pilot shortlist, curated 2026-08-17 from a live
+# fluxnet-shuttle listall snapshot (775 sites), filtered to IGBP classes
+# SAV/WSA/OSH/CSH/GRA, excluding all sites in reference/plumber2_170_site_ids.txt,
+# hand-picked from the ranked candidates for biome/geographic diversity
+# (see scripts/filter_candidate_sites.py for the ranking this was drawn from).
+SN-Dhr
+ID-PaB
+ZA-BfS
+ZA-BfK
+ES-LM1
+ES-LM2
+ES-LJu
+ES-Agu
+ES-Amo
+US-Seg
+US-Ses
+US-Wjs
+US-Mpj
+US-Jo1
+US-Kon
+US-ICh
+US-ICt
+CN-Sdq
+CN-Dsh
+CN-Aro

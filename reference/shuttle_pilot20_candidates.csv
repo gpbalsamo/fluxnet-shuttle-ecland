@@ -1,0 +1,21 @@
+site_id,data_hub,site_name,location_lat,location_long,igbp,first_year,last_year,download_link
+SN-Dhr,ICOS,Dahra,15.40256,-15.43214,GRA,2010,2022,https://data.icos-cp.eu/licence_accept?ids=%5B%22KdzlABR5BBUtxi1T7yzDK4_Z%22%5D
+ID-PaB,ICOS,Palangkaraya Drained Burnt forest,-2.340796,114.0379,OSH,2004,2016,https://data.icos-cp.eu/licence_accept?ids=%5B%22MpLHCY-ecJkBO48pW8l-Tra-%22%5D
+ZA-BfS,ICOS,Benfontien Savanna,-28.8906,24.86112,OSH,2020,2024,https://data.icos-cp.eu/licence_accept?ids=%5B%227D87eYcefMtCZ131SjGfAEvu%22%5D
+ZA-BfK,ICOS,Benfontien Karoo,-28.856483,24.83985,OSH,2020,2024,https://data.icos-cp.eu/licence_accept?ids=%5B%22L3b447DFrFAeO56M1P7eueuq%22%5D
+ES-LM1,ICOS,Majadas del Tietar North,39.94269,-5.778683,SAV,2014,2024,https://data.icos-cp.eu/licence_accept?ids=%5B%229c9e--DRFTTyhtl6c0lcA3O6%22%5D
+ES-LM2,ICOS,Majadas del Tietar South,39.934593,-5.775881,SAV,2014,2024,https://data.icos-cp.eu/licence_accept?ids=%5B%22CgWe1iCQaO3oYYxgSMEe1BSq%22%5D
+ES-LJu,ICOS,Llano de los Juanes,36.926594,-2.752115,OSH,2004,2024,https://data.icos-cp.eu/licence_accept?ids=%5B%22TWomFhgjVCGRurmVpcaHcRD5%22%5D
+ES-Agu,ICOS,Aguamarga,36.939384,-2.034044,OSH,2006,2024,https://data.icos-cp.eu/licence_accept?ids=%5B%22smUITWSfoJ6VoyqONgDBxTSn%22%5D
+ES-Amo,ICOS,Amoladeras,36.833405,-2.2522173,OSH,2007,2019,https://data.icos-cp.eu/licence_accept?ids=%5B%22O6rek4-yeo_2LQrvCqM88Xvf%22%5D
+US-Seg,AmeriFlux,Sevilleta grassland,34.3603,-106.7003,GRA,2007,2025,https://ftp.fluxdata.org/.ameriflux_downloads/FLUXNET/AMF_US-Seg_FLUXNET_2007-2025_v1.3_r1.zip?=fluxnetshuttle
+US-Ses,AmeriFlux,Sevilleta shrubland,34.335,-106.7448,OSH,2007,2025,https://ftp.fluxdata.org/.ameriflux_downloads/FLUXNET/AMF_US-Ses_FLUXNET_2007-2025_v1.3_r1.zip?=fluxnetshuttle
+US-Wjs,AmeriFlux,Willard Juniper Savannah,34.4258,-105.8617,SAV,2007,2025,https://ftp.fluxdata.org/.ameriflux_downloads/FLUXNET/AMF_US-Wjs_FLUXNET_2007-2025_v1.3_r1.zip?=fluxnetshuttle
+US-Mpj,AmeriFlux,Mountainair Pinyon-Juniper Woodland,34.4382,-106.2385,WSA,2008,2025,https://ftp.fluxdata.org/.ameriflux_downloads/FLUXNET/AMF_US-Mpj_FLUXNET_2008-2025_v1.3_r1.zip?=fluxnetshuttle
+US-Jo1,AmeriFlux,Jornada Experimental Range Bajada Site,32.582,-106.635,OSH,2010,2022,https://ftp.fluxdata.org/.ameriflux_downloads/FLUXNET/AMF_US-Jo1_FLUXNET_2010-2022_v1.3_r1.zip?=fluxnetshuttle
+US-Kon,AmeriFlux,Konza Prairie LTER (KNZ),39.0824,-96.5603,GRA,2004,2019,https://ftp.fluxdata.org/.ameriflux_downloads/FLUXNET/AMF_US-Kon_FLUXNET_2004-2019_v1.3_r1.zip?=fluxnetshuttle
+US-ICh,AmeriFlux,Imnavait Creek Watershed Heath Tundra,68.6068,-149.2958,OSH,2007,2025,https://ftp.fluxdata.org/.ameriflux_downloads/FLUXNET/AMF_US-ICh_FLUXNET_2007-2025_v1.3_r1.zip?=fluxnetshuttle
+US-ICt,AmeriFlux,Imnavait Creek Watershed Tussock Tundra,68.6063,-149.3041,OSH,2007,2025,https://ftp.fluxdata.org/.ameriflux_downloads/FLUXNET/AMF_US-ICt_FLUXNET_2007-2025_v1.3_r1.zip?=fluxnetshuttle
+CN-Sdq,ICOS,Sidaoqiao,42.00119,101.13741,OSH,2013,2024,https://data.icos-cp.eu/licence_accept?ids=%5B%223lCvpR-G0sl29NE-OD2rgvf7%22%5D
+CN-Dsh,ICOS,Dashalong,38.83992,98.9406,GRA,2013,2024,https://data.icos-cp.eu/licence_accept?ids=%5B%22CuNYBsqS22epRiBFdnFTFpHD%22%5D
+CN-Aro,ICOS,Arou,38.04734,100.46432,GRA,2013,2024,https://data.icos-cp.eu/licence_accept?ids=%5B%22jxTNODjDo67lOrOxUacBPDO4%22%5D

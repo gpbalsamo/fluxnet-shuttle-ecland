@@ -1,0 +1,1088 @@
+<meta charset="utf-8">
+<title>ecLand × PLUMBER2 Flux Benchmark</title>
+<script>
+(function(){
+  try{
+    var saved = localStorage.getItem('plumber2-benchmark-theme');
+    if(saved === 'light' || saved === 'dark') document.documentElement.setAttribute('data-theme', saved);
+  }catch(e){}
+})();
+</script>
+<style>
+  :root{
+    color-scheme: light;
+    --page:      #f5f7f4;
+    --surface-1: #fcfcfb;
+    --surface-2: #f0f1ee;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #898781;
+    --grid:      #e1e0d9;
+    --axis:      #c3c2b7;
+    --border:    rgba(11,11,11,0.10);
+    --var-Qle: #2a78d6;
+    --var-Qh:  #eb6834;
+    --var-NEE: #1baf7a;
+    --status-good:     #0ca30c;
+    --status-warning:  #fab219;
+    --status-serious:  #ec835a;
+    --status-critical: #d03b3b;
+    --map-ocean:        #eef1f2;
+    --map-land:          #e3e7e1;
+    --map-land-stroke:   #d3d8d0;
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    --font-mono: ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:where(:not([data-theme="light"])){
+      color-scheme: dark;
+      --page:      #101210;
+      --surface-1: #1a1a19;
+      --surface-2: #201f1d;
+      --text-primary:   #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted:     #898781;
+      --grid:      #2c2c2a;
+      --axis:      #383835;
+      --border:    rgba(255,255,255,0.10);
+      --var-Qle: #3987e5;
+      --var-Qh:  #d95926;
+      --var-NEE: #199e70;
+      --map-ocean: #101c22;
+      --map-land: #1c221c;
+      --map-land-stroke: #2a3128;
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --page:      #101210;
+    --surface-1: #1a1a19;
+    --surface-2: #201f1d;
+    --text-primary:   #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted:     #898781;
+    --grid:      #2c2c2a;
+    --axis:      #383835;
+    --border:    rgba(255,255,255,0.10);
+    --var-Qle: #3987e5;
+    --var-Qh:  #d95926;
+    --var-NEE: #199e70;
+    --map-ocean: #101c22;
+    --map-land: #1c221c;
+    --map-land-stroke: #2a3128;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--page); color:var(--text-primary); font-family:var(--font-sans);
+    -webkit-font-smoothing:antialiased; line-height:1.4;
+  }
+  .app{max-width:1280px; margin:0 auto; padding:20px 20px 80px; display:flex; flex-direction:column; gap:18px;}
+  h1,h2,h3{text-wrap:balance; margin:0;}
+  ::selection{background:var(--var-Qle); color:#fff;}
+  .num{font-family:var(--font-mono); font-variant-numeric:tabular-nums;}
+
+  /* ---- topbar ---- */
+  .topbar{
+    position:sticky; top:0; z-index:40; background:var(--page);
+    display:flex; align-items:center; gap:20px; flex-wrap:wrap;
+    padding:14px 0 10px; border-bottom:1px solid var(--border);
+  }
+  .brand{display:flex; flex-direction:column; gap:2px; margin-right:auto;}
+  .eyebrow{font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--text-muted); font-weight:600;}
+  .brand h1{font-size:20px; font-weight:750; letter-spacing:-0.01em;}
+  .var-toggle{display:flex; gap:4px; background:var(--surface-2); padding:4px; border-radius:10px; border:1px solid var(--border);}
+  .var-btn{
+    appearance:none; border:none; background:transparent; cursor:pointer;
+    padding:7px 14px; border-radius:7px; font-family:var(--font-sans); font-size:13px; font-weight:650;
+    color:var(--text-secondary); display:flex; flex-direction:column; align-items:center; gap:1px;
+    transition:background .15s, color .15s;
+  }
+  .var-btn .var-sub{font-size:9.5px; font-weight:500; letter-spacing:.02em; color:var(--text-muted); text-transform:uppercase;}
+  .var-btn:hover{background:var(--surface-1);}
+  .var-btn:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+  .var-btn.active{background:var(--surface-1); color:var(--text-primary); box-shadow:0 1px 0 var(--border), 0 0 0 1.5px var(--accent) inset;}
+  .var-btn.active .var-sub{color:var(--accent);}
+  .meta{font-size:11.5px; color:var(--text-muted); font-family:var(--font-mono); white-space:nowrap;}
+  .theme-toggle{
+    appearance:none; border:1px solid var(--border); background:var(--surface-2); color:var(--text-secondary);
+    border-radius:9px; width:34px; height:34px; flex:none; display:flex; align-items:center; justify-content:center; cursor:pointer;
+  }
+  .theme-toggle:hover{color:var(--text-primary); background:var(--surface-1);}
+  .theme-toggle .icon-moon{display:none;}
+  :root[data-theme="dark"] .theme-toggle .icon-sun{display:none;}
+  :root[data-theme="dark"] .theme-toggle .icon-moon{display:block;}
+  @media (prefers-color-scheme: dark){
+    :root:where(:not([data-theme="light"])) .theme-toggle .icon-sun{display:none;}
+    :root:where(:not([data-theme="light"])) .theme-toggle .icon-moon{display:block;}
+  }
+
+  .map-controls{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px;}
+  .cont-btn{
+    appearance:none; border:1px solid var(--border); background:var(--surface-2); color:var(--text-secondary);
+    font-family:var(--font-sans); font-size:11px; font-weight:600; padding:5px 10px; border-radius:99px; cursor:pointer;
+  }
+  .cont-btn:hover{color:var(--text-primary); background:var(--surface-1);}
+  .cont-btn.active{background:var(--accent); color:#fff; border-color:var(--accent);}
+
+  /* ---- generic panel ---- */
+  .panel{
+    background:var(--surface-1); border:1px solid var(--border); border-radius:14px;
+    padding:18px 20px 20px;
+  }
+  .panel-head{display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin-bottom:12px; flex-wrap:wrap;}
+  .panel-head h2{font-size:15px; font-weight:700;}
+  .panel-sub{font-size:11.5px; color:var(--text-muted); margin:2px 0 0;}
+
+  /* ---- stat tiles ---- */
+  .stat-row{display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:10px;}
+  .stat-tile{
+    background:var(--surface-1); border:1px solid var(--border); border-radius:12px; padding:13px 14px;
+    display:flex; flex-direction:column; gap:5px;
+  }
+  .stat-tile .stat-label{font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); font-weight:650;}
+  .stat-tile .stat-value{font-family:var(--font-mono); font-size:24px; font-weight:600; font-variant-numeric:tabular-nums; color:var(--accent);}
+  .stat-tile .stat-note{font-size:11px; color:var(--text-secondary);}
+
+  /* ---- hero grid ---- */
+  .hero-grid{display:grid; grid-template-columns:2.1fr 1fr; gap:14px;}
+  .mid-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  .hero-grid > .panel, .mid-grid > .panel{min-width:0;} /* fr tracks default to minmax(auto,1fr); this stops a long unbreakable child from blowing out its column */
+  @media (max-width:880px){ .hero-grid, .mid-grid{grid-template-columns:1fr;} }
+
+  svg{width:100%; height:auto; display:block; overflow:visible;}
+  /* explicit aspect-ratio so rendered size never depends on the current viewBox (Safari needs this,
+     and it's what keeps the map's box a constant size while its viewBox pans/zooms) */
+  #map-svg{aspect-ratio:940/430; overflow:hidden; transition:viewBox .35s ease-in-out;}
+  #taylor-svg{aspect-ratio:480/300;}
+  #biome-svg{aspect-ratio:480/340;}
+  #strip-svg{aspect-ratio:1200/90;}
+  .axis-label{fill:var(--text-muted); font-family:var(--font-sans); font-size:9.5px;}
+  .grid-line{stroke:var(--grid); stroke-width:1;}
+  .ref-line{stroke:var(--axis); stroke-width:1; stroke-dasharray:2 3;}
+
+  /* legend */
+  .legend{display:flex; flex-wrap:wrap; gap:12px; margin-top:10px; font-size:11px; color:var(--text-secondary);}
+  .legend-item{display:flex; align-items:center; gap:6px;}
+  .swatch{width:11px; height:11px; border-radius:3px; flex:none;}
+  .swatch.line{width:14px; height:2px; border-radius:1px;}
+  .swatch.dot{border-radius:50%;}
+
+  /* site dots + status colors as classes */
+  .st-good{fill:var(--status-good);}
+  .st-warning{fill:var(--status-warning);}
+  .st-serious{fill:var(--status-serious);}
+  .st-critical{fill:var(--status-critical);}
+  .st-none{fill:none; stroke:var(--text-muted); stroke-width:1; opacity:.55;}
+  circle.site-dot{cursor:pointer; stroke:var(--surface-1); stroke-width:0.75;}
+  circle.site-dot:hover{stroke:var(--text-primary); stroke-width:1.5;}
+  circle.site-dot.selected{stroke:var(--text-primary); stroke-width:2.25;}
+
+  /* callouts */
+  .callouts-panel{display:flex; flex-direction:column; gap:16px;}
+  .callout-group h3{font-size:11.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); margin:0 0 8px;}
+  .callout-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:2px;}
+  .callout-row{
+    display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:8px; cursor:pointer;
+    font-size:12.5px; border:1px solid transparent;
+  }
+  .callout-row:hover{background:var(--surface-2); border-color:var(--border);}
+  .callout-rank{font-family:var(--font-mono); color:var(--text-muted); min-width:30px; flex:none; font-size:11px; text-align:right;}
+  .callout-code{font-family:var(--font-mono); font-weight:650; width:58px; flex:none;}
+  .callout-name{color:var(--text-secondary); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .callout-metric{font-family:var(--font-mono); font-size:11.5px; font-variant-numeric:tabular-nums;}
+  .pill{display:inline-flex; align-items:center; gap:4px; font-size:10px; font-weight:650; padding:2px 7px; border-radius:99px; text-transform:uppercase; letter-spacing:.03em;}
+  .pill::before{content:""; width:6px; height:6px; border-radius:50%;}
+  .pill.st-good{color:var(--status-good); background:color-mix(in srgb, var(--status-good) 15%, transparent);}
+  .pill.st-good::before{background:var(--status-good);}
+  .pill.st-warning{color:var(--status-warning); background:color-mix(in srgb, var(--status-warning) 18%, transparent);}
+  .pill.st-warning::before{background:var(--status-warning);}
+  .pill.st-serious{color:var(--status-serious); background:color-mix(in srgb, var(--status-serious) 18%, transparent);}
+  .pill.st-serious::before{background:var(--status-serious);}
+  .pill.st-critical{color:var(--status-critical); background:color-mix(in srgb, var(--status-critical) 15%, transparent);}
+  .pill.st-critical::before{background:var(--status-critical);}
+  .pill.st-none{color:var(--text-muted); background:var(--surface-2);}
+  .pill.st-none::before{background:var(--text-muted);}
+
+  /* strip panel */
+  .strip-controls input{
+    font-family:var(--font-sans); font-size:12.5px; padding:7px 11px; border-radius:8px;
+    border:1px solid var(--border); background:var(--surface-2); color:var(--text-primary); min-width:220px;
+  }
+  .strip-controls input:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
+  .table-wrap{overflow-x:auto; margin-top:14px; border-top:1px solid var(--border);}
+  table{width:100%; border-collapse:collapse; font-size:12.5px; min-width:720px;}
+  thead th{
+    position:sticky; top:0; background:var(--surface-1); text-align:left; font-size:10.5px; text-transform:uppercase;
+    letter-spacing:.04em; color:var(--text-muted); padding:9px 10px; cursor:pointer; white-space:nowrap; border-bottom:1px solid var(--border);
+  }
+  thead th:hover{color:var(--text-primary);}
+  thead th.sorted{color:var(--accent);}
+  tbody td{padding:7px 10px; border-bottom:1px solid var(--border); white-space:nowrap;}
+  tbody tr{cursor:pointer;}
+  tbody tr:hover{background:var(--surface-2);}
+  tbody tr.selected{background:color-mix(in srgb, var(--accent) 12%, transparent);}
+  td.num, th.num{text-align:right; font-family:var(--font-mono); font-variant-numeric:tabular-nums;}
+
+  /* tooltip */
+  #tooltip{
+    position:fixed; pointer-events:none; z-index:100; background:var(--text-primary); color:var(--page);
+    font-family:var(--font-mono); font-size:11.5px; padding:7px 10px; border-radius:8px; line-height:1.5;
+    opacity:0; transform:translate(-50%,-120%); transition:opacity .08s; white-space:nowrap; box-shadow:0 4px 14px rgba(0,0,0,.25);
+  }
+  #tooltip.show{opacity:1;}
+  #tooltip b{font-family:var(--font-sans);}
+
+  /* inspector */
+  .inspector{
+    display:none; background:var(--surface-1); border:1px solid var(--accent); border-radius:14px;
+    padding:20px 22px 24px; scroll-margin-top:70px;
+  }
+  .inspector.open{display:block;}
+  .insp-head{display:flex; justify-content:space-between; align-items:flex-start; gap:14px; flex-wrap:wrap; margin-bottom:14px;}
+  .insp-title{display:flex; flex-direction:column; gap:3px;}
+  .insp-title .code{font-family:var(--font-mono); font-size:22px; font-weight:650; letter-spacing:-.01em;}
+  .insp-title .sub{font-size:12.5px; color:var(--text-secondary);}
+  .insp-close{
+    appearance:none; border:1px solid var(--border); background:var(--surface-2); color:var(--text-secondary);
+    border-radius:8px; width:30px; height:30px; cursor:pointer; font-size:15px; line-height:1;
+  }
+  .insp-close:hover{color:var(--text-primary);}
+  .badge-row{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:18px;}
+  .var-badge{border:1px solid var(--border); border-radius:10px; padding:10px 12px; background:var(--surface-2);}
+  .var-badge.current{box-shadow:0 0 0 1.5px var(--bvar) inset;}
+  .var-badge .vb-top{display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;}
+  .var-badge .vb-name{font-weight:700; font-size:12.5px; color:var(--bvar);}
+  .var-badge .vb-grid{display:flex; gap:14px; font-family:var(--font-mono); font-size:12px;}
+  .var-badge .vb-grid div span{display:block; font-size:9.5px; color:var(--text-muted); font-family:var(--font-sans); text-transform:uppercase;}
+  .insp-charts{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  .insp-charts .wide{grid-column:1 / -1;}
+  .chart-box h4{font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--text-muted); margin:0 0 6px; font-weight:650;}
+  .chart-note{font-size:11px; color:var(--text-muted); margin:0 0 8px; line-height:1.5;}
+  .diurnal-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+  .diurnal-grid .season-label{font-size:10px; color:var(--text-muted); text-align:center; margin-top:2px; font-weight:650; letter-spacing:.03em;}
+
+  .biome-glossary{
+    display:flex; flex-wrap:wrap; gap:6px 14px; margin-top:12px; padding-top:12px; border-top:1px solid var(--border);
+  }
+  .biome-glossary .gloss-item{font-size:10.5px; color:var(--text-secondary); max-width:220px;}
+  .biome-glossary .gloss-item b{font-family:var(--font-mono); color:var(--text-primary); font-weight:650;}
+
+  footer.note{font-size:11px; color:var(--text-muted); line-height:1.6; border-top:1px solid var(--border); padding-top:14px;}
+  footer.note code{font-family:var(--font-mono); background:var(--surface-2); padding:1px 5px; border-radius:4px;}
+</style>
+
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <span class="eyebrow">ecLand → PLUMBER2</span>
+      <h1>Flux Tower Benchmark</h1>
+    </div>
+    <div class="var-toggle" id="var-toggle" role="tablist" aria-label="Variable">
+      <button class="var-btn" data-var="Qle" role="tab">Qle<span class="var-sub">Latent heat</span></button>
+      <button class="var-btn" data-var="Qh" role="tab">Qh<span class="var-sub">Sensible heat</span></button>
+      <button class="var-btn" data-var="NEE" role="tab">NEE<span class="var-sub">CO₂ exchange</span></button>
+    </div>
+    <div class="meta" id="meta-note"><span id="n-sites-meta"></span> sites · generated <span id="gen-date"></span></div>
+    <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Toggle light/dark theme" title="Toggle light/dark theme">
+      <svg class="icon-sun" viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><circle cx="10" cy="10" r="4" fill="currentColor"/><g stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="10" y1="1" x2="10" y2="3.2"/><line x1="10" y1="16.8" x2="10" y2="19"/><line x1="1" y1="10" x2="3.2" y2="10"/><line x1="16.8" y1="10" x2="19" y2="10"/><line x1="3.8" y1="3.8" x2="5.3" y2="5.3"/><line x1="14.7" y1="14.7" x2="16.2" y2="16.2"/><line x1="3.8" y1="16.2" x2="5.3" y2="14.7"/><line x1="14.7" y1="5.3" x2="16.2" y2="3.8"/></g></svg>
+      <svg class="icon-moon" viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M15.5 12.3A6.8 6.8 0 0 1 7.7 4.5a.6.6 0 0 0-.8-.7 8 8 0 1 0 9.3 9.3.6.6 0 0 0-.7-.8Z"/></svg>
+    </button>
+  </header>
+
+  <section class="stat-row" id="stat-tiles"></section>
+
+  <section class="hero-grid">
+    <div class="panel map-panel">
+      <div class="panel-head">
+        <div><h2>Site network</h2><p class="panel-sub">dot size = record length · color = skill quartile for the selected variable</p></div>
+      </div>
+      <div class="map-controls" id="map-controls"></div>
+      <svg id="map-svg" viewBox="0 0 940 430" preserveAspectRatio="xMidYMid meet"></svg>
+      <div class="legend" id="map-legend"></div>
+    </div>
+    <div class="panel callouts-panel">
+      <div class="callout-group">
+        <h3 id="best-title">Best agreement</h3>
+        <ol class="callout-list" id="best-list"></ol>
+      </div>
+      <div class="callout-group">
+        <h3 id="worst-title">Largest error</h3>
+        <ol class="callout-list" id="worst-list"></ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="mid-grid">
+    <div class="panel">
+      <div class="panel-head"><div><h2>Taylor diagram</h2><p class="panel-sub">angle = correlation with obs · radius = normalised variability (σ<sub>model</sub> / σ<sub>obs</sub>)</p></div></div>
+      <svg id="taylor-svg" viewBox="0 0 480 300" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><div><h2>Skill by land cover</h2><p class="panel-sub">NME distribution per IGBP biome (lower is better)</p></div></div>
+      <svg id="biome-svg" viewBox="0 0 480 340" preserveAspectRatio="xMidYMid meet"></svg>
+      <div class="biome-glossary" id="biome-glossary"></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <div><h2>All sites, ranked</h2><p class="panel-sub">sorted by NME, best to worst</p></div>
+      <div class="strip-controls"><input id="site-search" type="search" placeholder="Search site, country, biome…" autocomplete="off" /></div>
+    </div>
+    <svg id="strip-svg" viewBox="0 0 1200 90"></svg>
+    <div class="table-wrap">
+      <table id="site-table">
+        <thead>
+          <tr>
+            <th data-key="site">Site</th>
+            <th data-key="site_name">Name</th>
+            <th data-key="country">Country</th>
+            <th data-key="igbp">Biome</th>
+            <th data-key="r" class="num">R</th>
+            <th data-key="nme" class="num">NME</th>
+            <th data-key="bias" class="num">Bias</th>
+            <th data-key="years" class="num">Years</th>
+            <th data-key="pct_measured" class="num">% measured</th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <aside class="inspector" id="inspector"></aside>
+
+  <footer class="note">
+    Observations: PLUMBER2 v1.0 (FLUXNET2015-derived), quality-controlled half-hours only (QC = measured, gapfilled steps excluded from every score and aggregate shown here). Model: ecLand, postprocessed PLUMBER2 output. NEE converted from ecLand's native <code>kg C m⁻² s⁻¹</code> to <code>µmol m⁻² s⁻¹</code> for comparison; both series use the release-positive sign convention (positive = net carbon release to the atmosphere). NME is the normalised mean absolute error — 0 is perfect, 1 means the model does no better than predicting the observed mean. Generated <span id="gen-date-2"></span> from <span id="n-sites"></span> site-periods.
+  </footer>
+</div>
+
+<div id="tooltip"></div>
+
+<script type="application/json" id="bench-data">__DATA_JSON__</script>
+<script>
+(function(){
+  "use strict";
+  const DATA = JSON.parse(document.getElementById('bench-data').textContent);
+  const SITES = DATA.sites;
+  const VARS = DATA.variables;
+  const WORLD_LAND_PATH = "M0.5,253.3L0.2,254.4L0.0,254.5L0.0,253.4L0.5,253.3ZM265.9,195.1L263.4,193.5L262.3,193.7L259.9,195.7L261.1,197.0L258.8,197.8L258.3,196.3L257.1,196.6L256.6,195.6L253.7,195.2L253.7,195.7L252.0,194.8L251.4,194.3L251.6,193.4L249.0,192.0L248.1,190.9L247.8,192.2L246.3,191.3L246.3,189.3L245.6,189.0L246.2,188.5L241.1,184.2L242.0,184.0L241.6,183.2L239.0,183.6L231.8,181.7L226.2,177.7L222.7,176.3L217.9,177.6L206.7,174.0L203.9,172.2L199.7,171.3L195.9,168.9L194.5,167.3L193.9,166.2L194.8,166.0L195.1,163.8L193.1,160.6L187.0,154.9L184.7,153.9L184.2,153.3L184.6,151.8L181.8,150.1L181.1,148.4L179.7,148.3L177.0,145.8L174.5,141.5L174.6,140.5L170.3,139.0L169.9,140.0L170.6,142.9L178.6,151.3L181.1,157.0L182.3,157.0L184.3,159.6L182.7,160.5L182.0,159.0L177.1,155.9L176.8,152.9L171.1,150.2L169.6,148.8L170.8,148.7L171.8,147.8L171.9,146.8L168.4,144.4L163.7,136.1L160.8,134.4L160.5,133.7L155.0,132.3L154.7,131.0L152.2,128.6L150.1,124.7L146.9,121.9L146.6,120.0L145.2,118.7L145.7,114.7L144.8,112.8L145.9,110.6L146.5,106.2L146.0,103.0L144.4,99.9L144.7,99.4L148.5,100.2L149.9,102.5L150.6,101.9L149.3,97.9L142.0,94.6L137.3,93.6L135.8,91.5L136.2,90.0L132.8,89.0L132.4,87.0L129.2,85.3L129.2,84.1L125.4,82.4L124.7,80.3L121.3,78.4L119.9,76.2L113.2,75.9L110.2,75.3L104.8,72.8L97.7,71.5L94.1,71.7L85.9,69.6L83.0,70.1L83.5,71.7L73.9,73.7L73.5,72.3L74.7,69.9L77.4,69.2L76.7,68.6L67.8,73.2L69.7,74.4L67.3,76.1L61.9,77.8L61.2,78.9L57.1,80.1L56.3,81.2L39.7,85.0L39.3,84.6L47.5,81.5L50.8,81.2L58.2,77.5L58.6,75.7L59.9,74.2L56.9,75.0L56.1,74.6L54.7,75.4L53.0,74.2L52.3,75.1L51.3,73.9L47.1,74.8L47.3,72.5L45.6,71.7L42.3,72.1L38.3,70.5L38.3,69.1L36.2,68.1L37.2,66.7L40.3,64.2L44.2,64.4L46.3,63.2L48.2,63.4L50.2,62.7L49.7,61.6L48.3,61.1L50.2,60.2L45.0,61.3L43.0,60.8L39.3,61.0L35.4,60.5L31.0,58.1L40.5,56.0L42.7,56.0L42.3,57.1L47.8,57.1L45.7,55.6L42.5,54.7L38.1,52.5L34.6,51.7L36.0,50.4L40.7,50.4L43.9,49.3L44.6,48.1L47.2,47.0L54.7,45.6L57.1,45.8L61.2,44.5L65.1,45.0L67.0,46.1L68.1,45.7L72.6,45.8L72.4,46.3L76.4,46.8L79.1,46.5L91.6,47.8L95.1,47.4L113.6,50.4L119.0,48.7L122.9,49.0L131.1,47.3L132.9,48.3L134.8,47.7L135.4,46.6L137.2,46.9L141.6,49.0L145.1,47.4L145.5,49.2L148.7,48.8L149.7,48.1L152.8,48.3L162.9,50.1L169.1,50.4L172.6,51.6L168.9,52.8L173.6,53.3L182.9,52.6L185.7,54.0L188.5,52.8L185.9,51.8L187.6,51.0L192.8,50.6L197.6,52.5L200.5,52.3L205.1,53.4L213.0,53.1L212.7,51.6L215.0,51.2L219.0,52.0L219.0,54.2L220.7,52.3L222.8,52.4L223.9,50.0L218.1,47.6L218.3,44.9L221.4,43.2L224.8,43.6L227.5,44.6L231.0,47.3L228.7,48.5L233.6,49.0L233.6,51.4L237.0,49.5L240.2,51.1L239.4,52.9L241.9,54.5L244.6,52.7L246.5,50.7L246.7,48.1L254.3,48.6L257.8,49.8L257.9,51.0L256.0,52.2L257.8,53.5L257.5,54.7L252.4,56.4L248.7,56.7L246.0,56.0L242.0,60.3L239.0,61.9L235.2,62.0L233.2,63.0L233.0,64.6L230.0,64.9L226.8,66.8L223.9,69.5L222.9,71.4L222.8,74.2L226.6,74.6L229.0,78.6L232.7,78.2L237.5,79.2L242.0,81.2L248.0,82.9L255.2,83.3L254.7,85.3L255.6,87.7L257.5,90.4L261.3,92.7L263.3,91.9L264.8,89.4L263.4,85.7L261.6,84.4L265.7,83.3L268.7,81.6L270.1,79.9L269.9,78.3L268.2,76.3L265.0,74.5L268.1,72.0L266.1,66.1L267.9,65.6L275.0,66.5L277.2,65.8L282.8,68.0L283.6,69.0L288.3,69.1L289.1,74.2L291.5,74.5L293.4,75.9L297.1,74.6L301.4,70.9L309.7,78.9L308.6,80.4L314.5,83.1L320.3,84.5L321.3,86.5L323.4,86.8L324.4,87.7L324.6,90.4L320.8,92.2L316.5,93.0L313.2,95.0L308.8,95.4L296.6,95.0L294.4,96.7L291.1,97.8L284.3,103.1L286.6,102.8L290.7,99.6L296.2,97.6L300.1,97.4L302.4,98.6L300.0,100.2L301.7,104.5L305.0,105.7L309.4,105.4L312.0,102.7L312.2,104.4L313.8,105.3L310.6,106.9L302.2,109.3L299.3,111.0L297.3,110.8L297.2,108.8L301.8,106.8L294.7,107.2L295.1,108.0L286.9,110.6L285.5,112.1L285.1,113.9L285.9,115.1L287.0,115.2L286.7,114.3L287.5,114.9L287.3,115.5L277.5,117.2L281.4,116.8L282.1,117.2L278.5,117.9L276.9,117.7L276.1,118.3L276.9,118.4L276.3,120.1L274.4,122.0L272.8,120.6L274.0,123.3L271.7,126.1L272.3,124.4L270.9,123.5L270.6,121.5L270.1,122.5L270.7,124.0L269.0,123.6L270.8,124.4L270.9,126.7L271.6,126.9L272.3,130.1L270.6,131.8L267.9,132.6L266.2,134.0L263.6,135.0L263.2,135.8L260.3,137.3L257.6,139.9L257.2,141.6L257.7,143.2L261.0,150.8L260.1,154.8L258.1,154.8L257.6,153.7L256.6,153.2L253.7,148.4L254.2,146.8L251.4,143.5L250.4,143.1L247.8,144.2L244.4,142.4L236.1,143.0L237.0,145.0L236.5,145.3L235.6,145.0L232.7,145.4L230.8,144.1L225.0,144.0L222.8,144.6L220.4,146.3L217.8,147.4L215.8,149.6L216.4,153.2L215.3,153.3L216.4,153.2L214.9,157.0L214.4,161.4L216.2,165.7L219.6,170.0L222.4,170.7L223.4,171.7L231.3,169.9L233.0,168.9L234.3,164.8L238.8,163.7L242.7,163.5L243.3,164.0L243.2,165.2L241.2,168.1L241.7,168.5L240.6,171.4L239.4,170.8L239.9,171.2L239.3,175.5L237.8,177.0L239.9,177.5L240.5,177.1L243.1,177.4L248.1,176.8L252.2,178.5L252.9,179.2L252.8,180.8L251.9,182.6L252.0,185.3L251.2,188.5L255.3,193.5L258.6,193.8L262.2,192.0L265.0,192.5L268.0,194.3L269.4,194.4L272.4,192.4L272.9,189.6L274.4,188.5L276.1,188.5L276.3,188.0L278.3,188.2L282.6,185.3L284.3,186.1L283.7,187.4L282.1,187.7L283.0,188.8L283.0,190.0L281.8,191.4L282.8,193.3L283.9,193.2L284.5,191.4L283.7,190.6L283.6,188.8L286.8,187.8L286.5,186.7L287.4,185.9L288.3,187.6L290.1,187.7L291.8,189.0L291.9,189.8L297.1,189.6L298.6,190.6L300.6,190.9L302.0,190.2L302.1,189.6L308.4,189.4L306.2,190.1L307.1,191.2L309.2,191.4L311.2,192.6L311.6,194.5L312.9,194.4L315.7,195.9L317.3,197.4L317.4,198.7L318.4,198.7L320.8,200.7L323.9,201.2L326.3,200.6L329.1,201.2L331.9,202.1L334.7,204.1L335.1,205.1L336.0,205.0L338.1,210.5L339.5,210.9L339.6,212.5L337.6,214.5L338.4,215.2L343.0,215.6L343.1,218.0L345.1,216.4L352.7,218.7L354.0,220.1L353.6,221.4L356.6,220.7L361.7,222.0L365.6,221.9L369.5,223.8L372.8,226.5L377.1,227.3L378.0,228.1L379.3,232.5L378.3,236.5L373.3,241.4L369.7,246.1L369.0,246.2L368.3,248.0L368.5,252.4L367.5,257.7L366.6,258.6L366.2,261.8L363.5,264.9L363.1,267.4L361.0,268.4L360.4,269.9L357.5,269.9L353.4,270.8L348.7,272.5L345.6,274.4L343.4,276.8L343.0,278.6L343.4,279.9L342.3,283.5L340.5,284.8L337.6,289.0L333.6,292.0L332.4,294.3L329.5,297.2L326.6,298.5L323.2,298.3L320.8,297.3L319.0,297.3L317.4,296.0L317.3,297.3L320.6,299.3L320.2,300.9L321.9,302.0L321.7,303.2L319.2,306.2L315.3,307.5L307.2,307.8L307.7,312.2L306.2,313.0L303.5,313.3L301.0,312.5L300.0,313.1L300.3,315.5L302.1,316.2L303.5,315.4L304.3,316.7L301.9,317.4L299.8,318.9L298.8,322.6L296.3,322.6L294.3,323.8L293.5,325.6L296.1,327.4L298.6,327.8L297.7,330.0L294.6,331.3L292.9,334.1L290.5,335.1L289.5,336.2L290.3,338.7L292.1,340.1L288.6,339.9L285.0,341.4L284.6,343.6L280.5,342.9L274.3,339.8L273.5,338.3L274.2,336.9L272.9,335.3L272.6,331.3L273.7,329.0L276.4,327.1L272.5,326.4L275.0,324.3L275.9,320.4L278.8,321.2L280.1,316.2L278.4,315.6L277.6,318.6L275.9,318.3L277.6,310.4L278.8,308.8L277.9,303.8L279.0,303.7L283.5,292.4L282.9,288.9L283.6,286.9L283.3,283.9L284.9,281.0L287.0,266.1L286.8,262.2L286.2,258.8L283.6,257.5L283.4,256.5L278.2,254.1L271.5,250.0L270.4,248.0L270.9,247.3L261.7,232.2L257.8,229.7L258.7,228.6L257.4,226.3L258.2,224.6L261.7,221.3L261.1,220.3L260.1,221.4L258.6,220.4L259.1,219.7L258.7,217.5L259.6,217.2L261.1,214.1L260.9,213.2L264.1,211.7L263.7,211.0L264.7,210.8L264.6,209.6L265.2,208.7L266.5,208.6L268.6,205.8L267.6,205.2L268.1,203.8L267.7,199.0L265.8,197.1L265.2,195.8L265.9,195.1ZM62.8,169.5L62.5,167.9L63.0,166.6L65.8,168.4L63.5,169.8L62.8,169.5ZM62.7,165.4L61.6,165.9L60.8,165.0L61.1,164.8L62.7,165.4ZM59.4,164.3L60.6,164.7L59.2,164.6L59.4,164.3ZM57.4,163.1L58.4,164.1L58.2,164.2L57.1,164.1L56.7,163.4L57.4,163.1ZM270.2,164.3L272.6,164.8L272.4,165.5L274.3,165.6L276.3,166.5L276.0,167.1L274.3,167.4L267.0,167.6L268.7,166.2L266.0,165.5L264.5,163.4L263.0,163.5L255.4,161.5L256.4,160.9L253.9,160.8L250.5,162.7L248.1,162.7L250.1,161.1L252.6,160.1L255.2,159.6L259.5,159.8L263.0,161.5L265.4,161.2L270.2,164.3ZM53.6,162.7L52.7,162.3L53.9,161.9L53.6,162.7ZM264.0,151.9L263.8,151.0L266.7,150.9L266.8,151.5L264.0,151.9ZM134.8,93.7L141.6,94.9L143.8,96.8L146.4,97.8L147.5,99.1L146.2,99.4L141.9,98.4L138.3,96.0L135.6,95.6L134.6,94.3L134.8,93.7ZM122.6,87.4L122.3,85.6L126.0,85.7L125.2,88.4L127.5,90.3L126.4,90.3L124.9,89.2L122.6,87.4ZM69.9,76.5L71.6,76.7L72.7,77.4L67.9,79.5L66.5,78.9L66.1,77.7L69.9,76.5ZM37.7,71.9L36.1,72.3L32.8,71.2L37.4,71.0L37.7,71.9ZM261.3,66.0L263.0,66.5L262.0,67.8L260.2,66.8L261.3,66.0ZM256.2,64.7L256.2,65.2L253.1,66.5L251.3,66.5L250.7,65.8L252.6,64.7L256.2,64.7ZM24.4,63.6L21.4,63.5L21.6,62.6L29.5,63.8L27.3,64.6L24.4,63.6ZM253.0,61.9L246.7,64.4L245.8,63.0L242.3,63.2L244.5,62.0L245.7,58.0L247.6,58.2L248.1,59.2L249.5,58.8L256.8,61.0L257.1,62.2L259.0,62.0L260.8,62.8L258.5,63.5L254.5,62.9L253.0,61.9ZM19.4,61.0L18.4,61.5L15.9,61.4L10.5,59.9L9.9,58.9L4.3,58.8L2.9,58.0L3.4,57.1L0.3,57.6L1.5,58.8L0.0,59.8L0.0,50.3L13.2,54.5L13.0,55.9L14.8,56.5L14.2,54.8L21.3,55.2L26.4,57.4L23.8,58.4L19.5,58.7L19.4,61.0ZM213.5,47.4L220.3,49.9L218.6,50.7L215.1,50.0L213.0,50.3L209.4,49.2L213.5,47.4ZM203.4,49.9L202.5,50.8L193.3,49.7L174.1,51.3L172.7,50.1L169.1,49.5L166.8,49.8L163.6,47.9L176.5,46.9L171.4,46.3L162.1,46.5L160.8,45.6L166.8,44.7L158.2,44.1L162.2,41.3L169.2,39.9L171.9,40.3L170.6,41.4L176.4,40.7L180.0,41.9L183.0,40.7L185.4,41.5L187.5,43.8L188.8,42.8L187.0,40.4L189.3,40.0L194.8,41.4L197.2,45.4L206.3,47.7L206.0,48.8L201.8,49.0L203.4,49.9ZM0.0,45.8L0.3,44.1L6.3,44.7L3.4,45.6L0.0,45.8ZM217.5,43.8L213.2,44.7L210.7,44.5L202.4,41.8L202.4,41.0L207.7,41.3L204.9,39.8L208.0,38.6L211.1,39.1L215.7,38.8L216.4,39.5L214.0,40.6L217.9,41.7L217.5,43.8ZM155.5,44.5L148.6,45.6L147.2,44.6L141.2,43.3L146.4,39.0L143.8,37.5L152.7,37.1L163.0,37.8L168.4,39.5L158.7,41.8L155.5,43.4L155.5,44.5ZM220.6,38.6L223.2,37.9L233.7,38.6L229.8,40.7L226.7,41.2L223.9,42.9L220.9,42.9L219.2,40.8L219.3,39.6L220.6,38.6ZM190.8,39.5L195.2,39.1L197.1,39.6L194.8,41.2L190.8,39.5ZM270.9,41.0L261.7,41.1L258.8,39.8L258.9,39.0L266.2,39.1L270.7,40.4L270.9,41.0ZM224.1,36.8L220.4,36.6L217.2,36.0L218.6,34.9L222.3,34.3L225.6,35.9L224.1,36.8ZM172.7,36.5L178.1,35.4L166.3,35.7L162.6,35.3L166.2,33.0L168.7,32.3L176.0,33.1L180.7,34.5L185.2,34.7L181.5,32.4L183.9,31.5L186.6,31.8L188.5,33.8L193.5,33.5L194.0,34.7L192.4,35.8L183.6,36.2L177.0,37.2L173.0,37.3L172.7,36.5ZM217.4,30.7L230.8,31.6L233.1,32.4L232.5,33.3L237.1,34.4L244.5,34.7L258.2,34.1L261.0,35.0L261.5,36.0L256.0,37.2L239.8,37.3L228.7,36.2L227.5,33.7L224.8,32.7L219.4,32.4L216.4,31.7L217.4,30.7ZM202.2,32.6L212.8,31.7L214.8,32.8L214.9,34.1L213.7,35.8L209.4,36.1L206.6,35.7L206.6,34.3L202.4,34.5L202.2,32.6ZM164.2,32.2L152.8,33.7L149.2,33.2L159.0,29.8L166.6,29.5L166.2,31.3L164.2,32.2ZM218.9,29.7L218.2,29.1L225.3,29.5L223.8,29.9L218.9,29.7ZM182.3,29.4L177.4,30.1L173.5,29.3L175.7,28.5L183.2,28.7L182.3,29.4ZM217.4,26.8L220.5,27.7L219.8,28.5L215.9,29.0L213.8,28.5L212.7,27.6L212.5,26.6L217.4,26.8ZM197.9,27.0L194.7,26.5L194.5,25.6L206.7,26.8L209.7,28.9L201.2,27.8L195.4,27.8L197.9,27.0ZM183.7,27.2L176.1,27.7L178.9,26.6L183.7,27.2ZM242.8,24.7L245.9,25.5L237.5,28.0L232.9,28.2L227.5,27.8L224.7,26.9L224.7,26.0L226.8,25.4L222.0,25.4L219.1,24.6L217.5,23.5L221.1,21.7L223.8,21.6L222.6,21.0L228.7,20.9L232.0,22.2L240.7,23.1L242.8,24.7ZM278.6,343.9L275.0,341.2L284.3,344.2L286.5,341.4L288.9,340.5L290.8,340.7L293.1,343.6L296.5,345.1L300.1,345.7L299.0,346.9L296.5,347.0L295.2,346.1L294.3,347.1L290.8,347.8L284.6,346.5L278.6,343.9ZM311.5,339.9L310.2,338.9L313.3,337.4L315.6,338.0L317.1,337.1L319.2,338.1L318.4,339.0L314.9,339.7L313.7,338.9L311.5,339.9ZM436.2,196.4L435.4,193.7L431.9,190.6L431.3,189.0L428.0,187.5L426.6,185.9L426.0,183.6L426.4,182.5L425.3,180.7L424.0,179.8L425.1,179.4L427.0,176.5L426.8,175.2L427.8,171.7L427.5,167.0L425.4,164.8L425.7,162.7L427.5,160.8L428.3,158.3L430.6,156.4L432.3,152.3L434.0,151.4L435.7,149.0L437.1,148.0L439.5,147.8L445.0,143.5L444.4,140.5L445.7,137.2L447.4,135.6L452.0,133.5L454.5,129.6L456.4,129.6L458.0,130.6L464.3,131.0L466.8,129.7L469.7,129.3L473.8,127.6L482.6,126.9L483.9,127.3L486.4,126.3L492.0,126.7L494.8,125.8L496.7,126.1L496.6,127.3L498.8,126.4L499.0,126.9L497.7,128.0L497.7,129.1L498.6,129.7L498.2,131.8L496.5,133.0L497.0,134.3L498.3,134.3L499.0,135.5L500.0,135.8L509.8,137.9L511.0,140.0L519.8,142.7L522.4,141.0L521.8,139.1L522.6,138.0L526.3,136.5L529.8,137.0L530.7,138.1L535.1,138.8L535.7,139.6L539.2,139.5L545.5,141.3L548.6,139.8L550.9,139.6L552.7,139.9L553.5,141.1L554.1,140.3L558.2,141.0L560.2,139.6L561.3,136.6L564.0,132.2L563.8,130.4L564.4,129.4L563.4,128.3L564.4,127.4L560.6,127.1L558.8,128.5L554.9,128.7L552.8,127.5L550.0,127.4L549.4,128.4L547.5,128.7L545.0,127.4L542.2,127.4L540.6,125.1L538.7,123.7L540.0,121.9L538.3,120.7L541.2,118.4L545.3,118.3L546.3,116.5L551.3,116.8L554.5,115.3L557.5,114.6L561.8,114.6L570.1,117.2L575.4,117.0L578.5,115.8L578.9,114.8L578.2,113.1L565.8,106.9L567.7,106.5L569.8,104.5L568.4,103.6L572.2,102.6L572.1,102.1L563.5,103.6L561.3,104.5L561.4,105.9L562.7,106.5L565.4,106.4L564.9,107.2L562.0,107.6L558.5,109.0L557.0,108.5L557.6,107.4L554.7,106.7L557.7,105.5L556.9,104.9L552.9,104.3L552.7,103.4L550.3,103.7L547.3,106.8L547.4,107.4L545.3,107.7L544.6,110.6L543.2,111.6L542.3,113.3L543.4,115.6L545.7,116.3L545.2,116.9L542.1,117.1L538.8,119.1L538.0,117.5L535.1,117.2L531.9,117.8L533.7,119.1L532.4,119.5L531.0,119.5L529.6,118.3L529.1,118.8L529.7,120.3L531.0,121.4L530.0,121.9L532.7,123.7L532.8,125.0L530.4,124.4L531.1,125.6L529.5,125.9L530.5,128.0L528.7,128.0L526.6,127.0L525.1,123.5L522.1,119.6L520.7,118.8L521.0,115.3L519.3,114.0L511.8,111.1L509.6,109.3L510.1,109.1L509.0,108.1L508.9,107.3L507.2,106.9L506.4,108.0L505.7,107.2L505.7,106.3L506.4,106.1L504.3,105.7L502.2,106.6L502.0,108.5L502.9,109.7L505.3,110.9L506.6,112.8L509.5,114.8L511.6,114.8L512.2,115.3L511.5,115.8L515.7,117.3L518.3,119.0L517.8,119.9L516.3,118.8L514.0,118.4L512.9,119.9L514.8,120.8L514.5,122.1L513.4,122.2L512.0,124.3L511.0,124.4L512.1,121.9L510.2,119.3L505.6,116.6L503.7,116.5L501.6,115.4L497.4,112.4L496.6,110.1L493.2,109.0L487.0,112.0L481.9,111.3L478.1,112.1L477.9,114.9L475.5,116.5L472.1,117.0L469.3,121.1L470.3,122.5L468.8,123.5L468.2,125.1L466.2,125.6L464.4,127.4L458.6,127.4L456.0,129.1L454.7,128.9L453.0,126.7L450.5,126.4L449.5,127.0L446.8,126.9L446.9,123.6L445.7,123.4L445.1,122.5L445.3,120.9L446.4,120.0L447.1,117.6L446.5,113.3L445.5,112.2L449.2,110.5L458.6,111.3L465.0,111.3L466.4,109.8L466.9,105.1L462.3,101.4L458.3,100.4L458.0,98.7L461.4,98.2L465.8,98.8L465.0,96.1L467.4,97.1L473.5,95.3L474.3,93.3L480.0,91.7L482.3,88.2L485.9,87.2L488.0,87.2L488.5,86.7L490.7,86.6L491.2,87.1L493.0,86.0L491.2,82.4L491.1,79.9L492.3,78.6L494.6,78.4L497.6,77.1L497.5,78.3L496.8,79.1L497.1,79.8L498.5,80.1L495.2,82.5L496.0,84.6L498.6,85.1L498.6,86.0L502.7,84.9L506.9,86.6L516.0,84.0L518.6,84.4L518.8,85.0L521.3,85.0L521.9,83.9L525.5,83.2L525.1,79.3L526.4,77.8L528.8,77.0L530.9,78.8L533.0,78.8L533.8,75.5L532.8,75.8L531.2,75.0L530.9,73.6L537.5,72.6L543.1,72.9L546.0,71.6L543.3,70.5L529.7,72.0L528.2,70.7L525.7,69.9L526.3,67.6L525.0,65.4L526.2,64.0L528.6,62.5L536.3,59.5L536.0,58.4L532.4,57.3L527.9,58.0L525.4,59.7L525.8,61.1L516.6,65.1L514.7,68.5L519.1,71.5L516.7,74.2L513.9,74.7L512.9,78.7L511.5,81.0L508.3,80.7L506.8,82.6L503.8,82.7L503.0,80.5L498.8,74.4L497.0,72.9L491.9,75.7L488.4,76.3L484.8,75.0L483.0,67.0L485.4,65.4L492.3,63.4L497.5,61.0L508.5,53.0L520.1,48.2L525.8,47.2L530.1,47.3L534.1,45.3L543.5,44.9L551.7,46.7L548.3,47.3L551.2,48.8L553.9,48.0L558.2,49.4L565.3,50.0L575.2,52.7L577.2,53.9L577.4,55.4L574.5,56.7L570.2,57.3L558.6,55.5L556.6,55.8L560.9,57.6L561.2,61.1L566.6,62.5L567.0,61.3L565.4,60.3L567.1,59.4L573.4,60.9L575.6,60.3L573.8,58.5L579.9,56.2L584.8,57.2L586.3,55.5L584.1,54.1L585.4,52.7L583.5,51.2L590.8,52.0L592.3,53.3L588.9,53.6L589.0,54.9L591.0,55.7L595.1,55.2L595.7,53.7L610.3,50.5L612.2,50.6L609.7,52.1L612.9,52.3L614.8,51.5L619.7,51.4L623.5,50.5L626.5,51.9L629.5,50.3L626.7,48.9L628.1,48.1L635.8,48.9L648.9,52.3L650.6,51.1L648.0,49.8L647.9,49.3L644.8,49.1L645.6,47.9L644.1,45.3L649.0,43.2L650.7,41.0L652.6,40.5L659.5,41.1L660.1,42.5L657.6,44.4L659.2,45.2L660.1,46.8L659.5,50.1L662.4,51.6L661.2,53.2L656.1,56.6L659.1,56.9L660.1,56.1L663.0,55.4L663.7,54.3L666.0,53.1L664.4,51.8L665.7,50.2L662.8,50.0L662.2,48.7L664.3,46.3L660.9,44.3L665.5,42.7L664.9,41.0L666.2,41.0L667.6,42.3L666.6,44.6L669.4,45.0L668.2,43.3L672.6,42.4L678.0,42.2L682.8,43.6L680.5,41.6L680.2,39.1L696.7,38.4L694.6,37.1L697.6,35.6L700.6,35.5L705.7,34.3L712.6,34.0L713.4,33.3L720.3,33.1L722.4,33.6L728.3,32.4L733.1,32.4L733.8,31.4L736.3,30.4L742.5,29.4L747.0,30.2L743.4,30.8L749.3,31.1L750.0,32.3L752.4,31.7L760.0,31.7L768.0,33.8L767.4,35.1L755.7,37.8L762.8,38.7L765.1,38.3L766.4,39.8L767.6,39.2L771.8,38.8L780.1,39.2L780.8,40.3L791.7,40.7L791.8,38.9L801.5,39.3L805.8,40.5L807.0,42.0L805.4,43.0L808.7,44.9L812.8,45.9L815.3,43.4L819.5,44.5L824.0,43.8L829.0,44.6L830.9,43.9L835.2,44.2L833.3,42.0L836.8,41.0L860.4,42.5L862.6,43.9L869.4,45.8L880.0,45.3L885.2,45.7L887.3,46.7L887.0,48.4L890.2,49.1L893.7,48.6L908.2,48.8L912.8,50.9L916.0,50.1L913.9,48.6L915.1,47.5L928.8,48.1L940.0,50.3L940.0,59.8L936.6,60.8L933.2,60.7L935.6,61.9L938.4,64.5L938.7,65.5L938.0,66.2L933.1,65.6L923.5,67.7L915.7,70.9L914.8,71.9L911.0,70.3L904.2,72.2L903.0,71.3L900.5,72.3L897.0,72.0L896.2,73.6L893.0,75.9L893.1,76.8L896.1,77.4L895.8,80.8L893.3,80.9L892.2,82.9L893.3,84.0L888.7,85.2L887.8,87.9L883.9,88.5L883.2,90.9L879.4,93.1L875.9,82.7L877.1,79.4L879.3,78.0L879.4,76.8L883.5,76.3L892.7,70.8L897.4,68.9L899.5,65.6L896.3,65.8L894.7,67.7L888.1,70.4L886.0,67.4L879.2,68.2L872.7,72.2L874.8,73.7L865.0,74.6L865.2,72.9L861.1,72.5L857.9,73.7L849.9,73.3L841.3,74.0L822.8,84.3L826.9,84.6L828.2,86.1L830.8,86.6L832.4,85.4L835.3,85.5L839.1,88.2L839.2,90.2L837.1,92.6L835.7,99.3L831.8,102.7L830.9,104.4L822.2,111.3L818.7,112.7L817.0,112.8L815.4,111.6L811.9,113.3L811.5,114.1L810.5,114.0L809.4,114.8L808.6,115.6L808.7,117.3L803.0,120.0L802.6,121.3L805.1,122.8L808.0,127.1L808.1,129.9L807.1,131.2L800.3,132.8L800.5,129.8L799.3,127.3L801.2,126.9L799.5,124.8L798.2,124.4L797.1,125.0L795.6,124.0L797.0,122.6L797.2,120.5L794.5,119.6L790.8,120.3L788.9,121.4L786.1,122.1L787.5,121.0L786.9,120.0L789.0,118.4L787.6,117.2L782.4,119.7L780.8,121.2L778.2,121.3L776.9,122.5L778.3,124.1L780.4,124.5L780.5,125.5L782.6,126.2L785.5,124.5L789.5,125.5L789.9,126.8L786.2,127.4L785.0,128.7L782.5,129.9L781.1,131.6L783.9,132.9L785.0,135.3L788.3,139.3L788.3,141.1L786.6,141.7L787.3,143.0L788.8,143.7L787.7,147.6L786.3,147.8L779.8,156.4L772.6,160.6L769.7,160.8L768.1,161.9L767.2,161.1L765.7,162.3L759.3,163.9L758.4,166.4L756.9,166.5L756.2,164.8L756.9,163.9L753.4,163.1L748.6,165.6L746.5,167.8L745.9,169.5L750.3,175.1L752.7,176.6L754.3,178.5L755.5,182.9L755.1,187.1L750.0,190.2L744.6,194.5L743.6,192.9L744.4,191.3L742.4,189.9L740.2,189.6L737.9,185.9L735.5,184.8L733.3,184.8L733.7,183.0L731.4,183.0L731.2,185.6L728.9,191.2L729.1,192.9L730.8,193.0L732.3,197.3L733.8,198.6L735.3,198.9L738.8,201.8L739.9,203.4L740.3,208.3L741.2,209.0L742.2,211.9L740.3,212.1L734.7,208.4L731.6,202.3L731.9,200.6L731.3,199.6L727.2,195.0L726.8,196.4L726.3,195.1L727.3,191.3L727.1,189.5L727.9,187.7L727.0,186.3L727.2,183.7L726.2,182.4L724.8,176.5L723.7,174.6L719.0,177.5L715.9,176.7L716.8,173.7L716.3,171.5L714.2,168.7L714.6,167.9L713.0,167.6L711.2,165.6L708.7,160.6L706.3,160.5L706.5,161.5L705.7,162.8L702.5,162.3L702.1,163.2L697.1,163.6L697.3,165.4L695.9,166.9L692.1,168.5L689.2,171.3L684.6,174.3L684.6,175.4L679.7,177.0L679.0,178.8L679.6,183.9L678.5,186.2L678.5,190.3L677.2,190.4L676.0,192.2L676.8,193.0L674.4,193.7L672.5,196.0L670.0,193.7L667.8,188.0L665.5,184.6L664.4,180.1L662.0,176.8L660.1,169.1L659.6,164.0L655.8,165.4L654.0,165.1L650.6,162.2L651.9,161.4L651.1,160.4L646.1,157.8L645.3,156.1L643.3,154.3L630.6,155.1L619.9,153.5L618.8,150.6L617.5,150.2L612.9,151.7L609.7,150.9L607.0,149.1L604.5,148.4L600.9,143.0L599.5,143.4L597.8,142.6L596.8,143.5L595.3,143.4L597.4,148.9L601.0,151.2L600.9,153.0L602.7,155.9L602.5,154.1L603.2,152.9L603.9,152.6L604.7,153.4L604.2,156.2L605.2,157.6L611.0,157.4L617.2,151.9L617.3,155.5L618.4,157.1L619.9,158.0L623.3,158.7L626.2,161.7L622.7,166.2L621.5,166.1L621.0,166.6L620.6,169.7L619.4,169.7L617.8,170.6L617.0,172.3L615.3,172.3L614.3,172.9L614.3,173.8L606.8,175.9L606.2,177.7L599.4,179.9L597.1,181.5L595.2,181.5L593.6,182.5L589.1,183.2L587.5,184.7L583.5,184.8L581.2,178.7L581.8,178.5L581.8,177.0L581.4,174.9L577.6,170.4L576.9,168.4L573.9,166.4L572.2,164.1L572.0,161.1L570.5,158.4L567.9,157.0L566.4,153.8L561.7,148.0L560.4,148.0L561.3,144.9L561.2,144.5L560.9,143.9L561.2,144.5L558.6,149.0L556.5,147.1L554.7,143.7L555.5,146.4L559.1,152.5L563.2,157.8L562.7,158.3L562.8,159.8L566.3,162.4L567.9,170.5L570.3,172.0L572.5,177.0L577.5,180.4L583.1,185.4L583.0,186.4L581.5,187.0L583.5,188.1L585.2,190.0L586.5,190.1L603.5,186.3L603.3,189.6L599.1,198.7L594.7,204.9L591.6,208.2L582.6,214.3L578.6,219.0L575.1,221.1L573.4,225.4L572.4,226.2L571.2,229.1L571.3,230.5L573.0,231.3L572.3,235.3L575.7,240.7L576.5,250.1L574.7,253.5L573.0,254.9L567.7,257.0L560.8,262.3L560.6,264.0L562.4,267.9L562.9,267.8L562.6,272.6L555.1,276.5L555.3,277.5L555.9,277.6L554.8,282.6L551.8,285.2L548.5,289.4L543.7,293.3L541.7,294.4L537.7,295.4L537.3,296.1L528.9,295.9L521.2,298.2L518.0,296.5L516.8,292.9L517.6,292.5L517.6,290.6L509.7,279.7L507.6,272.0L507.2,267.8L504.9,264.9L502.9,260.5L500.8,258.2L500.4,254.8L502.6,247.4L505.6,243.8L505.7,240.6L503.6,236.9L504.6,235.5L501.1,227.0L494.6,220.1L493.0,217.7L494.8,212.6L494.3,212.2L495.6,207.7L494.6,206.1L493.4,205.7L492.2,204.3L492.2,203.6L487.5,204.9L485.4,204.8L483.1,201.6L481.3,200.0L477.0,200.0L472.8,200.8L464.9,203.7L457.9,202.7L449.2,204.6L446.5,203.5L436.2,196.4ZM601.6,118.8L599.4,119.0L598.5,121.7L597.6,122.3L598.5,125.2L600.9,125.7L602.8,126.9L606.5,127.3L610.5,126.7L610.7,121.9L608.7,121.1L609.3,119.5L607.6,119.4L608.2,117.4L610.6,117.9L612.9,117.2L611.0,115.7L610.3,114.4L608.2,115.0L607.9,116.7L606.9,114.6L607.6,113.6L607.1,112.8L604.1,112.0L602.9,109.8L601.4,109.2L601.4,108.4L603.9,108.7L604.0,106.9L606.2,106.5L608.5,106.9L609.0,104.6L608.5,103.1L605.9,103.2L603.7,102.6L598.2,104.2L597.0,105.6L594.5,106.0L591.9,108.4L594.3,110.7L594.0,112.3L599.6,118.1L601.6,118.8ZM308.9,189.3L311.0,189.1L310.9,190.8L308.2,190.9L309.0,190.2L308.9,189.3ZM265.8,170.9L269.2,171.0L271.0,172.3L268.4,172.7L265.5,171.5L265.8,170.9ZM294.8,170.8L298.7,171.5L298.1,172.1L294.6,172.1L294.8,170.8ZM289.2,169.6L291.6,170.5L290.6,171.5L287.3,171.0L285.9,171.6L285.5,171.0L284.6,171.3L283.6,173.0L282.8,171.9L281.0,171.5L277.0,171.9L275.6,171.2L275.8,170.4L280.2,170.9L281.1,170.4L279.9,169.4L280.0,168.5L278.3,168.1L278.9,167.4L282.8,167.9L285.1,167.5L287.4,168.1L287.8,168.9L289.3,168.9L289.2,169.6ZM266.6,154.9L267.5,156.9L267.5,158.2L266.9,158.4L265.3,156.3L265.8,154.8L266.6,154.9ZM268.5,153.2L268.1,151.6L266.9,150.4L268.9,151.5L268.5,153.2ZM302.9,102.6L303.8,103.8L308.1,104.1L305.8,105.2L302.5,104.2L301.9,103.4L302.9,102.6ZM330.4,97.3L329.6,99.1L331.4,98.7L332.5,101.4L331.4,103.5L328.5,103.2L329.1,101.2L328.4,100.9L325.3,103.0L323.8,102.9L325.6,101.8L323.1,101.2L315.2,101.3L314.8,100.6L316.5,99.7L315.3,99.1L317.5,97.6L320.2,93.8L321.8,92.5L324.1,91.7L325.3,91.8L321.7,96.0L323.4,95.2L325.2,95.7L324.2,96.5L326.6,97.2L327.8,96.6L330.4,97.3ZM305.9,96.3L308.6,97.7L304.0,97.0L301.5,95.9L305.9,96.3ZM452.4,83.2L455.2,84.7L453.8,86.3L454.2,88.0L452.3,90.2L447.6,91.6L443.9,91.2L446.1,88.7L444.7,86.3L450.2,83.3L452.4,83.2ZM456.8,81.7L455.4,82.9L455.3,80.6L453.9,79.3L454.9,76.9L456.9,74.9L462.2,74.9L459.4,77.5L464.9,77.2L464.2,79.1L461.9,81.3L464.6,81.4L467.1,84.5L468.9,84.9L471.2,88.6L474.4,89.0L474.1,90.5L472.7,91.2L473.8,92.5L471.4,93.7L463.5,94.4L462.3,93.9L460.6,95.0L458.1,94.7L456.3,95.7L454.9,95.2L458.7,92.7L461.1,92.1L457.0,91.7L456.2,90.8L459.0,90.1L457.5,88.8L458.0,87.2L461.9,87.4L462.3,86.0L460.5,84.5L457.4,84.1L456.7,83.5L457.7,82.4L456.8,81.7ZM413.1,61.2L407.5,60.0L412.1,59.5L412.0,58.8L406.5,58.3L408.2,56.7L412.2,56.4L416.3,58.0L420.2,56.7L423.5,57.3L427.8,56.1L432.1,56.2L431.5,57.8L434.5,59.4L431.1,61.2L421.3,63.3L410.6,62.2L413.1,61.2ZM273.6,53.9L271.9,54.6L269.0,54.7L268.3,53.5L269.4,52.2L271.8,51.9L273.9,52.5L273.6,53.9ZM292.7,47.5L295.1,49.7L290.3,50.8L300.6,52.9L304.4,55.1L308.5,55.3L307.7,57.0L303.1,59.7L299.9,58.7L295.8,56.4L292.4,56.7L292.1,58.1L299.4,61.2L301.1,63.6L300.2,65.3L290.4,62.7L296.8,66.2L297.2,67.1L284.5,64.7L281.4,63.5L282.3,62.9L274.6,60.5L274.6,61.2L267.1,61.6L264.9,60.7L266.6,59.0L276.9,58.6L276.0,57.8L276.9,56.6L280.3,54.3L278.6,52.4L269.3,50.4L271.0,49.8L268.2,48.3L263.8,47.4L262.4,48.1L257.7,48.4L238.4,46.8L236.3,46.0L239.0,44.9L235.3,44.9L234.5,42.4L236.5,40.3L239.2,39.3L245.9,38.7L244.0,40.2L246.0,41.7L248.4,39.8L255.1,38.8L259.5,41.3L259.2,42.9L264.3,42.2L266.8,41.2L276.2,43.6L276.5,44.6L281.4,44.1L284.1,45.6L290.4,46.5L292.7,47.5ZM410.7,18.3L386.7,18.6L388.0,19.1L397.3,18.8L405.1,19.6L410.2,18.9L412.4,19.7L409.5,21.1L428.8,19.3L436.7,19.8L438.1,20.8L426.0,23.1L417.7,23.5L423.7,23.6L418.5,26.9L418.6,29.5L421.8,31.1L413.4,31.9L418.2,33.2L418.8,35.2L416.0,35.5L419.4,37.5L413.6,37.7L416.6,38.7L415.8,39.5L408.5,39.9L411.7,41.5L411.8,42.6L406.6,41.6L405.3,42.2L408.8,42.8L412.2,44.3L413.2,46.2L408.5,46.7L403.3,44.4L404.2,46.0L401.2,47.2L411.6,47.5L397.5,51.4L387.0,52.3L384.3,53.2L380.7,55.7L375.1,57.4L366.0,58.6L363.8,60.1L363.8,61.8L362.5,63.3L358.2,65.3L359.2,67.1L356.7,71.4L353.1,71.6L349.2,69.6L344.0,69.6L341.4,68.3L339.7,66.0L335.2,63.0L333.9,61.4L333.5,59.3L329.9,57.1L330.8,55.3L329.1,54.5L331.7,51.7L335.6,50.8L336.6,49.8L337.2,47.9L330.4,49.5L327.2,48.7L327.0,47.1L328.1,45.8L335.8,46.4L329.0,44.1L326.4,44.4L324.2,43.8L327.1,41.6L320.3,36.5L317.0,35.6L317.0,34.6L310.0,33.2L291.1,33.3L283.6,31.0L295.7,30.2L284.5,29.5L278.6,28.6L279.0,27.6L298.4,25.3L299.4,24.5L292.4,23.6L294.7,22.7L307.5,20.7L306.4,19.7L312.6,19.0L328.6,18.6L331.5,19.4L338.4,18.1L353.7,19.9L347.5,18.6L347.9,17.6L356.7,16.2L365.8,16.3L369.2,15.4L378.4,15.2L399.2,15.5L415.6,17.4L410.7,18.3ZM254.8,17.1L279.8,16.2L298.1,16.7L308.5,17.6L308.4,18.2L293.3,20.3L299.0,20.3L288.6,22.4L284.1,24.4L269.2,25.5L272.8,25.8L271.0,26.2L273.1,27.4L261.7,30.6L262.1,31.1L266.6,31.0L266.6,31.6L259.6,33.0L252.8,32.4L245.2,32.7L236.3,32.3L236.0,31.2L240.8,30.6L239.5,28.9L248.1,29.8L244.6,28.2L240.3,27.8L242.4,26.9L247.1,26.3L247.8,25.5L244.1,24.5L243.0,23.3L252.2,23.6L256.3,22.8L241.3,22.7L236.7,21.8L231.4,20.2L230.9,19.4L242.9,18.4L246.8,17.6L252.8,18.3L254.8,17.1ZM502.8,123.9L505.9,124.1L510.5,123.7L509.4,127.5L502.5,125.1L502.8,123.9ZM491.3,117.2L492.7,117.3L494.0,116.6L495.6,118.2L495.2,121.4L494.1,121.3L493.0,122.1L492.0,121.4L491.3,117.2ZM495.0,114.3L494.1,116.1L492.9,115.7L492.3,114.1L494.5,112.3L495.0,114.3ZM498.8,82.7L498.5,81.7L502.3,81.0L503.1,82.2L501.6,84.1L498.8,82.7ZM514.7,31.5L511.6,31.6L505.9,30.1L508.3,29.3L504.4,28.6L499.3,26.6L497.3,24.7L504.4,23.9L505.8,24.7L509.5,24.7L510.5,23.9L514.4,23.8L526.3,26.4L519.7,27.3L518.2,29.1L515.9,29.5L514.7,31.5ZM556.0,130.5L557.9,130.5L560.3,129.8L558.5,130.8L558.8,131.4L556.1,132.4L554.8,132.1L554.2,131.1L555.7,131.0L556.0,130.5ZM537.3,130.5L537.2,131.0L538.6,130.7L538.3,131.4L534.6,131.6L534.6,131.2L531.4,130.7L531.9,129.7L533.3,130.5L537.3,130.5ZM528.7,30.0L524.1,29.4L525.9,28.8L524.3,28.1L529.8,27.6L530.8,28.5L534.6,29.0L528.7,30.0ZM527.2,23.0L529.8,22.3L541.6,23.8L537.7,25.0L530.1,25.3L522.4,24.9L522.0,24.3L518.2,24.2L515.3,23.1L523.4,22.5L527.2,23.0ZM650.0,331.2L654.1,332.2L654.2,332.7L653.5,333.8L649.5,333.9L650.0,331.2ZM599.7,252.5L600.0,255.3L599.2,255.9L599.1,257.9L593.0,274.6L588.6,276.2L585.0,274.7L582.9,267.7L583.4,266.0L584.6,265.6L585.9,263.0L586.1,261.4L584.8,256.6L586.1,253.7L590.9,252.7L594.6,249.9L595.3,248.7L595.0,247.6L596.1,247.9L597.5,246.3L597.6,244.8L598.5,243.8L600.1,245.8L601.8,251.4L601.1,253.2L600.2,251.8L599.7,252.5ZM783.1,237.4L785.4,238.8L785.2,239.5L784.1,239.5L780.6,237.8L783.1,237.4ZM778.8,235.0L780.4,234.8L781.1,235.8L774.8,236.6L775.7,235.2L777.2,235.2L777.9,234.3L778.8,235.0ZM769.1,235.9L766.3,234.9L761.2,234.8L753.8,233.3L752.7,233.6L748.0,232.6L747.5,231.5L745.1,231.4L746.9,229.1L750.1,229.2L753.3,230.3L753.6,231.2L758.6,231.4L759.2,230.4L764.0,231.6L765.0,233.1L768.9,233.6L772.1,235.0L769.1,235.9ZM743.4,229.0L737.9,225.1L734.8,221.7L731.5,216.6L729.2,214.6L727.5,210.6L725.1,209.1L723.7,207.1L719.1,203.1L718.8,201.9L724.5,202.5L732.8,210.0L735.4,210.0L739.1,213.7L741.1,214.8L740.1,216.7L742.5,217.6L743.9,220.6L745.8,220.8L747.1,222.3L746.3,229.0L743.4,229.0ZM774.4,218.6L773.3,224.6L772.9,223.7L769.9,224.8L768.9,223.4L767.0,223.2L765.7,222.5L762.6,223.3L761.7,222.2L757.8,222.0L757.4,218.8L756.1,218.1L754.9,216.1L754.5,214.0L754.8,211.8L756.3,210.2L758.3,211.0L760.3,210.6L760.8,208.6L765.0,207.6L769.2,203.3L773.5,200.3L774.8,198.5L775.8,198.4L777.2,199.7L777.3,200.7L781.2,202.1L781.0,203.0L779.3,203.1L779.7,204.3L777.8,205.1L776.3,207.3L778.2,209.5L777.8,210.6L780.7,212.8L777.6,213.1L776.7,214.8L776.9,216.9L774.4,218.6ZM683.6,197.0L683.2,199.5L679.8,200.7L678.6,198.8L678.1,195.4L679.3,191.5L681.1,192.9L683.6,197.0ZM779.4,192.7L776.0,195.0L780.7,190.2L782.1,187.8L782.5,189.8L779.4,192.7ZM755.9,171.5L753.7,170.8L753.6,168.7L754.9,167.6L759.3,167.0L759.9,167.9L758.1,170.4L755.9,171.5ZM649.8,32.1L648.0,32.9L630.8,35.2L622.7,37.5L614.7,42.1L615.2,44.1L620.2,46.1L610.2,46.0L609.5,44.9L604.7,44.3L604.4,43.0L607.0,42.5L606.9,41.1L612.1,39.1L609.7,38.8L616.0,36.7L615.3,35.6L629.7,32.8L648.0,31.2L649.8,32.1ZM744.4,27.9L729.6,28.9L734.4,25.7L736.6,25.5L745.1,27.0L744.4,27.9ZM711.6,23.5L708.1,23.1L714.9,21.4L720.5,20.9L725.6,22.1L731.6,24.4L731.0,26.6L725.3,26.9L713.7,25.3L711.6,23.5ZM604.5,22.2L594.3,23.9L591.4,23.3L592.9,22.6L587.1,22.5L596.2,22.0L596.7,22.7L600.7,21.7L604.5,22.2ZM924.2,312.8L925.0,314.8L921.0,318.6L921.9,319.8L919.9,319.8L917.7,320.7L915.5,324.7L912.1,326.4L905.2,325.4L904.8,324.5L906.2,322.8L909.5,320.4L915.3,317.8L919.0,314.2L919.4,312.8L921.2,311.7L922.4,313.7L924.2,312.8ZM851.3,319.0L847.9,313.3L847.9,312.2L852.2,313.3L857.2,312.6L857.4,315.5L856.5,316.3L856.2,318.2L855.3,317.6L853.5,319.2L851.3,319.0ZM923.9,309.4L923.9,308.5L925.8,307.7L926.2,304.3L925.2,302.3L920.8,297.5L921.7,297.3L923.2,298.6L925.2,299.2L925.9,301.4L927.8,303.9L927.9,302.3L929.1,302.9L929.4,304.7L931.5,305.5L933.3,305.7L934.8,304.8L936.1,305.1L934.7,308.6L932.7,308.5L932.0,309.2L932.3,310.3L929.6,313.6L927.6,314.6L926.0,313.6L927.5,311.7L926.7,310.3L923.9,309.4ZM792.9,296.0L783.1,296.2L781.5,297.4L780.7,297.3L778.2,298.8L774.5,298.7L770.3,296.7L770.4,295.3L772.1,294.5L772.4,291.9L770.3,286.7L770.4,285.4L769.3,283.1L768.1,282.2L767.8,280.3L765.9,277.4L767.1,278.4L766.2,276.2L768.3,277.8L768.2,276.6L766.1,273.3L767.3,270.1L767.0,268.7L768.1,267.0L768.3,268.8L769.4,267.1L774.7,264.5L776.7,264.6L781.4,262.7L785.6,262.0L789.2,258.5L789.4,256.2L791.2,254.2L792.3,256.3L793.4,255.8L792.5,254.6L793.3,253.5L794.5,254.0L794.8,252.2L796.8,250.1L798.1,249.7L798.2,249.0L799.3,249.3L799.4,248.7L801.8,248.0L805.2,250.5L808.5,250.8L807.9,249.4L809.2,247.5L810.3,246.9L809.9,246.3L811.1,244.9L812.6,244.1L816.2,243.9L816.1,242.7L814.2,241.9L815.6,241.6L818.7,243.2L823.3,244.3L826.4,243.3L827.6,244.5L825.9,246.8L825.0,246.8L825.3,247.8L823.6,250.2L823.8,250.8L831.1,255.2L833.2,255.8L833.6,256.5L836.1,257.3L837.8,256.5L838.9,254.2L840.0,250.9L839.5,247.7L840.4,245.4L840.0,244.6L841.2,241.4L842.1,240.5L843.0,243.2L844.8,245.7L844.9,247.9L845.8,249.8L847.5,248.9L849.6,250.8L849.9,253.9L850.9,255.4L851.6,257.4L851.4,258.7L852.2,260.3L858.7,263.7L858.3,264.3L859.8,265.8L860.8,268.4L861.9,267.8L862.9,268.9L863.6,268.5L864.0,271.0L869.1,275.4L869.9,277.3L869.7,280.1L871.0,282.2L869.2,290.6L868.1,292.8L866.1,293.9L862.5,300.2L861.7,304.4L860.2,305.2L857.2,305.3L852.1,308.3L848.3,306.8L848.7,305.5L845.0,307.7L837.2,305.8L835.5,304.4L834.4,301.3L833.2,300.4L830.6,300.1L831.5,298.9L830.9,297.1L829.6,298.8L827.3,299.2L830.0,295.4L829.8,293.6L826.1,296.4L825.1,298.3L823.0,297.4L823.1,296.1L820.1,293.5L820.6,292.9L812.9,290.2L808.2,290.5L801.9,292.1L799.4,292.0L794.4,293.7L792.9,296.0ZM898.3,263.0L900.9,263.9L906.4,267.9L905.4,268.5L902.1,266.8L898.3,263.0ZM935.1,256.8L935.8,256.4L936.7,257.1L936.2,258.4L933.2,258.4L932.9,257.3L933.9,256.5L935.1,256.8ZM940.0,254.5L936.7,255.6L936.3,254.7L940.0,253.4L940.0,254.5ZM906.6,253.0L908.3,254.3L907.4,254.7L906.6,253.0ZM906.3,250.7L906.8,252.6L905.5,252.4L905.1,249.9L906.3,250.7ZM891.2,239.4L894.0,240.9L892.2,240.8L891.2,239.4ZM796.6,235.7L801.5,234.8L802.5,235.1L796.6,237.4L794.9,239.2L792.7,239.7L792.6,238.7L793.7,237.2L796.6,235.7ZM890.0,238.6L886.8,238.0L887.0,237.1L888.7,237.5L890.0,238.6ZM889.8,236.3L889.3,234.9L890.2,234.9L892.2,237.9L891.8,238.4L889.8,236.3ZM786.8,235.4L788.6,235.2L790.9,234.3L790.5,235.7L786.6,236.3L783.1,236.0L783.1,235.2L785.2,234.7L786.8,235.4ZM886.8,234.2L887.6,235.4L883.1,232.7L883.5,232.5L886.8,234.2ZM881.4,232.6L878.6,231.2L878.8,230.8L881.4,232.6ZM853.8,231.1L854.3,232.6L856.7,234.2L858.4,236.8L859.9,236.7L859.8,237.7L861.8,238.1L861.0,238.6L863.8,239.6L863.5,240.3L861.7,240.4L861.1,239.8L856.2,239.2L852.7,236.4L851.3,234.3L847.9,233.2L844.1,234.7L844.5,236.5L842.4,237.3L838.3,236.8L835.9,234.8L833.3,234.3L832.6,235.0L829.3,235.1L830.4,233.2L832.1,232.5L830.1,227.9L825.1,225.9L822.9,225.7L819.0,223.5L818.2,224.6L817.2,224.8L816.6,222.9L814.6,221.7L817.5,220.9L819.3,220.9L819.1,220.3L815.3,220.3L814.2,218.9L811.9,218.4L810.8,217.2L814.3,216.7L815.7,215.9L819.9,216.9L821.0,221.6L823.7,223.0L825.9,220.5L828.9,219.1L831.2,219.1L835.4,220.8L838.2,221.2L847.5,224.2L850.8,226.6L851.2,228.1L855.5,229.5L856.2,230.8L853.8,231.1ZM820.2,229.7L821.2,228.0L821.8,229.8L820.4,231.5L820.2,229.7ZM873.5,227.3L873.8,227.0L877.4,230.6L877.0,231.3L876.3,231.5L875.2,230.6L873.5,227.3ZM861.3,228.2L862.0,226.9L862.3,228.2L863.8,228.0L866.0,226.4L865.7,225.0L867.8,225.3L866.8,228.1L865.5,228.3L865.1,229.0L862.3,230.1L857.3,228.7L857.5,228.0L861.3,228.2ZM863.4,221.5L864.1,221.0L867.5,222.7L869.6,224.5L869.9,225.7L869.0,226.4L867.9,224.1L863.4,221.5ZM801.6,222.5L802.3,223.3L801.3,224.1L799.5,223.6L799.0,222.6L801.6,222.5ZM807.8,221.7L810.7,222.4L811.6,224.2L809.4,223.2L804.0,223.1L804.6,221.8L807.8,221.7ZM783.4,216.2L785.8,218.4L787.2,217.3L792.1,216.5L791.8,217.6L790.7,217.2L789.6,218.6L787.3,219.5L789.7,222.6L789.3,223.4L791.6,226.2L791.6,227.8L790.2,228.5L789.2,227.6L790.4,225.7L787.9,226.6L787.2,225.9L787.6,225.0L785.7,223.6L785.9,221.3L784.1,222.0L784.5,228.2L782.8,228.6L781.7,227.9L782.4,225.7L782.0,223.3L780.9,223.3L780.1,221.7L781.2,220.1L783.4,213.6L785.6,211.9L791.0,212.9L794.0,212.8L796.6,211.1L797.0,211.6L794.9,214.0L793.0,214.4L790.4,214.0L783.8,214.4L783.4,216.2ZM803.4,215.6L802.7,212.6L803.2,210.7L804.0,209.8L804.2,211.1L805.8,211.3L805.9,214.4L804.5,214.1L804.1,215.6L805.2,216.9L804.5,217.1L803.4,215.6ZM794.4,200.3L793.6,198.6L794.4,197.4L792.8,196.3L791.9,197.3L790.7,197.2L788.8,198.5L788.3,197.8L789.4,195.8L792.4,194.2L793.4,195.3L795.3,194.7L795.8,193.6L797.6,193.5L797.5,191.7L799.6,192.8L800.4,197.8L799.5,200.0L798.6,197.6L797.3,198.8L798.2,200.5L797.4,201.7L794.4,200.3ZM793.7,190.4L791.2,193.4L789.5,191.8L790.7,190.5L791.0,189.0L792.5,188.9L792.0,190.5L794.0,188.2L793.7,190.4ZM788.6,190.1L788.3,186.6L789.8,187.3L791.5,187.3L791.4,188.3L788.6,190.1ZM794.6,187.5L796.1,187.7L796.1,186.8L794.5,185.0L797.0,185.1L798.4,188.6L796.4,188.0L797.1,190.3L795.9,190.8L795.8,189.1L795.0,189.0L794.6,187.5ZM787.3,183.8L786.6,185.8L784.2,182.8L786.4,182.9L787.3,183.8ZM790.4,180.8L793.6,182.1L793.4,183.4L794.3,184.0L794.0,185.1L791.0,182.6L790.3,183.5L788.6,182.1L786.3,182.4L785.0,181.9L785.1,180.9L785.9,180.3L785.1,179.7L784.8,180.6L783.5,179.2L783.0,175.9L784.1,176.7L784.4,173.0L785.2,170.8L788.4,171.5L789.2,170.9L789.0,172.5L789.9,174.2L789.2,176.2L787.7,176.9L787.3,178.9L787.8,180.8L790.4,180.8ZM788.4,155.3L786.4,160.6L785.3,162.5L783.9,160.5L783.6,158.7L785.1,156.4L787.2,154.6L788.4,155.3ZM817.3,136.9L815.6,136.2L815.6,135.1L817.1,133.6L818.6,133.9L819.6,132.9L821.6,133.4L821.9,134.2L820.4,135.7L819.3,134.9L818.0,135.5L817.3,136.9ZM822.8,134.1L822.7,132.4L818.2,132.9L815.1,134.0L812.0,134.1L814.7,135.8L812.9,139.9L811.2,140.9L810.0,139.9L810.6,137.8L809.0,137.1L807.9,135.5L810.4,134.7L811.7,133.2L816.3,130.4L821.5,129.6L824.3,130.1L827.0,125.9L828.7,127.0L834.1,123.7L835.7,120.8L835.3,118.1L836.4,116.6L839.1,116.2L840.6,119.5L840.5,121.4L838.1,123.8L838.1,126.3L837.1,128.2L837.6,129.4L836.2,131.1L832.9,132.2L828.3,132.3L824.6,135.1L822.8,134.1ZM835.1,113.3L836.4,111.5L839.2,111.3L840.7,106.2L843.8,108.7L845.8,109.5L847.6,110.0L849.4,109.0L850.0,111.7L846.2,112.3L843.9,114.7L839.8,113.0L838.3,115.7L835.4,115.7L835.1,113.3ZM844.7,104.8L842.7,103.3L841.0,105.2L840.5,103.2L841.2,93.3L839.7,90.9L839.9,87.7L842.4,86.6L841.3,85.5L842.5,85.1L844.1,89.0L844.0,91.4L847.7,98.0L843.8,97.2L842.2,100.7L844.8,103.1L844.7,104.8ZM936.7,45.2L940.0,44.2L940.0,45.8L937.1,45.9L936.7,45.2ZM837.7,38.8L840.9,38.6L844.6,39.5L845.0,40.1L835.2,39.7L837.7,38.8ZM860.6,36.6L851.5,35.4L852.2,34.6L863.6,35.6L860.6,36.6ZM839.4,33.2L848.8,34.5L846.8,36.3L837.2,36.2L832.8,36.8L827.7,35.2L829.1,33.6L839.4,33.2Z";
+  const VAR_META = {
+    Qle:{label:'Qle', full:'Latent heat flux', unit:'W m⁻²', accentVar:'--var-Qle'},
+    Qh: {label:'Qh',  full:'Sensible heat flux', unit:'W m⁻²', accentVar:'--var-Qh'},
+    NEE:{label:'NEE', full:'Net ecosystem CO₂ exchange', unit:'µmol m⁻² s⁻¹', accentVar:'--var-NEE'},
+  };
+  const SEASON_ORDER = ['DJF','MAM','JJA','SON'];
+  const STATUS_ORDER = ['good','warning','serious','critical'];
+  const STATUS_LABEL = {good:'Strong', warning:'Fair', serious:'Weak', critical:'Poor', none:'No data'};
+
+  let state = { varName:'Qle', selectedSite:null, sortKey:'nme', sortDir:1 };
+
+  const root = document.documentElement;
+  function accentFor(v){ return getComputedStyle(root).getPropertyValue(VAR_META[v].accentVar).trim(); }
+  function setAccent(v){ document.body.style.setProperty('--accent', accentFor(v)); }
+
+  const fmt = {
+    n2:(x)=> x==null ? '—' : x.toFixed(2),
+    n1:(x)=> x==null ? '—' : x.toFixed(1),
+    n0:(x)=> x==null ? '—' : Math.round(x).toString(),
+    pct:(x)=> x==null ? '—' : x.toFixed(0)+'%',
+  };
+
+  const NS = 'http://www.w3.org/2000/svg';
+  function el(tag, attrs, kids){
+    const e = document.createElementNS(NS, tag);
+    if(attrs) for(const k in attrs) e.setAttribute(k, attrs[k]);
+    if(kids) for(const c of kids) e.appendChild(c);
+    return e;
+  }
+  function text(x,y,str,attrs){
+    const t = el('text', Object.assign({x, y}, attrs||{}));
+    t.textContent = str;
+    return t;
+  }
+  function clear(node){ while(node.firstChild) node.removeChild(node.firstChild); }
+
+  function quantile(sorted, q){
+    if(!sorted.length) return null;
+    const pos = (sorted.length-1)*q, base = Math.floor(pos), rest = pos-base;
+    return sorted[base+1]!==undefined ? sorted[base] + rest*(sorted[base+1]-sorted[base]) : sorted[base];
+  }
+
+  /* ---------- derived per-variable site stats ---------- */
+  function siteRows(varName){
+    return SITES.map(s=>{
+      const m = s.metrics[varName] || {};
+      return {
+        site:s.site, site_name:s.site_name, country:s.country, igbp:s.igbp, igbp_long:s.igbp_long,
+        lat:s.lat, lon:s.lon, years:s.years, period:s.period,
+        r:m.r ?? null, nme:m.nme ?? null, bias:m.bias ?? null, rmse:m.rmse ?? null,
+        std_obs:m.std_obs ?? null, std_mod:m.std_mod ?? null, pct_measured:m.pct_measured ?? 0,
+        raw:s,
+      };
+    });
+  }
+
+  function withStatus(rows){
+    const valid = rows.filter(r=>r.nme!=null).slice().sort((a,b)=>a.nme-b.nme);
+    const n = valid.length;
+    valid.forEach((r,i)=>{
+      const p = n<=1 ? 0 : i/(n-1);
+      r.status = p<0.25 ? 'good' : p<0.5 ? 'warning' : p<0.75 ? 'serious' : 'critical';
+      r.rank = i+1;
+    });
+    rows.forEach(r=>{ if(r.nme==null){ r.status='none'; r.rank=null; } });
+    return rows;
+  }
+
+  /* ---------- tooltip ---------- */
+  const tooltipEl = document.getElementById('tooltip');
+  function showTooltip(x, y, html){
+    tooltipEl.innerHTML = html;
+    tooltipEl.style.left = x+'px';
+    tooltipEl.style.top = y+'px';
+    tooltipEl.classList.add('show');
+  }
+  function hideTooltip(){ tooltipEl.classList.remove('show'); }
+
+  /* ================= STAT TILES ================= */
+  function renderStats(varName){
+    const rows = withStatus(siteRows(varName));
+    const valid = rows.filter(r=>r.nme!=null);
+    const rMed = median(valid.map(r=>r.r));
+    const nmeMed = median(valid.map(r=>r.nme));
+    const strongPct = 100*valid.filter(r=>r.status==='good'||r.status==='warning').length/Math.max(1,valid.length);
+    const totalYears = SITES.reduce((a,s)=>a+(s.years||0),0);
+    const wrap = document.getElementById('stat-tiles');
+    clear(wrap);
+    const tiles = [
+      {label:'Sites with data', value: valid.length+' / '+rows.length, note:VAR_META[varName].full},
+      {label:'Median R', value: fmt.n2(rMed), note:'correlation with observed'},
+      {label:'Median NME', value: fmt.n2(nmeMed), note:'0 = perfect · 1 = mean-only skill'},
+      {label:'Fair-or-better sites', value: fmt.n0(strongPct)+'%', note:'top two skill quartiles'},
+      {label:'Site-years evaluated', value: fmt.n0(totalYears), note:`across all ${SITES.length} towers`},
+    ];
+    tiles.forEach(t=>{
+      const d = document.createElement('div'); d.className='stat-tile';
+      d.innerHTML = `<span class="stat-label">${t.label}</span><span class="stat-value">${t.value}</span><span class="stat-note">${t.note}</span>`;
+      wrap.appendChild(d);
+    });
+  }
+  function median(arr){
+    const a = arr.filter(x=>x!=null).slice().sort((x,y)=>x-y);
+    return quantile(a, 0.5);
+  }
+
+  /* ================= MAP ================= */
+  const MAP_W = 940, MAP_H = 430;
+  function lonToX(lon){ return (lon+180)/360*MAP_W; }
+  function latToY(lat){ return (90-lat)/180*MAP_H; }
+  function renderMap(varName){
+    const svg = document.getElementById('map-svg');
+    clear(svg);
+    svg.appendChild(el('rect',{x:0,y:0,width:MAP_W,height:MAP_H,fill:'var(--map-ocean)'}));
+    svg.appendChild(el('path',{d:WORLD_LAND_PATH, fill:'var(--map-land)', stroke:'var(--map-land-stroke)', 'stroke-width':0.6, 'fill-rule':'evenodd'}));
+    // graticule
+    for(let lon=-180; lon<=180; lon+=30){
+      svg.appendChild(el('line',{x1:lonToX(lon),y1:0,x2:lonToX(lon),y2:MAP_H,class:'grid-line'}));
+    }
+    for(let lat=-60; lat<=60; lat+=30){
+      svg.appendChild(el('line',{x1:0,y1:latToY(lat),x2:MAP_W,y2:latToY(lat),class:'grid-line'}));
+    }
+    // climate reference lines
+    const refs = [[0,'Equator'],[23.44,'Tropic of Cancer'],[-23.44,'Tropic of Capricorn'],[66.56,'Arctic Circle'],[-66.56,'Antarctic Circle']];
+    refs.forEach(([lat,label])=>{
+      const y = latToY(lat);
+      svg.appendChild(el('line',{x1:0,y1:y,x2:MAP_W,y2:y,class:'ref-line'}));
+      svg.appendChild(text(6,y-3,label,{class:'axis-label'}));
+    });
+    svg.appendChild(el('rect',{x:0.5,y:0.5,width:MAP_W-1,height:MAP_H-1,fill:'none',stroke:'var(--axis)','stroke-width':1}));
+
+    const rows = withStatus(siteRows(varName));
+    // Dot pixel size is pinned to a fixed [MIN_DOT_PX, MAX_DOT_PX] range and renormalized against
+    // whichever sites currently fall inside the viewBox -- so dots never balloon (dense Europe stays
+    // legible when zoomed) and never shrink into invisibility (sparse Oceania/Asia stay readable too),
+    // and the shortest/longest record *currently on screen* always anchors the size range.
+    const MIN_DOT_PX = 5, MAX_DOT_PX = 10;
+    const visibleRows = rows.filter(r=>{
+      const x = lonToX(r.lon), y = latToY(r.lat);
+      return x>=mapViewBox[0] && x<=mapViewBox[0]+mapViewBox[2] && y>=mapViewBox[1] && y<=mapViewBox[1]+mapViewBox[3];
+    });
+    const basisRows = visibleRows.length ? visibleRows : rows;
+    const yearsExtent = [Math.min(...basisRows.map(r=>r.years)), Math.max(...basisRows.map(r=>r.years))];
+    const svgRectNow = svg.getBoundingClientRect();
+    const pxPerUnit = (svgRectNow.width || 700) / mapViewBox[2];
+    const rScale = y => {
+      // clamped: an off-screen site whose years fall outside the *visible* basis range (which can be
+      // narrow, even zero-width, when only 1-2 sites are in view) must not blow up past MAX_DOT_PX
+      const t = Math.min(1, Math.max(0, (y-yearsExtent[0])/Math.max(0.01,(yearsExtent[1]-yearsExtent[0]))));
+      return (MIN_DOT_PX + (MAX_DOT_PX-MIN_DOT_PX)*t) / pxPerUnit;
+    };
+    const strokeUnits = 1.1 / pxPerUnit;
+
+    const g = el('g',{});
+    rows.forEach(r=>{
+      const cx = lonToX(r.lon), cy = latToY(r.lat);
+      const c = el('circle',{cx, cy, r:rScale(r.years).toFixed(3),
+        class:'site-dot st-'+r.status, 'data-site':r.site});
+      // set as inline style, not a plain attribute: the .site-dot{stroke-width:0.75} class rule in the
+      // stylesheet outranks a presentation attribute in the cascade and would silently win otherwise,
+      // leaving the halo at a literal 0.75 user-units that balloons uncompensated at deep zoom
+      c.style.strokeWidth = strokeUnits.toFixed(3);
+      c.addEventListener('mouseenter',(ev)=>{
+        showTooltip(ev.clientX, ev.clientY, tooltipHtml(r, varName));
+      });
+      c.addEventListener('mousemove',(ev)=>{ tooltipEl.style.left=ev.clientX+'px'; tooltipEl.style.top=ev.clientY+'px'; });
+      c.addEventListener('mouseleave', hideTooltip);
+      c.addEventListener('click', ()=> selectSite(r.site));
+      g.appendChild(c);
+    });
+    svg.appendChild(g);
+    highlightSelected();
+
+    const legend = document.getElementById('map-legend');
+    clear(legend);
+    STATUS_ORDER.concat(['none']).forEach(st=>{
+      const item = document.createElement('div'); item.className='legend-item';
+      const swatchStyle = st==='none' ? 'background:transparent; border:1.5px solid var(--text-muted); opacity:.7;' : `background:var(--status-${st});`;
+      item.innerHTML = `<span class="swatch dot" style="${swatchStyle}"></span>${STATUS_LABEL[st]}`;
+      legend.appendChild(item);
+    });
+    const sizeNote = document.createElement('div'); sizeNote.className='legend-item';
+    sizeNote.style.color = 'var(--text-muted)';
+    sizeNote.textContent = `dot size ∝ record length (${yearsExtent[0].toFixed(0)}–${yearsExtent[1].toFixed(0)} yrs)`;
+    legend.appendChild(sizeNote);
+  }
+  function classifyContinent(lon, lat){
+    if(lon >= 95 && lat < -5) return 'Oceania';
+    if(lon >= -85 && lon <= -30 && lat < 13) return 'South America';
+    if(lon >= -170 && lon <= -50 && lat >= 5) return 'North America';
+    if(lon >= -25 && lon <= 45 && lat >= 34) return 'Europe';
+    if(lon >= -20 && lon <= 52 && lat < 34) return 'Africa';
+    return 'Asia';
+  }
+  const CONTINENT_ORDER = ['North America','South America','Europe','Africa','Asia','Oceania'];
+  let continentBBoxes = null;
+  function getContinentBBoxes(){
+    if(continentBBoxes) return continentBBoxes;
+    const groups = {};
+    SITES.forEach(s=>{
+      const c = classifyContinent(s.lon, s.lat);
+      (groups[c] ||= []).push(s);
+    });
+    const PAD = 4;
+    continentBBoxes = {};
+    CONTINENT_ORDER.forEach(c=>{
+      if(!groups[c] || !groups[c].length) return;
+      const lons = groups[c].map(s=>s.lon), lats = groups[c].map(s=>s.lat);
+      continentBBoxes[c] = {
+        n: groups[c].length,
+        lon0: Math.max(-180, Math.min(...lons)-PAD), lat0: Math.max(-90, Math.min(...lats)-PAD),
+        lon1: Math.min(180, Math.max(...lons)+PAD), lat1: Math.min(90, Math.max(...lats)+PAD),
+      };
+    });
+    return continentBBoxes;
+  }
+  function bboxToViewBox(b){
+    const x0 = lonToX(b.lon0), x1 = lonToX(b.lon1);
+    const y0 = latToY(b.lat1), y1 = latToY(b.lat0);
+    const w = Math.max(30, x1-x0), h = Math.max(30, y1-y0);
+    return [x0, y0, w, h];
+  }
+  let mapViewBox = [0,0,MAP_W,MAP_H];
+  function animateMapViewBox(target){
+    document.getElementById('map-svg').setAttribute('viewBox', target.join(' '));
+    mapViewBox = target;
+    renderMap(state.varName); // re-render so dot radii renormalize to the sites now in view
+  }
+  function initMapControls(){
+    const bboxes = getContinentBBoxes();
+    const wrap = document.getElementById('map-controls');
+    clear(wrap);
+    const worldBtn = document.createElement('button');
+    worldBtn.className = 'cont-btn active'; worldBtn.type = 'button'; worldBtn.textContent = 'World';
+    worldBtn.addEventListener('click', ()=>{
+      animateMapViewBox([0,0,MAP_W,MAP_H]);
+      wrap.querySelectorAll('.cont-btn').forEach(b=>b.classList.toggle('active', b===worldBtn));
+    });
+    wrap.appendChild(worldBtn);
+    CONTINENT_ORDER.forEach(c=>{
+      const b = bboxes[c];
+      if(!b) return;
+      const btn = document.createElement('button');
+      btn.className = 'cont-btn'; btn.type = 'button'; btn.textContent = `${c} (${b.n})`;
+      btn.addEventListener('click', ()=>{
+        animateMapViewBox(bboxToViewBox(b));
+        wrap.querySelectorAll('.cont-btn').forEach(x=>x.classList.toggle('active', x===btn));
+      });
+      wrap.appendChild(btn);
+    });
+  }
+  function tooltipHtml(r, varName){
+    const vm = VAR_META[varName];
+    return `<b>${r.site}</b> — ${r.site_name}, ${r.country}<br>${r.igbp_long}<br>`+
+      (r.nme!=null ? `${vm.label} R ${fmt.n2(r.r)} · NME ${fmt.n2(r.nme)}` : `no QC-passed ${vm.label} data`);
+  }
+
+  /* ================= CALLOUTS ================= */
+  function renderCallouts(varName){
+    const rows = withStatus(siteRows(varName)).filter(r=>r.nme!=null).sort((a,b)=>a.nme-b.nme);
+    const vm = VAR_META[varName];
+    document.getElementById('best-title').textContent = `Best agreement · ${vm.label}`;
+    document.getElementById('worst-title').textContent = `Largest error · ${vm.label}`;
+    fillCalloutList('best-list', rows.slice(0,5), varName, false);
+    fillCalloutList('worst-list', rows.slice(-5).reverse(), varName, true);
+  }
+  function fillCalloutList(id, rows, varName, showRank){
+    const list = document.getElementById(id);
+    clear(list);
+    rows.forEach((r,i)=>{
+      const li = document.createElement('li'); li.className='callout-row';
+      li.innerHTML = `<span class="callout-rank">${showRank? '#'+r.rank : i+1}</span>`+
+        `<span class="callout-code">${r.site}</span><span class="callout-name">${r.site_name}</span>`+
+        `<span class="callout-metric">NME ${fmt.n2(r.nme)}</span>`;
+      li.addEventListener('click', ()=> selectSite(r.site));
+      list.appendChild(li);
+    });
+  }
+
+  /* ================= TAYLOR DIAGRAM ================= */
+  function renderTaylor(varName){
+    const svg = document.getElementById('taylor-svg');
+    clear(svg);
+    const W=480,H=300, cx=W/2, cy=260;
+    const rows = withStatus(siteRows(varName)).filter(r=>r.r!=null && r.std_obs>0);
+    let maxR = 1.6;
+    rows.forEach(r=>{ maxR = Math.max(maxR, r.std_mod/r.std_obs); });
+    maxR = Math.min(3, Math.ceil(maxR*10)/10);
+    const radiusPx = Math.min(cx-40, cy-60);
+    const scale = radiusPx/maxR;
+
+    // radial gridlines (arcs)
+    const steps = maxR<=2 ? [0.5,1,1.5,2] : [0.5,1,1.5,2,2.5,3];
+    steps.filter(s=>s<=maxR).forEach(s=>{
+      const rad = s*scale;
+      svg.appendChild(el('path',{d:describeArc(cx,cy,rad,180,0), class:'grid-line', fill:'none'}));
+      svg.appendChild(text(cx+rad, cy+12, s.toFixed(1), {class:'axis-label','text-anchor':'middle'}));
+    });
+    // angular gridlines (correlation)
+    const corrTicks = [1,0.9,0.7,0.5,0.3,0,-0.3,-0.7,-1];
+    corrTicks.forEach(c=>{
+      const theta = Math.acos(Math.max(-1,Math.min(1,c)));
+      const x2 = cx + maxR*scale*Math.cos(theta), y2 = cy - maxR*scale*Math.sin(theta);
+      svg.appendChild(el('line',{x1:cx,y1:cy,x2,y2,class:'grid-line'}));
+      const lx = cx + (maxR*scale+14)*Math.cos(theta), ly = cy - (maxR*scale+14)*Math.sin(theta);
+      svg.appendChild(text(lx, ly, c.toString(), {class:'axis-label','text-anchor': c>0.85?'end': c<-0.85?'start':'middle'}));
+    });
+    svg.appendChild(text(cx+maxR*scale/2, 292, 'correlation with observations →', {class:'axis-label','text-anchor':'middle'}));
+    // outer bound
+    svg.appendChild(el('path',{d:describeArc(cx,cy,maxR*scale,180,0), stroke:'var(--axis)', fill:'none', 'stroke-width':1}));
+    svg.appendChild(el('line',{x1:cx-maxR*scale,y1:cy,x2:cx+maxR*scale,y2:cy, stroke:'var(--axis)', 'stroke-width':1}));
+
+    // reference point (obs)
+    svg.appendChild(el('circle',{cx:cx+scale,cy:cy,r:5,fill:'var(--text-primary)'}));
+    svg.appendChild(text(cx+scale, cy-10, 'Obs', {class:'axis-label','text-anchor':'middle', 'font-weight':'700', fill:'var(--text-primary)'}));
+
+    const g = el('g',{});
+    rows.forEach(r=>{
+      const ratio = r.std_mod/r.std_obs;
+      const theta = Math.acos(Math.max(-1,Math.min(1,r.r)));
+      const px = cx + Math.min(ratio,maxR)*scale*Math.cos(theta);
+      const py = cy - Math.min(ratio,maxR)*scale*Math.sin(theta);
+      const c = el('circle',{cx:px.toFixed(2), cy:py.toFixed(2), r:4, class:'site-dot st-'+r.status, 'data-site':r.site});
+      c.addEventListener('mouseenter',(ev)=> showTooltip(ev.clientX, ev.clientY, tooltipHtml(r, varName)+`<br>σ ratio ${fmt.n2(ratio)}`));
+      c.addEventListener('mousemove',(ev)=>{ tooltipEl.style.left=ev.clientX+'px'; tooltipEl.style.top=ev.clientY+'px'; });
+      c.addEventListener('mouseleave', hideTooltip);
+      c.addEventListener('click', ()=> selectSite(r.site));
+      g.appendChild(c);
+    });
+    svg.appendChild(g);
+    highlightSelected();
+  }
+  function describeArc(cx,cy,r,startDeg,endDeg){
+    const p = (deg)=>({x:cx+r*Math.cos(deg*Math.PI/180), y:cy-r*Math.sin(deg*Math.PI/180)});
+    const s = p(startDeg), e = p(endDeg);
+    return `M ${s.x} ${s.y} A ${r} ${r} 0 0 1 ${e.x} ${e.y}`;
+  }
+
+  /* ================= BIOME BOX PLOT ================= */
+  function renderBiome(varName){
+    const svg = document.getElementById('biome-svg');
+    clear(svg);
+    const rows = withStatus(siteRows(varName)).filter(r=>r.nme!=null);
+    const groups = {};
+    rows.forEach(r=>{ (groups[r.igbp] ||= []).push(r); });
+    const cats = Object.keys(groups).map(k=>{
+      const vals = groups[k].map(r=>r.nme).sort((a,b)=>a-b);
+      return { key:k, n:vals.length, rows:groups[k],
+        min:vals[0], q1:quantile(vals,0.25), med:quantile(vals,0.5), q3:quantile(vals,0.75), max:vals[vals.length-1] };
+    }).sort((a,b)=>a.med-b.med);
+
+    const W=480, H=340, padL=48, padR=16, padT=10, rowH= (H-padT-30)/Math.max(1,cats.length);
+    const allNme = rows.map(r=>r.nme).sort((a,b)=>a-b);
+    const trueMax = allNme.length ? allNme[allNme.length-1] : 1;
+    // Fixed 0.0-1.0 axis (rather than data-driven) so NME is visually comparable
+    // across different model/site-set dashboards.
+    const maxVal = 1.0;
+    const clipped = trueMax > maxVal * 1.001;
+    const x = v => padL + (Math.min(v,maxVal)/maxVal)*(W-padL-padR);
+
+    // gridlines
+    const ticks = 5;
+    for(let i=0;i<=ticks;i++){
+      const v = maxVal*i/ticks;
+      svg.appendChild(el('line',{x1:x(v),y1:padT,x2:x(v),y2:padT+cats.length*rowH, class:'grid-line'}));
+      svg.appendChild(text(x(v), padT+cats.length*rowH+16, v.toFixed(1), {class:'axis-label','text-anchor':'middle'}));
+    }
+
+    cats.forEach((c,i)=>{
+      const cy = padT + i*rowH + rowH/2;
+      const rowG = el('g',{});
+      // jittered points
+      c.rows.forEach(r=>{
+        const jitter = (Math.random()-0.5)*rowH*0.5;
+        const pt = el('circle',{cx:x(r.nme).toFixed(2), cy:(cy+jitter).toFixed(2), r:2.2, fill:'var(--accent)', opacity:'0.28'});
+        rowG.appendChild(pt);
+      });
+      rowG.appendChild(el('line',{x1:x(c.min),y1:cy,x2:x(c.q1),y2:cy, stroke:'var(--text-muted)','stroke-width':1.25}));
+      rowG.appendChild(el('line',{x1:x(c.q3),y1:cy,x2:x(c.max),y2:cy, stroke:'var(--text-muted)','stroke-width':1.25}));
+      rowG.appendChild(el('rect',{x:x(c.q1).toFixed(2), y:(cy-rowH*0.24).toFixed(2), width:Math.max(1,x(c.q3)-x(c.q1)).toFixed(2), height:(rowH*0.48).toFixed(2),
+        fill:'var(--accent)', opacity:'0.18', stroke:'var(--accent)', 'stroke-width':1, rx:3}));
+      rowG.appendChild(el('line',{x1:x(c.med),y1:(cy-rowH*0.24),x2:x(c.med),y2:(cy+rowH*0.24), stroke:'var(--accent)', 'stroke-width':2}));
+      if(c.max > maxVal){
+        const ex = x(c.max);
+        rowG.appendChild(el('path',{d:`M ${ex-5} ${cy-4} L ${ex} ${cy} L ${ex-5} ${cy+4}`, fill:'none', stroke:'var(--text-muted)', 'stroke-width':1.4}));
+      }
+      rowG.appendChild(text(padL-6, cy+3, c.key, {class:'axis-label','text-anchor':'end', 'font-weight':'650'}));
+      const label = el('title',{}); label.textContent = `${c.key} — ${c.rows[0].igbp_long} (n=${c.n}) median NME ${c.med.toFixed(2)}, max ${c.max.toFixed(2)}`;
+      rowG.appendChild(label);
+      svg.appendChild(rowG);
+    });
+    svg.appendChild(text((W+padL-padR)/2, H-2, clipped ? `NME (lower is better) — axis capped at ${maxVal.toFixed(1)}, worst case ${trueMax.toFixed(1)} (» marker)` : 'NME (lower is better)', {class:'axis-label','text-anchor':'middle'}));
+  }
+
+  /* ================= RANK STRIP ================= */
+  function renderStrip(varName, filterFn){
+    const svg = document.getElementById('strip-svg');
+    clear(svg);
+    let rows = withStatus(siteRows(varName)).filter(r=>r.nme!=null).sort((a,b)=>a.nme-b.nme);
+    const W=1200, H=90, padL=8, padR=8, padT=14;
+    const x = i => padL + (rows.length<=1?0:i/(rows.length-1))*(W-padL-padR);
+    rows.forEach((r,i)=>{
+      const hi = filterFn ? filterFn(r) : true;
+      const c = el('circle',{cx:x(i).toFixed(2), cy:padT+18, r: hi?3.4:2.6, class:'site-dot st-'+r.status,
+        opacity: hi?1:0.15, 'data-site':r.site});
+      c.addEventListener('mouseenter',(ev)=> showTooltip(ev.clientX, ev.clientY, tooltipHtml(r, varName)+`<br>rank ${r.rank} / ${rows.length}`));
+      c.addEventListener('mousemove',(ev)=>{ tooltipEl.style.left=ev.clientX+'px'; tooltipEl.style.top=ev.clientY+'px'; });
+      c.addEventListener('mouseleave', hideTooltip);
+      c.addEventListener('click', ()=> selectSite(r.site));
+      svg.appendChild(c);
+    });
+    if(rows.length){
+      svg.appendChild(text(x(0), padT+40, 'best', {class:'axis-label','text-anchor':'start'}));
+      svg.appendChild(text(x(rows.length-1), padT+40, 'worst', {class:'axis-label','text-anchor':'end'}));
+    }
+    highlightSelected();
+  }
+
+  /* ================= TABLE ================= */
+  function renderTable(varName, filterText){
+    const rows = withStatus(siteRows(varName));
+    const q = (filterText||'').trim().toLowerCase();
+    let filtered = !q ? rows : rows.filter(r=>
+      r.site.toLowerCase().includes(q) || r.site_name.toLowerCase().includes(q) ||
+      r.country.toLowerCase().includes(q) || r.igbp.toLowerCase().includes(q) || r.igbp_long.toLowerCase().includes(q));
+    const key = state.sortKey, dir = state.sortDir;
+    filtered = filtered.slice().sort((a,b)=>{
+      let av=a[key], bv=b[key];
+      if(av==null && bv==null) return 0;
+      if(av==null) return 1; if(bv==null) return -1;
+      if(typeof av === 'string') return dir*av.localeCompare(bv);
+      return dir*(av-bv);
+    });
+    const tbody = document.getElementById('table-body');
+    clear(tbody);
+    filtered.forEach(r=>{
+      const tr = document.createElement('tr');
+      tr.dataset.site = r.site;
+      if(r.site===state.selectedSite) tr.classList.add('selected');
+      tr.innerHTML = `<td class="num" style="text-align:left; font-family:var(--font-mono); font-weight:650;">${r.site}</td>`+
+        `<td>${r.site_name}</td><td>${r.country}</td><td>${r.igbp}</td>`+
+        `<td class="num">${fmt.n2(r.r)}</td><td class="num">${fmt.n2(r.nme)}</td>`+
+        `<td class="num">${fmt.n1(r.bias)}</td><td class="num">${fmt.n1(r.years)}</td>`+
+        `<td class="num">${fmt.pct(r.pct_measured)}</td>`;
+      tr.addEventListener('click', ()=> selectSite(r.site));
+      tbody.appendChild(tr);
+    });
+    document.querySelectorAll('#site-table thead th').forEach(th=>{
+      th.classList.toggle('sorted', th.dataset.key===key);
+    });
+  }
+
+  document.querySelectorAll('#site-table thead th').forEach(th=>{
+    th.addEventListener('click', ()=>{
+      const key = th.dataset.key;
+      if(state.sortKey===key) state.sortDir *= -1; else { state.sortKey=key; state.sortDir = key==='r'?-1:1; }
+      renderTable(state.varName, document.getElementById('site-search').value);
+    });
+  });
+  document.getElementById('site-search').addEventListener('input', (e)=>{
+    renderTable(state.varName, e.target.value);
+  });
+
+  /* ================= INSPECTOR ================= */
+  function selectSite(siteCode){
+    state.selectedSite = siteCode;
+    renderInspector();
+    highlightSelected();
+    renderTable(state.varName, document.getElementById('site-search').value);
+    const insp = document.getElementById('inspector');
+    insp.classList.add('open');
+    insp.scrollIntoView({behavior:'smooth', block:'nearest'});
+  }
+  function highlightSelected(){
+    document.querySelectorAll('circle.site-dot').forEach(c=>{
+      c.classList.toggle('selected', c.dataset.site===state.selectedSite);
+    });
+  }
+
+  function lineChart(svgId, seriesObs, seriesMod, xLabels, opts){
+    opts = opts||{};
+    const svg = document.getElementById(svgId);
+    clear(svg);
+    const W = opts.w||460, H = opts.h||160, padL=40, padR=10, padT=10, padB=20;
+    const allVals = seriesObs.concat(seriesMod).filter(v=>v!=null);
+    if(!allVals.length){ svg.appendChild(text(W/2,H/2,'no data', {class:'axis-label','text-anchor':'middle'})); return; }
+    let lo = Math.min(...allVals), hi = Math.max(...allVals);
+    if(lo>0 && opts.zeroBase!==false) lo = Math.min(0,lo);
+    const pad = (hi-lo)*0.08 || 1;
+    lo -= pad; hi += pad;
+    const n = xLabels.length;
+    const x = i => padL + (n<=1?0:i/(n-1))*(W-padL-padR);
+    const y = v => padT + (1-(v-lo)/(hi-lo))*(H-padT-padB);
+
+    // zero line
+    if(lo<0 && hi>0){
+      svg.appendChild(el('line',{x1:padL,y1:y(0),x2:W-padR,y2:y(0), class:'ref-line'}));
+    }
+    // y ticks
+    [lo+pad*0.3, (lo+hi)/2, hi-pad*0.3].forEach(v=>{
+      svg.appendChild(text(padL-6, y(v)+3, v.toFixed(1), {class:'axis-label','text-anchor':'end'}));
+    });
+    // x ticks
+    const step = Math.max(1, Math.round(n/6));
+    xLabels.forEach((lab,i)=>{
+      if(i%step===0 || i===n-1) svg.appendChild(text(x(i), H-4, lab, {class:'axis-label','text-anchor':'middle'}));
+    });
+
+    function pathFor(series){
+      let d = '', started=false, segLen=0;
+      series.forEach((v,i)=>{
+        if(v==null){ started=false; segLen=0; return; }
+        d += (started?'L':'M') + x(i).toFixed(2) + ' ' + y(v).toFixed(2) + ' ';
+        started = true; segLen++;
+      });
+      return d.trim();
+    }
+    function isIsolated(series,i){
+      const prevOk = i>0 && series[i-1]!=null;
+      const nextOk = i<series.length-1 && series[i+1]!=null;
+      return series[i]!=null && !prevOk && !nextOk;
+    }
+    function markersFor(series, color){
+      const g = el('g',{});
+      series.forEach((v,i)=>{
+        if(v==null || !isIsolated(series,i)) return;
+        g.appendChild(el('circle',{cx:x(i).toFixed(2), cy:y(v).toFixed(2), r:2.4, fill:color}));
+      });
+      return g;
+    }
+    svg.appendChild(el('path',{d:pathFor(seriesObs), fill:'none', stroke:'var(--text-primary)', 'stroke-width':2, 'stroke-linecap':'round','stroke-linejoin':'round'}));
+    svg.appendChild(el('path',{d:pathFor(seriesMod), fill:'none', stroke:'var(--accent)', 'stroke-width':2, 'stroke-linecap':'round','stroke-linejoin':'round'}));
+    svg.appendChild(markersFor(seriesObs, 'var(--text-primary)'));
+    svg.appendChild(markersFor(seriesMod, 'var(--accent)'));
+
+    // hover crosshair
+    const hitW = W-padL-padR;
+    const hitRect = el('rect',{x:padL,y:padT,width:hitW,height:H-padT-padB, fill:'transparent'});
+    const cross = el('line',{x1:0,y1:padT,x2:0,y2:H-padB, stroke:'var(--axis)','stroke-width':1, opacity:0});
+    svg.appendChild(cross);
+    hitRect.addEventListener('mousemove',(ev)=>{
+      const rect = svg.getBoundingClientRect();
+      const mx = (ev.clientX-rect.left) * (W/rect.width);
+      let i = Math.round((mx-padL)/(W-padL-padR)*(n-1));
+      i = Math.max(0, Math.min(n-1, i));
+      cross.setAttribute('x1', x(i)); cross.setAttribute('x2', x(i)); cross.setAttribute('opacity',1);
+      const ov = seriesObs[i], mv = seriesMod[i];
+      showTooltip(ev.clientX, ev.clientY, `<b>${xLabels[i]}</b><br>obs ${ov==null?'—':ov.toFixed(1)} · ecLand ${mv==null?'—':mv.toFixed(1)}`);
+    });
+    hitRect.addEventListener('mouseleave', ()=>{ cross.setAttribute('opacity',0); hideTooltip(); });
+    svg.appendChild(hitRect);
+  }
+
+  function scatterChart(svgId, obsArr, modArr){
+    const svg = document.getElementById(svgId);
+    clear(svg);
+    const W=220,H=220, pad=30;
+    const pts = obsArr.map((o,i)=>[o,modArr[i]]).filter(p=>p[0]!=null&&p[1]!=null);
+    if(!pts.length){ svg.appendChild(text(W/2,H/2,'no data',{class:'axis-label','text-anchor':'middle'})); return; }
+    const all = pts.flat();
+    let lo = Math.min(...all), hi = Math.max(...all);
+    const padv = (hi-lo)*0.1 || 1; lo-=padv; hi+=padv;
+    const sc = v => pad + (v-lo)/(hi-lo)*(W-2*pad);
+    const scY = v => H-pad - (v-lo)/(hi-lo)*(H-2*pad);
+    svg.appendChild(el('line',{x1:sc(lo),y1:scY(lo),x2:sc(hi),y2:scY(hi), class:'ref-line'}));
+    svg.appendChild(el('line',{x1:pad,y1:H-pad,x2:W-pad,y2:H-pad, stroke:'var(--axis)','stroke-width':1}));
+    svg.appendChild(el('line',{x1:pad,y1:pad,x2:pad,y2:H-pad, stroke:'var(--axis)','stroke-width':1}));
+    pts.forEach(p=>{
+      svg.appendChild(el('circle',{cx:sc(p[0]).toFixed(2), cy:scY(p[1]).toFixed(2), r:4, fill:'var(--accent)', opacity:0.75}));
+    });
+    svg.appendChild(text(W/2, H-4, 'observed →', {class:'axis-label','text-anchor':'middle'}));
+    svg.appendChild(text(10, H/2, 'model', {class:'axis-label','text-anchor':'middle', transform:`rotate(-90 10 ${H/2})`}));
+  }
+
+  let _statusCache = {};
+  function statusMapFor(varName){
+    if(_statusCache[varName]) return _statusCache[varName];
+    const rows = withStatus(siteRows(varName));
+    const map = {};
+    rows.forEach(r=> map[r.site] = r.status);
+    _statusCache[varName] = map;
+    return map;
+  }
+
+  function renderInspector(){
+    const site = SITES.find(s=>s.site===state.selectedSite);
+    const insp = document.getElementById('inspector');
+    if(!site){ insp.classList.remove('open'); return; }
+    const vname = state.varName;
+    const badgeRow = VARS.map(v=>{
+      const m = site.metrics[v] || {};
+      const accent = 'var(' + VAR_META[v].accentVar + ')';
+      const st = statusMapFor(v)[site.site] || 'none';
+      return `<div class="var-badge ${v===vname?'current':''}" style="--bvar:${accent}">
+        <div class="vb-top"><span class="vb-name">${VAR_META[v].label}</span>
+          <span class="pill st-${st}">${STATUS_LABEL[st]}</span></div>
+        <div class="vb-grid">
+          <div><span>R</span>${fmt.n2(m.r)}</div>
+          <div><span>NME</span>${fmt.n2(m.nme)}</div>
+          <div><span>Bias</span>${fmt.n1(m.bias)}</div>
+          <div><span>% meas.</span>${fmt.pct(m.pct_measured)}</div>
+        </div>
+      </div>`;
+    }).join('');
+
+    insp.innerHTML = `
+      <div class="insp-head">
+        <div class="insp-title">
+          <span class="code">${site.site} <span style="color:var(--text-muted); font-weight:500; font-size:14px;">— ${site.site_name}, ${site.country}</span></span>
+          <span class="sub">${site.igbp_long} · ${site.lat.toFixed(2)}°, ${site.lon.toFixed(2)}° · ${site.elevation}m · ${site.period} (${site.years} yrs)</span>
+        </div>
+        <button class="insp-close" id="insp-close-btn" aria-label="Close">✕</button>
+      </div>
+      <div class="badge-row">${badgeRow}</div>
+      <div class="legend" style="margin:-6px 0 14px;">
+        <div class="legend-item"><span class="swatch line" style="background:var(--text-primary)"></span>Observed</div>
+        <div class="legend-item"><span class="swatch line" style="background:var(--accent)"></span>ecLand model</div>
+      </div>
+      <div class="insp-charts">
+        <div class="chart-box wide">
+          <h4>Monthly climatology — ${VAR_META[vname].full} (${VAR_META[vname].unit})</h4>
+          <svg id="insp-clim" viewBox="0 0 920 170" style="width:100%; height:auto; aspect-ratio:920/170;"></svg>
+        </div>
+        <div class="chart-box wide">
+          <h4>Diurnal cycle by season</h4>
+          <p class="chart-note">Isolated dots (no connecting line) mark hours with fewer than 20 quality-checked half-hours at this site &mdash; too sparse to trust as a trend, so they're plotted but not joined.</p>
+          <div class="diurnal-grid">
+            ${SEASON_ORDER.map(s=>`<div><svg id="insp-diurnal-${s}" viewBox="0 0 440 140" style="width:100%;height:auto;aspect-ratio:440/140;"></svg><div class="season-label">${s}</div></div>`).join('')}
+          </div>
+        </div>
+        <div class="chart-box">
+          <h4>Monthly means, obs vs model</h4>
+          <svg id="insp-scatter" viewBox="0 0 220 220" style="width:100%; height:auto; max-width:260px; aspect-ratio:1/1;"></svg>
+        </div>
+        <div class="chart-box">
+          <h4>Long-term monthly mean</h4>
+          <svg id="insp-trend" viewBox="0 0 460 170" style="width:100%; height:auto; aspect-ratio:460/170;"></svg>
+        </div>
+      </div>
+    `;
+    document.getElementById('insp-close-btn').addEventListener('click', ()=>{
+      state.selectedSite = null; insp.classList.remove('open'); highlightSelected();
+      renderTable(state.varName, document.getElementById('site-search').value);
+    });
+
+    const mc = site.monthly_clim[vname];
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    lineChart('insp-clim', mc.obs, mc.mod, months, {w:920,h:170});
+
+    SEASON_ORDER.forEach(s=>{
+      const d = site.diurnal[vname][s];
+      const hours = Array.from({length:24},(_,i)=>i+'h');
+      lineChart('insp-diurnal-'+s, d.obs, d.mod, hours, {w:440,h:140});
+    });
+
+    scatterChart('insp-scatter', mc.obs, mc.mod);
+
+    const tr = site.trend[vname];
+    lineChart('insp-trend', tr.obs, tr.mod, tr.labels, {w:460,h:170});
+  }
+
+  /* ================= wiring ================= */
+  function renderAll(){
+    setAccent(state.varName);
+    document.querySelectorAll('.var-btn').forEach(b=> b.classList.toggle('active', b.dataset.var===state.varName));
+    renderStats(state.varName);
+    renderMap(state.varName);
+    renderCallouts(state.varName);
+    renderTaylor(state.varName);
+    renderBiome(state.varName);
+    renderStrip(state.varName);
+    renderTable(state.varName, document.getElementById('site-search').value);
+    if(state.selectedSite) renderInspector();
+  }
+
+  document.querySelectorAll('.var-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      state.varName = btn.dataset.var;
+      state.sortKey = 'nme'; state.sortDir = 1;
+      renderAll();
+    });
+  });
+
+  document.getElementById('gen-date').textContent = DATA.generated.slice(0,10);
+  document.getElementById('gen-date-2').textContent = DATA.generated.slice(0,10);
+  document.getElementById('n-sites').textContent = SITES.length;
+  document.getElementById('n-sites-meta').textContent = SITES.length;
+
+  function renderBiomeGlossary(){
+    const map = {};
+    SITES.forEach(s=>{ map[s.igbp] = s.igbp_long; });
+    const codes = Object.keys(map).sort();
+    const wrap = document.getElementById('biome-glossary');
+    clear(wrap);
+    codes.forEach(code=>{
+      const span = document.createElement('span');
+      span.className = 'gloss-item';
+      span.innerHTML = `<b>${code}</b> ${map[code]}`;
+      wrap.appendChild(span);
+    });
+  }
+  renderBiomeGlossary();
+  initMapControls();
+
+  const themeBtn = document.getElementById('theme-toggle');
+  themeBtn.addEventListener('click', ()=>{
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark' ||
+      (document.documentElement.getAttribute('data-theme') !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    const next = isDark ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try{ localStorage.setItem('plumber2-benchmark-theme', next); }catch(e){}
+  });
+
+  document.querySelectorAll('.var-btn')[0].classList.add('active');
+  renderAll();
+})();
+</script>
