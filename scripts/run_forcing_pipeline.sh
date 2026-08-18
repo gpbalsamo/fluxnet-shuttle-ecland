@@ -47,6 +47,7 @@ JOBS=4
 MIN_YEARS=""
 GAPFILL="statistical"
 PRESET="medium"
+WORK_ROOT=""
 
 usage() {
   cat <<EOF
@@ -68,11 +69,20 @@ Usage: $(basename "$0") -f SNAPSHOT_CSV -g GROUP [options]
                      each site's *_ERA5_HH_*.csv from the same download and passes it
                      as convert_fluxnetlsm.R --era-file (see convert_fluxnetlsm.R's
                      header for why "erainterim" here means real ERA5 data)
+  -W WORK_ROOT      Parent directory for the per-group work directory holding
+                     downloads, logs and status files (default:
+                     <repo>/scripts/work). Point this at a fast, roomy
+                     filesystem when the repo lives on a slow or quota-limited
+                     one -- on ECMWF HPC, \$SCRATCH. Several concurrent workers
+                     stage ~500MB downloads here, so it needs the bandwidth; the
+                     status/ subdirectory is also what makes a run resumable, so
+                     keep it on shared (not node-local) storage when the same
+                     group is processed by more than one node.
   -h                Show this help
 EOF
 }
 
-while getopts ":hf:g:S:c:j:m:G:P:" opt; do
+while getopts ":hf:g:S:c:j:m:G:P:W:" opt; do
   case "${opt}" in
     f) SNAPSHOT_CSV="${OPTARG}" ;;
     g) GROUP="${OPTARG}" ;;
@@ -82,6 +92,7 @@ while getopts ":hf:g:S:c:j:m:G:P:" opt; do
     m) MIN_YEARS="${OPTARG}" ;;
     G) GAPFILL="${OPTARG}" ;;
     P) PRESET="${OPTARG}" ;;
+    W) WORK_ROOT="${OPTARG}" ;;
     h) usage; exit 0 ;;
     \?) echo "ERROR: invalid option -${OPTARG}" >&2; usage >&2; exit 2 ;;
     :) echo "ERROR: option -${OPTARG} requires an argument" >&2; usage >&2; exit 2 ;;
@@ -99,8 +110,11 @@ if [[ ! -f "${SNAPSHOT_CSV}" ]]; then
 fi
 SNAPSHOT_CSV="$(cd "$(dirname "${SNAPSHOT_CSV}")" && pwd -P)/$(basename "${SNAPSHOT_CSV}")"
 
+WORK_ROOT="${WORK_ROOT:-${PROJECT_ROOT}/scripts/work}"
+WORK_DIR="${WORK_ROOT}/forcing_pipeline_${GROUP}"
+
 if [[ -z "${SITE_LIST_FILE}" ]]; then
-  SITE_LIST_FILE="${PROJECT_ROOT}/scripts/work/forcing_pipeline_${GROUP}/all_site_ids.txt"
+  SITE_LIST_FILE="${WORK_DIR}/all_site_ids.txt"
   mkdir -p "$(dirname "${SITE_LIST_FILE}")"
   python3 -c "
 import csv
@@ -116,13 +130,21 @@ if [[ ! -f "${SITE_LIST_FILE}" ]]; then
   exit 1
 fi
 
-WORK_DIR="${PROJECT_ROOT}/scripts/work/forcing_pipeline_${GROUP}"
 FORCING_DIR="${PROJECT_ROOT}/forcing/${GROUP}"
 FLUX_DIR="${PROJECT_ROOT}/flux/${GROUP}"
 LOG_DIR="${WORK_DIR}/logs"
 STATUS_DIR="${WORK_DIR}/status"
+
+# One work directory can be shared by several concurrent invocations -- that is
+# exactly how scripts/submit_forcing_pipeline_slurm.sh runs a job array, each
+# task processing a disjoint slice into a common status/ directory. Anything
+# not per-site therefore has to be per-invocation too, or the tasks silently
+# clobber each other: a fixed scratch path is a data race, not a temp file.
+# RUN_TAG namespaces every such path.
+RUN_TAG="${SLURM_ARRAY_JOB_ID:-run}_${SLURM_ARRAY_TASK_ID:-$$}"
+RUN_DIR="${WORK_DIR}/runs/${RUN_TAG}"
 mkdir -p "${FORCING_DIR}" "${FLUX_DIR}" "${LOG_DIR}" "${STATUS_DIR}" \
-         "${WORK_DIR}/dl" "${WORK_DIR}/convert" "${WORK_DIR}/met_src"
+         "${RUN_DIR}/dl" "${RUN_DIR}/convert" "${RUN_DIR}/met_src"
 
 # Site lists are meant to be hand-maintainable -- reference/
 # shuttle_pilot20_site_ids.txt ships with a comment header explaining how it
@@ -131,7 +153,7 @@ mkdir -p "${FORCING_DIR}" "${FLUX_DIR}" "${LOG_DIR}" "${STATUS_DIR}" \
 # order) before anything else reads the list. Without this a comment line is
 # handed to `fluxnet-shuttle download` as if it were a site ID, and its failure
 # is recorded as a bogus status file named after the comment text.
-SITE_IDS="${WORK_DIR}/site_ids.txt"
+SITE_IDS="${RUN_DIR}/site_ids.txt"
 awk '{ sub(/#.*/, ""); gsub(/^[[:space:]]+|[[:space:]]+$/, "") }
      $0 != "" && !seen[$0]++' "${SITE_LIST_FILE}" > "${SITE_IDS}"
 if [[ ! -s "${SITE_IDS}" ]]; then
@@ -161,9 +183,13 @@ run_one() {
   fi
 
   local log="${LOG_DIR}/${site}.log"
-  local dl_dir="${WORK_DIR}/dl/${site}"
-  local convert_out="${WORK_DIR}/convert/${site}"
-  local met_src_dir="${WORK_DIR}/met_src/${site}"
+  # Per-invocation as well as per-site (see RUN_TAG above): if two invocations
+  # ever are handed the same site, they must not delete each other's staged
+  # downloads mid-conversion. Duplicated effort is survivable; corrupted
+  # intermediate state that surfaces as a spurious ADAPT_FAILED is not.
+  local dl_dir="${RUN_DIR}/dl/${site}"
+  local convert_out="${RUN_DIR}/convert/${site}"
+  local met_src_dir="${RUN_DIR}/met_src/${site}"
   rm -rf "${dl_dir}" "${convert_out}" "${met_src_dir}"
   mkdir -p "${dl_dir}"
 
@@ -249,7 +275,7 @@ run_one() {
   echo "[$(date '+%H:%M:%S')] ${status}  ${site} ($(( t1 - t0 ))s)"
 }
 export -f run_one
-export SCRIPT_DIR SNAPSHOT_CSV SITE_CSV MIN_YEARS GAPFILL PRESET WORK_DIR FORCING_DIR FLUX_DIR LOG_DIR STATUS_DIR
+export SCRIPT_DIR SNAPSHOT_CSV SITE_CSV MIN_YEARS GAPFILL PRESET WORK_DIR RUN_DIR FORCING_DIR FLUX_DIR LOG_DIR STATUS_DIR
 export SHUTTLE_BIN="${SHUTTLE_BIN:-fluxnet-shuttle}"
 
 start=$(date +%s)

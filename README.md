@@ -162,6 +162,34 @@ Omit `-S` to process every site in the snapshot; `#` comments, blank lines and d
 - **`-P` acceptance preset** — `mild | medium` (default) `| heavy | complete`, a bundle of FluxnetLSM's own thresholds (`gapfill_met_tier1`, `missing_flux`, `min_yrs`, `check_range_action`). For a fixed gapfill method, a looser preset yields a strict superset of the periods a stricter one yields. `heavy`/`complete` switch `check_range_action` to `truncate`, which is what keeps a single implausible value from discarding a site's whole record.
 - **`-G` gapfilling** — `statistical` (default, no extra input) or `erainterim`, which also extracts the site's `*_ERA5_HH_*.csv` from the same download and passes it through. Flux variables always gapfill statistically; FluxnetLSM supports nothing else for them.
 - A site can yield **several disjoint qualifying periods** (e.g. 2009 and 2011–2013 separately); every one is written, not just the longest.
+- **`-W`** moves the work directory (downloads, logs, status) off the repo filesystem — see [Running on HPC](#running-on-hpc-slurm).
+
+### 2b. Running on HPC (SLURM)
+
+`scripts/submit_forcing_pipeline_slurm.sh` submits the same pipeline as a job array: the site list is split across `-a` array tasks, each running `run_forcing_pipeline.sh` with `-j` workers, all sharing one work directory. Concurrent sites = `-a` × `-j`.
+
+```bash
+# One-off setup (see Requirements for what these need)
+module load R/4.5.3
+R_LIBS_USER=$PERM/R/library/4.5 Rscript scripts/install_fluxnetlsm.R
+python3 -m venv $PERM/venv-shuttle
+$PERM/venv-shuttle/bin/pip install git+https://github.com/fluxnet/shuttle.git netCDF4
+
+# Submit
+scripts/submit_forcing_pipeline_slurm.sh \
+  -f $SCRATCH/fluxnet_shuttle_snapshot_*.csv \
+  -g shuttle-all775 \
+  -c reference/site_metadata_merged.csv \
+  -P heavy -a 8 -j 4
+```
+
+Add `-n` to write the job script and print it without submitting. Validated 2026-08-18 on ECMWF's Atos HPC (`gpil`, qos `nf`): the 20-site pilot ran 5×4 in ~4 minutes.
+
+- **Slices are disjoint and the status directory is shared**, so the array is resumable exactly like an interactive run: re-submit with the same `-g` and every site already recorded is skipped, no matter which task did it.
+- **Work directory defaults to `$SCRATCH`.** Each worker stages a ~500 MB download, so this wants a fast, roomy filesystem — not the repo's. Outputs (`forcing/`, `flux/`) still land in the repo.
+- **The batch environment is not the login environment.** `SBATCH_EXPORT=NONE` on ECMWF, so the job script loads R and NCO itself and prepends the venv to `PATH`; override with `R_MODULE`, `NCO_MODULE`, `R_LIBS_DIR`, `SHUTTLE_VENV`. A preflight check fails the task in seconds if `Rscript`, `fluxnet-shuttle`, `ncks` or `unzip` is missing, rather than after a queue of downloads.
+- **Compute nodes need outbound HTTPS**, since every task downloads from ICOS/AmeriFlux/TERN. They have it at ECMWF; elsewhere the download step may have to run where the network is.
+- **Concurrency is a courtesy question.** The `-a 4 -j 4` default is 16 simultaneous downloads from the data hubs. Raise it knowingly.
 
 ### 3. Single site (manual invocation)
 
