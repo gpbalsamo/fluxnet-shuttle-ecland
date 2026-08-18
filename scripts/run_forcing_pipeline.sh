@@ -53,11 +53,15 @@ Usage: $(basename "$0") -f SNAPSHOT_CSV -g GROUP [options]
                      --site-csv (default: ${SITE_CSV})
   -j JOBS           Concurrent site pipelines (default: ${JOBS})
   -m MIN_YEARS      convert_fluxnetlsm.R --min-years (default: ${MIN_YEARS})
+  -G GAPFILL        statistical (default) or erainterim -- erainterim also extracts
+                     each site's *_ERA5_HH_*.csv from the same download and passes it
+                     as convert_fluxnetlsm.R --era-file (see convert_fluxnetlsm.R's
+                     header for why "erainterim" here means real ERA5 data)
   -h                Show this help
 EOF
 }
 
-while getopts ":hf:g:S:c:j:m:" opt; do
+while getopts ":hf:g:S:c:j:m:G:" opt; do
   case "${opt}" in
     f) SNAPSHOT_CSV="${OPTARG}" ;;
     g) GROUP="${OPTARG}" ;;
@@ -65,6 +69,7 @@ while getopts ":hf:g:S:c:j:m:" opt; do
     c) SITE_CSV="${OPTARG}" ;;
     j) JOBS="${OPTARG}" ;;
     m) MIN_YEARS="${OPTARG}" ;;
+    G) GAPFILL="${OPTARG}" ;;
     h) usage; exit 0 ;;
     \?) echo "ERROR: invalid option -${OPTARG}" >&2; usage >&2; exit 2 ;;
     :) echo "ERROR: option -${OPTARG} requires an argument" >&2; usage >&2; exit 2 ;;
@@ -116,7 +121,8 @@ echo "Workers      : ${JOBS}"
 echo "Forcing out  : ${FORCING_DIR}"
 echo "Flux out     : ${FLUX_DIR}"
 echo "Logs         : ${LOG_DIR}/<site>.log"
-echo "Status       : ${STATUS_DIR}/<site> (OK / NODOWNLOAD / NOFLUXMET / NOYEARS / NOMET / ERROR)"
+echo "Gapfill      : ${GAPFILL}"
+echo "Status       : ${STATUS_DIR}/<site> (OK / NODOWNLOAD / NOFLUXMET / NOERA5 / NOYEARS / NOMET / ERROR)"
 echo
 
 run_one() {
@@ -147,25 +153,39 @@ run_one() {
       else
         unzip -o -q "${zipfile}" -d "${dl_dir}/extracted"
         rm -f "${zipfile}"
-        local csv
+        local csv era5_csv era_args=()
         csv=$(find "${dl_dir}/extracted" -iname '*FLUXMET_HH*.csv' | head -1)
         if [[ -z "${csv}" ]]; then
           status="NOFLUXMET"
+        elif [[ "${GAPFILL}" == "erainterim" ]] && \
+             era5_csv=$(find "${dl_dir}/extracted" -iname '*_ERA5_HH_*.csv' | head -1) && \
+             [[ -z "${era5_csv}" ]]; then
+          status="NOERA5"
         else
+          [[ "${GAPFILL}" == "erainterim" ]] && era_args=(--era-file="${era5_csv}")
           if Rscript "${SCRIPT_DIR}/convert_fluxnetlsm.R" \
               --site="${site}" --infile="${csv}" --outdir="${convert_out}" \
-              --site-csv="${SITE_CSV}" --min-years="${MIN_YEARS}" --gapfill="${GAPFILL}"; then
-            local met_nc flux_nc
-            met_nc=$(find "${convert_out}/Nc_files/Met" -name '*.nc' 2>/dev/null | head -1)
-            flux_nc=$(find "${convert_out}/Nc_files/Flux" -name '*.nc' 2>/dev/null | head -1)
-            if [[ -z "${met_nc}" ]]; then
+              --site-csv="${SITE_CSV}" --min-years="${MIN_YEARS}" --gapfill="${GAPFILL}" \
+              "${era_args[@]+"${era_args[@]}"}"; then
+            # FluxnetLSM writes one NetCDF per disjoint qualifying
+            # consecutive-year block, not just the single longest one (e.g.
+            # a site can pass screening for both 2009 and 2011-2013
+            # separately) -- copy every Met/Flux file found, not just one,
+            # so no valid period is silently dropped.
+            local n_met n_flux
+            n_met=$(find "${convert_out}/Nc_files/Met" -name '*.nc' 2>/dev/null | wc -l | tr -d ' ')
+            n_flux=$(find "${convert_out}/Nc_files/Flux" -name '*.nc' 2>/dev/null | wc -l | tr -d ' ')
+            if [[ "${n_met}" -eq 0 ]]; then
               status="NOMET"
             else
               mkdir -p "${met_src_dir}"
-              cp "${met_nc}" "${met_src_dir}/"
+              find "${convert_out}/Nc_files/Met" -name '*.nc' -exec cp {} "${met_src_dir}/" \;
               if ORIG_DIR="${met_src_dir}" OUT_DIR="${FORCING_DIR}" "${SCRIPT_DIR}/regenerate_forcing.sh"; then
-                [[ -n "${flux_nc}" ]] && cp "${flux_nc}" "${FLUX_DIR}/"
+                if [[ "${n_flux}" -gt 0 ]]; then
+                  find "${convert_out}/Nc_files/Flux" -name '*.nc' -exec cp {} "${FLUX_DIR}/" \;
+                fi
                 status="OK"
+                echo "  (${n_met} period(s) written for ${site})"
               else
                 status="ADAPT_FAILED"
               fi
@@ -193,7 +213,7 @@ end=$(date +%s)
 
 echo
 echo "=== Summary ($(( end - start ))s) ==="
-for s in OK NODOWNLOAD NOFLUXMET NOYEARS NOMET ADAPT_FAILED ERROR; do
+for s in OK NODOWNLOAD NOFLUXMET NOERA5 NOYEARS NOMET ADAPT_FAILED ERROR; do
   c=$(ls "${STATUS_DIR}" 2>/dev/null | xargs -I{} cat "${STATUS_DIR}/{}" 2>/dev/null | grep -c "^${s}\$" || true)
   [[ "${c}" -gt 0 ]] && echo "  ${s}: ${c}"
 done
