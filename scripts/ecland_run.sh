@@ -1,6 +1,11 @@
 #!/bin/bash
 # Script to run the ecland model on pre-downloaded forcing and initial conditions.
-# ECMWF HPC only -- see README.md "What runs where" for why this can't run locally.
+#
+# This is the ECMWF HPC entry point: it loads the site's compiler/MPI/netCDF
+# modules and runs under LBATCH=true with the paths below hardcoded. ecLand
+# itself is not HPC-only -- for a local (macOS) run use
+# scripts/run_parallel_local.sh or scripts/run_and_proc_macos.sh instead, which
+# drive the same ecland_run_experiment.sh with LBATCH=false.
 
 # To compile:
 #module load prgenv/intel intel/2021.4 cmake/3.25 ninja/1.11.1 hpcx-openmpi/2.9 netcdf4/4.9.1 ecbuild/new ecmwf-toolbox/new python3/new

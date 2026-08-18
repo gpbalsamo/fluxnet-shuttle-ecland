@@ -1,14 +1,23 @@
 #!/usr/bin/env bash
 
-# Regenerate forcing/PLUMBER2/ (the ecLand-ready forcing files) from
-# forcing/PLUMBER2_original/ (the raw PLUMBER2 v1.0 download from NCI).
+# Convert ALMA-CF Met files (ORIG_DIR) into ecLand-ready forcing files
+# (OUT_DIR). Two sources are in use here:
+#
+#   - FluxnetLSM output for a Shuttle site, i.e. <outdir>/Nc_files/Met --
+#     this is what scripts/run_forcing_pipeline.sh points ORIG_DIR at;
+#   - the raw PLUMBER2 v1.0 download from NCI (forcing/PLUMBER2_original/),
+#     which is what the defaults below assume, as inherited from
+#     plumber2-ecland where this script originated.
+#
+# Both carry the same variable/dimension conventions, so no source-specific
+# handling is needed.
 #
 # Unlike the original fix_forcing.py (which subset the raw files down to just
 # the 7 driving variables and stripped metadata), this script keeps every
-# variable and global attribute from the raw file -- QC flags, VPD, RH,
-# CO2air, LAI, site metadata (latitude/longitude/elevation/canopy_height/
-# vegetation type/soil) -- and only does the minimum needed for ecLand to
-# read the file:
+# variable and global attribute from the source file -- QC flags, VPD, RH,
+# CO2air, LAI, per-variable Missing_%/Gap-filled_% (see scripts/qc_classify.py),
+# site metadata (latitude/longitude/elevation/canopy_height/vegetation type/
+# soil) -- and only does the minimum needed for ecLand to read the file:
 #
 #   - rename dims   x,y      -> lon,lat
 #   - rename vars   Psurf    -> PSurf
@@ -79,6 +88,11 @@ for src in "${files[@]}"; do
   out="${OUT_DIR}/met_insituHT_${site}_${years}.nc"
   tmp="${work_dir}/${site}_${years}.nc"
 
+  # Record where this file actually came from (parent dir + filename), rather
+  # than asserting a fixed PLUMBER2_original provenance: ORIG_DIR is just as
+  # often FluxnetLSM output for a Shuttle site.
+  srcref="$(basename "$(dirname "${src}")")/$(basename "${src}")"
+
   cp "${src}" "${tmp}"
 
   # Rename dims/vars to ecLand's expected names; -h suppresses the noisy
@@ -86,7 +100,7 @@ for src in "${files[@]}"; do
   ncrename -O -h -d x,lon -d y,lat -v Psurf,PSurf -v Precip,Rainf "${tmp}" "${tmp}"
   ncks -O -h -x -v x,y "${tmp}" "${tmp}"
   ncks -O -h --mk_rec_dmn time "${tmp}" "${tmp}"
-  ncatted -O -h -a history,global,a,c," Regenerated $(date -u +%Y-%m-%dT%H:%M:%SZ) from PLUMBER2_original/${site}_${years}_*_Met.nc by scripts/regenerate_plumber2_forcing.sh: dims x,y renamed to lon,lat; Psurf->PSurf; Precip->Rainf; x,y index vars dropped; all other raw PLUMBER2 v1.0 variables, QC flags and metadata preserved as-is.\n" "${tmp}"
+  ncatted -O -h -a history,global,a,c," Regenerated $(date -u +%Y-%m-%dT%H:%M:%SZ) from ${srcref} by scripts/regenerate_forcing.sh: dims x,y renamed to lon,lat; Psurf->PSurf; Precip->Rainf; x,y index vars dropped; all other source variables, QC flags and metadata preserved as-is.\n" "${tmp}"
 
   nccopy -d"${DEFLATE_LEVEL}" -s "${tmp}" "${out}"
 

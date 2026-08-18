@@ -54,7 +54,8 @@ Usage: $(basename "$0") -f SNAPSHOT_CSV -g GROUP [options]
 
   -f SNAPSHOT_CSV   fluxnet-shuttle listall snapshot CSV (required)
   -g GROUP          Output subdirectory name under forcing/ and flux/ (required)
-  -S SITE_LIST_FILE One site_id per line (default: every site_id in SNAPSHOT_CSV)
+  -S SITE_LIST_FILE One site_id per line; '#' comments, blank lines and duplicates
+                     are ignored (default: every site_id in SNAPSHOT_CSV)
   -c SITE_CSV       FluxnetLSM site metadata CSV, forwarded as convert_fluxnetlsm.R
                      --site-csv (default: ${SITE_CSV})
   -j JOBS           Concurrent site pipelines (default: ${JOBS})
@@ -123,7 +124,22 @@ STATUS_DIR="${WORK_DIR}/status"
 mkdir -p "${FORCING_DIR}" "${FLUX_DIR}" "${LOG_DIR}" "${STATUS_DIR}" \
          "${WORK_DIR}/dl" "${WORK_DIR}/convert" "${WORK_DIR}/met_src"
 
-n_sites=$(grep -c . "${SITE_LIST_FILE}")
+# Site lists are meant to be hand-maintainable -- reference/
+# shuttle_pilot20_site_ids.txt ships with a comment header explaining how it
+# was curated. Strip comments, surrounding whitespace and blank lines, and drop
+# duplicates (keeping first-seen order, since a curated list may be in priority
+# order) before anything else reads the list. Without this a comment line is
+# handed to `fluxnet-shuttle download` as if it were a site ID, and its failure
+# is recorded as a bogus status file named after the comment text.
+SITE_IDS="${WORK_DIR}/site_ids.txt"
+awk '{ sub(/#.*/, ""); gsub(/^[[:space:]]+|[[:space:]]+$/, "") }
+     $0 != "" && !seen[$0]++' "${SITE_LIST_FILE}" > "${SITE_IDS}"
+if [[ ! -s "${SITE_IDS}" ]]; then
+  echo "ERROR: no site IDs found in ${SITE_LIST_FILE} (only comments/blank lines?)" >&2
+  exit 1
+fi
+
+n_sites=$(wc -l < "${SITE_IDS}" | tr -d ' ')
 n_done=$(ls "${STATUS_DIR}" 2>/dev/null | wc -l | tr -d ' ')
 echo "Group        : ${GROUP}"
 echo "Sites        : ${n_sites} (from ${SITE_LIST_FILE}), ${n_done} already processed"
@@ -134,7 +150,7 @@ echo "Flux out     : ${FLUX_DIR}"
 echo "Logs         : ${LOG_DIR}/<site>.log"
 echo "Gapfill      : ${GAPFILL}"
 echo "Preset       : ${PRESET}"
-echo "Status       : ${STATUS_DIR}/<site> (OK / NODOWNLOAD / BADZIP / NOFLUXMET / NOERA5 / NOYEARS / NOMET / ERROR)"
+echo "Status       : ${STATUS_DIR}/<site> (OK / NODOWNLOAD / BADZIP / NOFLUXMET / NOERA5 / NOYEARS / NOMET / ADAPT_FAILED / ERROR)"
 echo
 
 run_one() {
@@ -237,7 +253,7 @@ export SCRIPT_DIR SNAPSHOT_CSV SITE_CSV MIN_YEARS GAPFILL PRESET WORK_DIR FORCIN
 export SHUTTLE_BIN="${SHUTTLE_BIN:-fluxnet-shuttle}"
 
 start=$(date +%s)
-xargs -P "${JOBS}" -I{} bash -c 'run_one "$@"' _ {} < "${SITE_LIST_FILE}"
+xargs -P "${JOBS}" -I{} bash -c 'run_one "$@"' _ {} < "${SITE_IDS}"
 end=$(date +%s)
 
 echo

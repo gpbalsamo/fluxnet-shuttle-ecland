@@ -27,7 +27,13 @@ from netCDF4 import Dataset
 # (upper bound of Gap-filled_% for each band).
 BANDS = [("mild", 10), ("medium", 25), ("heavy", 50), ("complete", 100)]
 
-MET_VARS = ("Tair", "SWdown", "LWdown", "VPD", "Psurf", "Precip", "Wind", "Qair", "RH", "CO2air")
+# Both spellings of the two renamed variables are listed on purpose: FluxnetLSM
+# writes the ALMA names Psurf/Precip, and scripts/regenerate_forcing.sh renames
+# them to ecLand's PSurf/Rainf. This script is normally pointed at the renamed
+# forcing/<group>/ files, so omitting the ecLand spellings silently dropped
+# surface pressure and precipitation from every report.
+MET_VARS = ("Tair", "SWdown", "LWdown", "VPD", "Psurf", "PSurf", "Precip", "Rainf",
+            "Wind", "Qair", "RH", "CO2air")
 
 
 def classify(gapfilled_pct: float) -> str:

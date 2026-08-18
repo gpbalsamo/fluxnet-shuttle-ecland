@@ -11,7 +11,7 @@
 # not a re-extraction of the static fields at the forcing's site location.
 #
 # Requires: NCO (ncap2), and forcing/PLUMBER2/ already populated (see
-# regenerate_plumber2_forcing.sh).
+# regenerate_forcing.sh).
 #
 # (C) Copyright 2023- ECMWF.
 #
