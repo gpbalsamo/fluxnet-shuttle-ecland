@@ -212,7 +212,7 @@ run_one() {
   echo "[$(date '+%H:%M:%S')] ${status}  ${site} ($(( t1 - t0 ))s)"
 }
 export -f run_one
-export SCRIPT_DIR SNAPSHOT_CSV SITE_CSV MIN_YEARS GAPFILL WORK_DIR FORCING_DIR FLUX_DIR LOG_DIR STATUS_DIR
+export SCRIPT_DIR SNAPSHOT_CSV SITE_CSV MIN_YEARS GAPFILL PRESET WORK_DIR FORCING_DIR FLUX_DIR LOG_DIR STATUS_DIR
 export SHUTTLE_BIN="${SHUTTLE_BIN:-fluxnet-shuttle}"
 
 start=$(date +%s)
