@@ -60,6 +60,7 @@ SITE_CSV="${PROJECT_ROOT}/reference/site_metadata_merged.csv"
 PRESET="medium"
 GAPFILL="statistical"
 MIN_YEARS=""
+CO2_CSV=""
 ARRAY_TASKS=4
 JOBS=4
 WALLTIME="12:00:00"
@@ -90,6 +91,9 @@ Pipeline options (forwarded to run_forcing_pipeline.sh):
   -P PRESET         mild|medium|heavy|complete (default: ${PRESET})
   -G GAPFILL        statistical|erainterim (default: ${GAPFILL})
   -m MIN_YEARS      Override the preset's min_yrs
+  -C CO2_CSV        NOAA GML monthly CO2 table (scripts/fetch_noaa_co2.py); fills
+                     each site's missing CO2 before conversion, see
+                     run_forcing_pipeline.sh -C
 
 SLURM options:
   -a ARRAY_TASKS    Array tasks, i.e. nodes' worth of slices (default: ${ARRAY_TASKS})
@@ -108,7 +112,7 @@ already on the batch PATH>}).
 EOF
 }
 
-while getopts ":hnf:g:S:c:P:G:m:a:j:t:q:M:W:" opt; do
+while getopts ":hnf:g:S:c:P:G:m:C:a:j:t:q:M:W:" opt; do
   case "${opt}" in
     f) SNAPSHOT_CSV="${OPTARG}" ;;
     g) GROUP="${OPTARG}" ;;
@@ -117,6 +121,7 @@ while getopts ":hnf:g:S:c:P:G:m:a:j:t:q:M:W:" opt; do
     P) PRESET="${OPTARG}" ;;
     G) GAPFILL="${OPTARG}" ;;
     m) MIN_YEARS="${OPTARG}" ;;
+    C) CO2_CSV="${OPTARG}" ;;
     a) ARRAY_TASKS="${OPTARG}" ;;
     j) JOBS="${OPTARG}" ;;
     t) WALLTIME="${OPTARG}" ;;
@@ -144,6 +149,16 @@ if [[ ! -f "${SITE_CSV}" ]]; then
   echo "ERROR: site metadata CSV not found: ${SITE_CSV}" >&2
   echo "       build one with: python3 scripts/build_site_metadata.py ${SNAPSHOT_CSV} --out ${SITE_CSV}" >&2
   exit 1
+fi
+if [[ -n "${CO2_CSV}" ]]; then
+  if [[ ! -f "${CO2_CSV}" ]]; then
+    echo "ERROR: CO2 table not found: ${CO2_CSV}" >&2
+    echo "       build it with: python3 scripts/fetch_noaa_co2.py --out ${CO2_CSV}" >&2
+    exit 1
+  fi
+  # The job runs from an arbitrary working directory, so a relative path here
+  # would silently not resolve on the compute node.
+  CO2_CSV="$(cd "$(dirname "${CO2_CSV}")" && pwd -P)/$(basename "${CO2_CSV}")"
 fi
 if ! command -v sbatch >/dev/null 2>&1; then
   echo "ERROR: sbatch not found -- this script is for HPC batch submission." >&2
@@ -201,6 +216,10 @@ done
 n_done=0
 [[ -d "${WORK_DIR}/status" ]] && n_done=$(ls "${WORK_DIR}/status" 2>/dev/null | wc -l | tr -d ' ')
 
+EXTRA_ARGS=""
+[[ -n "${CO2_CSV}" ]] && EXTRA_ARGS+=" -C \"${CO2_CSV}\""
+[[ -n "${MIN_YEARS}" ]] && EXTRA_ARGS+=" -m \"${MIN_YEARS}\""
+
 JOB_SCRIPT="${SLURM_DIR}/forcing_pipeline_${GROUP}.sbatch"
 cat > "${JOB_SCRIPT}" <<EOF
 #!/bin/bash
@@ -242,8 +261,7 @@ exec "${SCRIPT_DIR}/run_forcing_pipeline.sh" \\
   -W "${WORK_ROOT}" \\
   -P "${PRESET}" \\
   -G "${GAPFILL}" \\
-  -j "${JOBS}"${MIN_YEARS:+ \\
-  -m "${MIN_YEARS}"}
+  -j "${JOBS}"${EXTRA_ARGS}
 EOF
 chmod +x "${JOB_SCRIPT}"
 
@@ -251,6 +269,7 @@ echo "Group          : ${GROUP}"
 echo "Sites          : ${n_sites} (${n_done} already have a status file and will be skipped)"
 echo "Array          : ${ARRAY_TASKS} tasks x ${JOBS} workers = $((ARRAY_TASKS * JOBS)) concurrent sites"
 echo "Preset/gapfill : ${PRESET} / ${GAPFILL}"
+echo "CO2 fill       : ${CO2_CSV:-<none>}"
 echo "Work dir       : ${WORK_DIR}"
 echo "Forcing out    : ${PROJECT_ROOT}/forcing/${GROUP}"
 echo "Job script     : ${JOB_SCRIPT}"

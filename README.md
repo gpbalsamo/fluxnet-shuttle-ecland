@@ -2,7 +2,7 @@
 
 Scripts and configuration to run [ecLand](https://www.ecmwf.int/en/research/modelling-systems/land-surface) land-surface model simulations over flux-tower sites discovered live via the [FLUXNET Shuttle](https://github.com/fluxnet/shuttle) — extending beyond the fixed 170-site [PLUMBER2](https://essd.copernicus.org/articles/14/449/2022/) benchmark (see sibling repo [plumber2-ecland](https://github.com/gpbalsamo/plumber2-ecland), which this repo forks most of its `scripts/` from) into the wider, continually-growing pool of sites now available across AmeriFlux, ICOS and TERN.
 
-As of the 2026-08-17 live Shuttle snapshot: **775 sites** (AmeriFlux 381, ICOS 342, TERN 52) vs PLUMBER2's 170 — including biomes/regions PLUMBER2 underrepresents (savanna, Mediterranean shrubland, Sahel, boreal/tundra), which is the actual motivation: a CoFLAME-facing gap around fire-prone and vegetation-stress biomes.
+As of the 2026-08-18 live Shuttle snapshot: **775 sites** (AmeriFlux 381, ICOS 342, TERN 52) vs PLUMBER2's 170 — including biomes/regions PLUMBER2 underrepresents (savanna, Mediterranean shrubland, Sahel, boreal/tundra), which is the actual motivation: a CoFLAME-facing gap around fire-prone and vegetation-stress biomes.
 
 ![FLUXNET Shuttle site locations, colored by biome](shuttle_sites_map.png)
 
@@ -10,9 +10,21 @@ Generated with `scripts/plot_sites_map.py --snapshot-csv <listall snapshot>` —
 
 ## Status (2026-08-18)
 
-This is a pilot, not a finished benchmark. What's real and validated vs. what's still blocked:
+**Forcing now exists for the whole live site pool.** A full run on ECMWF HPC (2026-08-18 snapshot, ERA5 gapfilling, `complete` preset, NOAA CO2 fill) produced ecLand-ready forcing for **775 / 775 sites — 5397 site-years**, median 5 years per site, max 31:
 
-**Validated end-to-end, on real data, on this machine:**
+| hub | sites | site-years |
+|---|---|---|
+| AmeriFlux | 381 / 381 | 2513.1 |
+| ICOS | 342 / 342 | 2511.1 |
+| TERN | 52 / 52 | 373.0 |
+
+By IGBP: GRA 145, CRO 138, WET 115, ENF 114, DBF 80, EBF 44, OSH 40, MF 24, WSA 18, SAV 14, DNF 13, CSH 12, CVM 9, BSV 7, SNO 2 — the fire/vegetation-stress classes that motivate this repo (SAV/WSA/OSH/CSH/GRA) come to **228 sites**, against PLUMBER2's 170 in total.
+
+Gap-fill intensity across all 7750 (file, variable) records, from `reference/qc_report_shuttle-all775-era5.csv`: mild 3755, medium 1603, heavy 1169, complete 1223. Roughly half the delivered data is lightly gap-filled; the heavily-filled remainder is labelled per file and variable rather than mixed in silently. Reaching full coverage does depend on ERA5 — sites vary from near-pure observations to records where pressure and precipitation are largely reanalysis.
+
+What's validated vs. what's still blocked:
+
+**Validated end-to-end, on real data:**
 - Live Shuttle inventory pull, IGBP/record-length filtering, and download (`fluxnet-shuttle listall`/`download` + `scripts/filter_candidate_sites.py`) — see `reference/shuttle_pilot20_site_ids.txt` for the current 20-site fire/vegetation-stress pilot shortlist.
 - FluxnetLSM conversion of a real downloaded site (ES-LJu, ICOS) to ALMA-CF NetCDF (`scripts/install_fluxnetlsm.R` + `scripts/convert_fluxnetlsm.R`) — variables/dims are byte-identical to an existing PLUMBER2-170 file.
 - `scripts/regenerate_forcing.sh` (forked unmodified from `plumber2-ecland`) converts that FluxnetLSM output to ecLand's forcing convention with **no changes needed**. This was the step flagged as the real engineering risk going in; it isn't one for Shuttle-sourced sites.
@@ -23,6 +35,9 @@ This is a pilot, not a finished benchmark. What's real and validated vs. what's 
 - PLUMBER2-style QC screening is strict against sites outside the original pool: ES-LJu's real 21-year record only yielded 2 usable years under statistical gapfilling. Expect similar attrition elsewhere — hence the acceptance presets below, rather than one fixed threshold set.
 - FluxnetLSM's default `check_range_action="stop"` discards a site's **entire** multi-year record over a single implausible value anywhere in it; this alone killed SN-Dhr and US-ICt over one bad PA/VPD value from an ERA5 extraction edge case. The `heavy`/`complete` presets use `truncate` instead.
 - Because acceptance thresholds only decide what gets *written out* (gapfilling always runs first regardless), the real per-variable gap-fill fraction is recorded in every output file. `scripts/qc_classify.py` reads it back, so how much you trust a period is a filtering decision made *after* processing, not a rerun.
+- **Gapfill method dominates yield, far more than the preset does.** The same 775 sites and the same `complete` preset gave 231 sites / 505 files under statistical gapfilling but **775 / 775** under ERA5. Statistical filling cannot close long gaps, and FluxnetLSM's `missing_met` threshold (default 0) then discards the whole year.
+- **CO2 was silently costing 97 sites.** `missing_met=0` drops a year if *any* met variable still has a gap, and CO2 is the one met variable the Shuttle's ERA5 file cannot fill (`ERAinterim_variable=NA` in FluxnetLSM's own schema — reanalysis surface files carry no atmospheric CO2). Those sites were being discarded over a variable ecLand is not driven by here (`LEAIRCO2COUP=.FALSE.`; CO2 appears only as model output). `scripts/fill_co2_from_noaa.py` fills it from the NOAA GML monthly global mean, flagged QC=3 so it still reports as gap-filled — recovering all 97 sites and 264 site-years without touching any acceptance threshold.
+- **One site is blocked by upstream metadata, not by data.** FluxnetLSM's packaged `Site_metadata.csv` marks CZ-BK2 `Exclude=TRUE` with `Exclude_reason=NA`, aborting conversion before any data is read. Verified it converts to a complete 7-year record; `build_site_metadata.py` carries a documented override (`EXCLUDE_OVERRIDES`), reversible with `--respect-upstream-excludes`.
 
 **Blocked, not yet solved:**
 - **No script generates `clim/<group>/surfclim_<site>.nc` / `surfinit_<site>.nc`** (soil, vegetation cover fractions, orography, LAI climatology — ecLand's non-meteorological static inputs) for a new site coordinate. `plumber2-ecland`'s versions of these files were produced externally and only ever fetched from Git LFS; FluxnetLSM doesn't produce them either (it only converts met/flux data).
@@ -36,9 +51,11 @@ scripts/install_fluxnetlsm.R (once per machine)      # R + FluxnetLSM, with a do
 
 fluxnet-shuttle listall                              # live site inventory -> snapshot CSV
   -> scripts/build_site_metadata.py                   # FluxnetLSM's 874-site table + Shuttle sites -> merged site CSV
+  -> scripts/fetch_noaa_co2.py                        # NOAA GML monthly CO2 -> CO2 fallback table (once)
   -> scripts/filter_candidate_sites.py                # IGBP/record-length filter, exclude PLUMBER2-170 (optional)
   -> scripts/run_forcing_pipeline.sh                  # batch driver, per site:
        fluxnet-shuttle download                       #   per-site zip -> FLUXMET (+ optional ERA5) HH CSV
+       -> scripts/fill_co2_from_noaa.py               #   fill missing CO2 (-C), which ERA5 cannot supply
        -> scripts/convert_fluxnetlsm.R                #   FLUXMET CSV -> ALMA-CF Met/Flux NetCDF (--preset, --gapfill)
        -> scripts/regenerate_forcing.sh               #   -> ecLand forcing convention (lon/lat/time, PSurf/Rainf)
   -> scripts/qc_classify.py                           # post-hoc: real per-variable gap-fill % -> mild/medium/heavy/complete
@@ -62,11 +79,16 @@ fluxnet-shuttle-ecland/
 │   ├── plumber2_170_site_ids.txt   # Copy of plumber2-ecland's 170-site list, used as the exclude-list
 │   ├── shuttle_pilot20_site_ids.txt # Current fire/vegetation-stress pilot shortlist (20 sites)
 │   ├── shuttle_pilot20_candidates.csv # The same shortlist with hub/coords/IGBP/record-length columns
-│   └── site_metadata_merged.csv    # FluxnetLSM's Site_metadata.csv + the 2026-08-17 Shuttle sites
-│                                     (1379 sites), for convert_fluxnetlsm.R --site-csv
+│   ├── site_metadata_merged.csv    # FluxnetLSM's Site_metadata.csv + the 2026-08-18 Shuttle sites
+│   │                                 (1349 sites), for convert_fluxnetlsm.R --site-csv
+│   ├── noaa_gml_co2_monthly.csv    # NOAA GML monthly global mean CO2, the CO2 gapfill fallback
+│   └── qc_report_shuttle-all775-era5.csv  # Gap-fill intensity per (file, variable) for the 775-site run
 ├── scripts/
 │   ├── run_forcing_pipeline.sh     # NEW: batch Shuttle -> forcing driver (streaming, resumable, parallel)
+│   ├── submit_forcing_pipeline_slurm.sh # NEW: submit the batch driver to SLURM as a job array
 │   ├── build_site_metadata.py      # NEW: build reference/site_metadata_merged.csv
+│   ├── fetch_noaa_co2.py           # NEW: fetch NOAA GML monthly global mean CO2
+│   ├── fill_co2_from_noaa.py       # NEW: fill a FLUXMET CSV's missing CO2 from that table
 │   ├── filter_candidate_sites.py   # NEW: filter a Shuttle snapshot CSV to candidates
 │   ├── install_fluxnetlsm.R        # NEW: install FluxnetLSM (documents the sf/lutz build workaround)
 │   ├── convert_fluxnetlsm.R        # NEW: FLUXMET CSV -> ALMA-CF NetCDF via FluxnetLSM, with the
@@ -119,7 +141,14 @@ Rscript scripts/install_fluxnetlsm.R   # once per machine; needs: brew install r
 # lat/lon/IGBP. Re-run whenever you take a newer snapshot.
 python3 scripts/build_site_metadata.py fluxnet_shuttle_snapshot_*.csv \
   --out reference/site_metadata_merged.csv
+
+# CO2 fallback table. CO2 is the one met variable ERA5 gapfilling cannot supply,
+# and FluxnetLSM discards any year with a residual met gap -- so without this,
+# sites with intermittent CO2 are lost over a variable ecLand is not driven by.
+python3 scripts/fetch_noaa_co2.py --out reference/noaa_gml_co2_monthly.csv
 ```
+
+`build_site_metadata.py` also applies the documented `EXCLUDE_OVERRIDES` in its source, which un-excludes sites FluxnetLSM's table blocks without a stated reason (currently just CZ-BK2, verified to convert cleanly). Pass `--respect-upstream-excludes` to honour the upstream flags instead.
 
 Optionally narrow the full inventory to a shortlist (skip this to process every site in the snapshot):
 
@@ -146,6 +175,7 @@ scripts/run_forcing_pipeline.sh \
   -g shuttle-pilot20 \
   -S reference/shuttle_pilot20_site_ids.txt \
   -c reference/site_metadata_merged.csv \
+  -C reference/noaa_gml_co2_monthly.csv \
   -P heavy -G erainterim -j 4
 ```
 
@@ -160,7 +190,8 @@ Omit `-S` to process every site in the snapshot; `#` comments, blank lines and d
 
   then re-running the same command. Per-site logs are in `scripts/work/forcing_pipeline_<group>/logs/<site>.log`.
 - **`-P` acceptance preset** — `mild | medium` (default) `| heavy | complete`, a bundle of FluxnetLSM's own thresholds (`gapfill_met_tier1`, `missing_flux`, `min_yrs`, `check_range_action`). For a fixed gapfill method, a looser preset yields a strict superset of the periods a stricter one yields. `heavy`/`complete` switch `check_range_action` to `truncate`, which is what keeps a single implausible value from discarding a site's whole record.
-- **`-G` gapfilling** — `statistical` (default, no extra input) or `erainterim`, which also extracts the site's `*_ERA5_HH_*.csv` from the same download and passes it through. Flux variables always gapfill statistically; FluxnetLSM supports nothing else for them.
+- **`-G` gapfilling** — `statistical` (default, no extra input) or `erainterim`, which also extracts the site's `*_ERA5_HH_*.csv` from the same download and passes it through. Flux variables always gapfill statistically; FluxnetLSM supports nothing else for them. This choice dominates yield: 231 sites vs 775 on the same pool and preset.
+- **`-C` CO2 fill** — fills missing CO2 from `reference/noaa_gml_co2_monthly.csv` before conversion, flagged QC=3 so it is still counted as gap-filled. Needed because ERA5 has no CO2 to give; without it 97 sites produced nothing at all.
 - A site can yield **several disjoint qualifying periods** (e.g. 2009 and 2011–2013 separately); every one is written, not just the longest.
 - **`-W`** moves the work directory (downloads, logs, status) off the repo filesystem — see [Running on HPC](#running-on-hpc-slurm).
 
@@ -180,8 +211,11 @@ scripts/submit_forcing_pipeline_slurm.sh \
   -f $SCRATCH/fluxnet_shuttle_snapshot_*.csv \
   -g shuttle-all775 \
   -c reference/site_metadata_merged.csv \
-  -P heavy -a 8 -j 4
+  -C reference/noaa_gml_co2_monthly.csv \
+  -P complete -G erainterim -a 8 -j 4
 ```
+
+That is the exact configuration behind the 775-site result in [Status](#status-2026-08-18): ~47 minutes wall-clock at 8x4, plus a short second pass for the CO2-recovered sites.
 
 Add `-n` to write the job script and print it without submitting. Validated 2026-08-18 on ECMWF's Atos HPC (`gpil`, qos `nf`): the 20-site pilot ran 5×4 in ~4 minutes.
 

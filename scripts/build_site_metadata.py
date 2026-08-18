@@ -54,6 +54,26 @@ IGBP_LONG_NAME = {
     "SNO": "Snow and Ice",
 }
 
+# FluxnetLSM's packaged table marks five sites Exclude=TRUE. That flag aborts
+# conversion before any data is read ("ERROR: Site not processed. Reason: ...",
+# from R/ConvertSpreadsheetToNcdf.R), so such a site can never produce forcing
+# no matter how good its data is. Where the exclusion carries no stated reason
+# AND the site has been positively verified to convert cleanly, it is
+# overridden here -- in code, with the evidence recorded, so the merged table
+# stays reproducible from a snapshot and every override stays reviewable.
+# Pass --respect-upstream-excludes to honour FluxnetLSM's flag instead.
+EXCLUDE_OVERRIDES = {
+    "CZ-BK2": (
+        "Upstream Exclude=TRUE carries Exclude_reason=NA -- unexplained, in a table "
+        "predating the FLUXNET Shuttle by years. Verified 2026-08-18 on a real "
+        "download: with ERA5 gapfilling plus NOAA CO2 fill the site converts to a "
+        "complete 7.0-year record (2006-2012, 122736 half-hours) with every met "
+        "variable at 0.00% missing, so the flag does not reflect unusable data. "
+        "Heavily ERA5-dependent (Psurf 64.6%, Precip 49.4% gap-filled), which "
+        "scripts/qc_classify.py reports per file."
+    ),
+}
+
 # FluxnetLSM's Site_metadata.csv column schema (see site_metadata_template()
 # in FluxnetLSM's R/Site_metadata.R) -- new rows must use these exact names.
 SCHEMA = [
@@ -86,6 +106,10 @@ def parse_args() -> argparse.Namespace:
                    help="FluxnetLSM's packaged Site_metadata.csv (default: auto-detected via "
                         "`Rscript -e system.file(...)`, i.e. wherever FluxnetLSM is installed).")
     p.add_argument("--out", type=Path, required=True, help="Output merged CSV path.")
+    p.add_argument("--respect-upstream-excludes", action="store_true",
+                   help="Keep FluxnetLSM's Exclude=TRUE flags as-is, skipping the documented "
+                        "overrides in EXCLUDE_OVERRIDES (see this script's source for each "
+                        "override and the evidence behind it).")
     return p.parse_args()
 
 
@@ -141,6 +165,15 @@ def main() -> int:
         print(f"WARNING: no long name mapped for IGBP code(s) {sorted(unmapped_igbp)} "
               f"-- add to IGBP_LONG_NAME in this script.", file=sys.stderr)
 
+    overridden = []
+    if not args.respect_upstream_excludes:
+        for r in base_rows:
+            reason = EXCLUDE_OVERRIDES.get(r["SiteCode"])
+            if reason and r.get("Exclude", "").strip().upper() == "TRUE":
+                r["Exclude"] = "FALSE"
+                r["Exclude_reason"] = reason
+                overridden.append(r["SiteCode"])
+
     args.out.parent.mkdir(parents=True, exist_ok=True)
     with open(args.out, "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=SCHEMA)
@@ -149,6 +182,10 @@ def main() -> int:
             w.writerow({col: r.get(col, "") for col in SCHEMA})
         for r in new_rows:
             w.writerow(r)
+
+    if overridden:
+        print(f"Overrode FluxnetLSM Exclude=TRUE for: {', '.join(overridden)} "
+              f"(reasons recorded in Exclude_reason; --respect-upstream-excludes to disable)")
 
     print(f"Added {added} Shuttle-only sites -> {len(base_rows) + added} total rows")
     print(f"Wrote {args.out}")

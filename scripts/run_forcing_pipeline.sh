@@ -48,6 +48,7 @@ MIN_YEARS=""
 GAPFILL="statistical"
 PRESET="medium"
 WORK_ROOT=""
+CO2_CSV=""
 
 usage() {
   cat <<EOF
@@ -69,6 +70,14 @@ Usage: $(basename "$0") -f SNAPSHOT_CSV -g GROUP [options]
                      each site's *_ERA5_HH_*.csv from the same download and passes it
                      as convert_fluxnetlsm.R --era-file (see convert_fluxnetlsm.R's
                      header for why "erainterim" here means real ERA5 data)
+  -C CO2_CSV        NOAA GML monthly CO2 table (scripts/fetch_noaa_co2.py output).
+                     When given, each site's missing CO2_F_MDS is filled from it
+                     before conversion, flagged QC=3. CO2 is the one met variable
+                     the Shuttle's ERA5 file cannot gapfill, and FluxnetLSM's
+                     missing_met=0 discards any year with a gap in ANY met
+                     variable -- so without this, sites with intermittent CO2 are
+                     lost entirely over a variable ecLand is not driven by here
+                     (see scripts/fill_co2_from_noaa.py). Default: unset (no fill)
   -W WORK_ROOT      Parent directory for the per-group work directory holding
                      downloads, logs and status files (default:
                      <repo>/scripts/work). Point this at a fast, roomy
@@ -82,7 +91,7 @@ Usage: $(basename "$0") -f SNAPSHOT_CSV -g GROUP [options]
 EOF
 }
 
-while getopts ":hf:g:S:c:j:m:G:P:W:" opt; do
+while getopts ":hf:g:S:c:j:m:G:P:W:C:" opt; do
   case "${opt}" in
     f) SNAPSHOT_CSV="${OPTARG}" ;;
     g) GROUP="${OPTARG}" ;;
@@ -93,6 +102,7 @@ while getopts ":hf:g:S:c:j:m:G:P:W:" opt; do
     G) GAPFILL="${OPTARG}" ;;
     P) PRESET="${OPTARG}" ;;
     W) WORK_ROOT="${OPTARG}" ;;
+    C) CO2_CSV="${OPTARG}" ;;
     h) usage; exit 0 ;;
     \?) echo "ERROR: invalid option -${OPTARG}" >&2; usage >&2; exit 2 ;;
     :) echo "ERROR: option -${OPTARG} requires an argument" >&2; usage >&2; exit 2 ;;
@@ -109,6 +119,14 @@ if [[ ! -f "${SNAPSHOT_CSV}" ]]; then
   exit 1
 fi
 SNAPSHOT_CSV="$(cd "$(dirname "${SNAPSHOT_CSV}")" && pwd -P)/$(basename "${SNAPSHOT_CSV}")"
+if [[ -n "${CO2_CSV}" ]]; then
+  if [[ ! -f "${CO2_CSV}" ]]; then
+    echo "ERROR: CO2 table not found: ${CO2_CSV}" >&2
+    echo "       build it with: python3 scripts/fetch_noaa_co2.py --out ${CO2_CSV}" >&2
+    exit 1
+  fi
+  CO2_CSV="$(cd "$(dirname "${CO2_CSV}")" && pwd -P)/$(basename "${CO2_CSV}")"
+fi
 
 WORK_ROOT="${WORK_ROOT:-${PROJECT_ROOT}/scripts/work}"
 WORK_DIR="${WORK_ROOT}/forcing_pipeline_${GROUP}"
@@ -172,6 +190,7 @@ echo "Flux out     : ${FLUX_DIR}"
 echo "Logs         : ${LOG_DIR}/<site>.log"
 echo "Gapfill      : ${GAPFILL}"
 echo "Preset       : ${PRESET}"
+echo "CO2 fill     : ${CO2_CSV:-<none>}"
 echo "Status       : ${STATUS_DIR}/<site> (OK / NODOWNLOAD / BADZIP / NOFLUXMET / NOERA5 / NOYEARS / NOMET / ADAPT_FAILED / ERROR)"
 echo
 
@@ -232,6 +251,16 @@ run_one() {
              [[ -z "${era5_csv}" ]]; then
           status="NOERA5"
         else
+          # Fill CO2 before conversion, not after: FluxnetLSM decides which
+          # years to keep while reading this file, so a gap left here costs
+          # the whole year (missing_met=0). Failure to fill is deliberately
+          # not fatal -- the site simply proceeds as it would have without
+          # -C, and FluxnetLSM's own verdict still applies.
+          if [[ -n "${CO2_CSV}" ]]; then
+            python3 "${SCRIPT_DIR}/fill_co2_from_noaa.py" \
+              --infile "${csv}" --co2-csv "${CO2_CSV}" \
+              || echo "WARNING: CO2 fill failed for ${site}; continuing unfilled" >&2
+          fi
           [[ "${GAPFILL}" == "erainterim" ]] && era_args=(--era-file="${era5_csv}")
           [[ -n "${MIN_YEARS}" ]] && era_args+=(--min-years="${MIN_YEARS}")
           if Rscript "${SCRIPT_DIR}/convert_fluxnetlsm.R" \
@@ -275,7 +304,7 @@ run_one() {
   echo "[$(date '+%H:%M:%S')] ${status}  ${site} ($(( t1 - t0 ))s)"
 }
 export -f run_one
-export SCRIPT_DIR SNAPSHOT_CSV SITE_CSV MIN_YEARS GAPFILL PRESET WORK_DIR RUN_DIR FORCING_DIR FLUX_DIR LOG_DIR STATUS_DIR
+export SCRIPT_DIR SNAPSHOT_CSV SITE_CSV MIN_YEARS GAPFILL PRESET CO2_CSV WORK_DIR RUN_DIR FORCING_DIR FLUX_DIR LOG_DIR STATUS_DIR
 export SHUTTLE_BIN="${SHUTTLE_BIN:-fluxnet-shuttle}"
 
 start=$(date +%s)
