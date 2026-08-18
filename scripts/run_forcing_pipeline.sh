@@ -12,7 +12,12 @@
 # FluxnetLSM's QC screening).
 #
 # Resumable: a site already recorded in the status dir is skipped, so a
-# killed/interrupted run can just be re-invoked with the same arguments.
+# killed/interrupted run can just be re-invoked with the same arguments. To
+# retry only sites that failed transiently (NODOWNLOAD/BADZIP -- a network
+# blip mid-download, not a real "no data" verdict like NOFLUXMET/NOYEARS),
+# delete just their status files first, e.g.:
+#   grep -lxE 'NODOWNLOAD|BADZIP' scripts/work/forcing_pipeline_<group>/status/* | xargs rm
+# then re-invoke with the same arguments.
 #
 # Requires: scripts/install_fluxnetlsm.R already run, and
 # scripts/build_site_metadata.py already run to produce --site-csv (or pass
@@ -129,7 +134,7 @@ echo "Flux out     : ${FLUX_DIR}"
 echo "Logs         : ${LOG_DIR}/<site>.log"
 echo "Gapfill      : ${GAPFILL}"
 echo "Preset       : ${PRESET}"
-echo "Status       : ${STATUS_DIR}/<site> (OK / NODOWNLOAD / NOFLUXMET / NOERA5 / NOYEARS / NOMET / ERROR)"
+echo "Status       : ${STATUS_DIR}/<site> (OK / NODOWNLOAD / BADZIP / NOFLUXMET / NOERA5 / NOYEARS / NOMET / ERROR)"
 echo
 
 run_one() {
@@ -157,6 +162,13 @@ run_one() {
       zipfile=$(find "${dl_dir}" -maxdepth 1 -name '*.zip' | head -1)
       if [[ -z "${zipfile}" ]]; then
         status="NODOWNLOAD"
+      elif ! unzip -tq "${zipfile}" >/dev/null 2>&1; then
+        # A network blip mid-download can leave a truncated/corrupt zip even
+        # though the shuttle CLI itself reported success -- `unzip -t`
+        # verifies the archive's integrity before extracting, so this is
+        # told apart from a genuine "no FLUXMET product for this site"
+        # (NOFLUXMET below) and can be safely retried later.
+        status="BADZIP"
       else
         unzip -o -q "${zipfile}" -d "${dl_dir}/extracted"
         rm -f "${zipfile}"
@@ -221,7 +233,7 @@ end=$(date +%s)
 
 echo
 echo "=== Summary ($(( end - start ))s) ==="
-for s in OK NODOWNLOAD NOFLUXMET NOERA5 NOYEARS NOMET ADAPT_FAILED ERROR; do
+for s in OK NODOWNLOAD BADZIP NOFLUXMET NOERA5 NOYEARS NOMET ADAPT_FAILED ERROR; do
   c=$(ls "${STATUS_DIR}" 2>/dev/null | xargs -I{} cat "${STATUS_DIR}/{}" 2>/dev/null | grep -c "^${s}\$" || true)
   [[ "${c}" -gt 0 ]] && echo "  ${s}: ${c}"
 done
