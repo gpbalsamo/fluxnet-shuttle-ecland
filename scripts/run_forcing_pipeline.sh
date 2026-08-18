@@ -173,11 +173,20 @@ run_one() {
         unzip -o -q "${zipfile}" -d "${dl_dir}/extracted"
         rm -f "${zipfile}"
         local csv era5_csv era_args=()
+        # TERN/OzFlux sites ship hourly data (*_HR_*) instead of half-hourly
+        # (*_HH_*) -- same FLUXNET2015 column schema either way (confirmed
+        # 2026-08-18: FluxnetLSM auto-detects the timestep from the data's
+        # own TIMESTAMP_START/END spacing, no special-casing needed), but the
+        # filename pattern differs. Falling back to *_HR_* below fixes what
+        # first looked like network-outage-caused NOFLUXMET failures but was
+        # actually this filename gap -- would have affected every TERN site
+        # regardless of network conditions.
         csv=$(find "${dl_dir}/extracted" -iname '*FLUXMET_HH*.csv' | head -1)
+        [[ -z "${csv}" ]] && csv=$(find "${dl_dir}/extracted" -iname '*FLUXMET_HR*.csv' | head -1)
         if [[ -z "${csv}" ]]; then
           status="NOFLUXMET"
         elif [[ "${GAPFILL}" == "erainterim" ]] && \
-             era5_csv=$(find "${dl_dir}/extracted" -iname '*_ERA5_HH_*.csv' | head -1) && \
+             era5_csv=$( { find "${dl_dir}/extracted" -iname '*_ERA5_HH_*.csv'; find "${dl_dir}/extracted" -iname '*_ERA5_HR_*.csv'; } | head -1) && \
              [[ -z "${era5_csv}" ]]; then
           status="NOERA5"
         else
