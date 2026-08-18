@@ -39,8 +39,9 @@ GROUP=""
 SITE_LIST_FILE=""
 SITE_CSV="${PROJECT_ROOT}/reference/site_metadata_merged.csv"
 JOBS=4
-MIN_YEARS=1
+MIN_YEARS=""
 GAPFILL="statistical"
+PRESET="medium"
 
 usage() {
   cat <<EOF
@@ -52,7 +53,11 @@ Usage: $(basename "$0") -f SNAPSHOT_CSV -g GROUP [options]
   -c SITE_CSV       FluxnetLSM site metadata CSV, forwarded as convert_fluxnetlsm.R
                      --site-csv (default: ${SITE_CSV})
   -j JOBS           Concurrent site pipelines (default: ${JOBS})
-  -m MIN_YEARS      convert_fluxnetlsm.R --min-years (default: ${MIN_YEARS})
+  -m MIN_YEARS      convert_fluxnetlsm.R --min-years (default: unset -- use the
+                     preset's own min_yrs, see convert_fluxnetlsm.R --preset)
+  -P PRESET         mild|medium (default)|heavy|complete -- acceptance-threshold
+                     bundle, forwarded as convert_fluxnetlsm.R --preset (see its
+                     header for what each level actually changes)
   -G GAPFILL        statistical (default) or erainterim -- erainterim also extracts
                      each site's *_ERA5_HH_*.csv from the same download and passes it
                      as convert_fluxnetlsm.R --era-file (see convert_fluxnetlsm.R's
@@ -61,7 +66,7 @@ Usage: $(basename "$0") -f SNAPSHOT_CSV -g GROUP [options]
 EOF
 }
 
-while getopts ":hf:g:S:c:j:m:G:" opt; do
+while getopts ":hf:g:S:c:j:m:G:P:" opt; do
   case "${opt}" in
     f) SNAPSHOT_CSV="${OPTARG}" ;;
     g) GROUP="${OPTARG}" ;;
@@ -70,6 +75,7 @@ while getopts ":hf:g:S:c:j:m:G:" opt; do
     j) JOBS="${OPTARG}" ;;
     m) MIN_YEARS="${OPTARG}" ;;
     G) GAPFILL="${OPTARG}" ;;
+    P) PRESET="${OPTARG}" ;;
     h) usage; exit 0 ;;
     \?) echo "ERROR: invalid option -${OPTARG}" >&2; usage >&2; exit 2 ;;
     :) echo "ERROR: option -${OPTARG} requires an argument" >&2; usage >&2; exit 2 ;;
@@ -122,6 +128,7 @@ echo "Forcing out  : ${FORCING_DIR}"
 echo "Flux out     : ${FLUX_DIR}"
 echo "Logs         : ${LOG_DIR}/<site>.log"
 echo "Gapfill      : ${GAPFILL}"
+echo "Preset       : ${PRESET}"
 echo "Status       : ${STATUS_DIR}/<site> (OK / NODOWNLOAD / NOFLUXMET / NOERA5 / NOYEARS / NOMET / ERROR)"
 echo
 
@@ -163,9 +170,10 @@ run_one() {
           status="NOERA5"
         else
           [[ "${GAPFILL}" == "erainterim" ]] && era_args=(--era-file="${era5_csv}")
+          [[ -n "${MIN_YEARS}" ]] && era_args+=(--min-years="${MIN_YEARS}")
           if Rscript "${SCRIPT_DIR}/convert_fluxnetlsm.R" \
               --site="${site}" --infile="${csv}" --outdir="${convert_out}" \
-              --site-csv="${SITE_CSV}" --min-years="${MIN_YEARS}" --gapfill="${GAPFILL}" \
+              --site-csv="${SITE_CSV}" --preset="${PRESET}" --gapfill="${GAPFILL}" \
               "${era_args[@]+"${era_args[@]}"}"; then
             # FluxnetLSM writes one NetCDF per disjoint qualifying
             # consecutive-year block, not just the single longest one (e.g.
