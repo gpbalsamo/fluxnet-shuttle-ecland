@@ -4,6 +4,10 @@ Scripts and configuration to run [ecLand](https://www.ecmwf.int/en/research/mode
 
 As of the 2026-08-17 live Shuttle snapshot: **775 sites** (AmeriFlux 381, ICOS 342, TERN 52) vs PLUMBER2's 170 — including biomes/regions PLUMBER2 underrepresents (savanna, Mediterranean shrubland, Sahel, boreal/tundra), which is the actual motivation: a CoFLAME-facing gap around fire-prone and vegetation-stress biomes.
 
+![FLUXNET Shuttle site locations, colored by biome](shuttle_sites_map.png)
+
+Generated with `scripts/plot_sites_map.py --snapshot-csv <listall snapshot>` — the same script (forked as-is from `plumber2-ecland`) that renders that repo's 170-site map, extended with a fourth Barren & Snow/Ice biome group and `DNF`/`CVM` IGBP classes for the sites outside the original PLUMBER2 pool.
+
 ## Status (2026-08-17)
 
 This is a pilot, not a finished benchmark. What's real and validated vs. what's still blocked:
