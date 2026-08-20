@@ -71,6 +71,7 @@ DEFAULTS="${PROJECT_ROOT}/config/physiography_defaults.yaml"
 # physiography from the same O1280 climate directory.
 OPER_FROM="20150601"
 LIMIT=""
+OVERRIDE_CSV=""
 
 usage() {
   cat <<EOF
@@ -99,11 +100,17 @@ Usage: $(basename "$0") -g GROUP [options]
                      fraction at the point, which is what the flux-tower case
                      wants; 'orig' keeps ERA5's own land/lake fractions
   -p PYTHON_BIN     Python with netCDF4, for reading coordinates (default: ${PYTHON_BIN})
+  -O OVERRIDE_CSV   CSV of site,lat,lon replacing the coordinate taken from the
+                     forcing file, for sites whose own gridpoint carries no land
+                     (see scripts/nearest_land_point.py and
+                     reference/physiography_land_nudge.csv). The tower keeps its
+                     own coordinates everywhere else -- only these static fields
+                     and the initial soil state are borrowed
   -h                Show this help
 EOF
 }
 
-while getopts ":hg:S:n:j:W:E:s:u:p:D:" opt; do
+while getopts ":hg:S:n:j:W:E:s:u:p:D:O:" opt; do
   case "${opt}" in
     g) GROUP="${OPTARG}" ;;
     S) SITE_LIST_FILE="${OPTARG}" ;;
@@ -115,6 +122,7 @@ while getopts ":hg:S:n:j:W:E:s:u:p:D:" opt; do
     u) WHICH_SURFACE="${OPTARG}" ;;
     p) PYTHON_BIN="${OPTARG}" ;;
     D) DEFAULTS="${OPTARG}" ;;
+    O) OVERRIDE_CSV="${OPTARG}" ;;
     h) usage; exit 0 ;;
     \?) echo "ERROR: invalid option -${OPTARG}" >&2; usage >&2; exit 2 ;;
     :) echo "ERROR: option -${OPTARG} requires an argument" >&2; usage >&2; exit 2 ;;
@@ -162,12 +170,19 @@ mkdir -p "${CLIM_DIR}" "${LOG_DIR}" "${STATUS_DIR}" "${RUN_DIR}"
 # file. Built once, here, so a coordinate that cannot be read is a startup
 # failure rather than a job that dies 300 sites in.
 MANIFEST="${RUN_DIR}/manifest.txt"
-"${PYTHON_BIN}" - "${FORCING_DIR}" "${SITE_LIST_FILE}" > "${MANIFEST}" <<'PY'
-import glob, os, re, sys
+"${PYTHON_BIN}" - "${FORCING_DIR}" "${SITE_LIST_FILE}" "${OVERRIDE_CSV}" > "${MANIFEST}" <<'PY'
+import csv, glob, os, re, sys
 from netCDF4 import Dataset
 import numpy as np
 
-forcing_dir, site_list = sys.argv[1], sys.argv[2]
+forcing_dir, site_list, override_csv = sys.argv[1], sys.argv[2], sys.argv[3]
+# Sites whose own gridpoint is water take their physiography from the nearest
+# land gridpoint instead; the coordinate substitution happens here so the rest
+# of the pipeline is unaware of it.
+override = {}
+if override_csv:
+    for r in csv.DictReader(open(override_csv)):
+        override[r["site"]] = (float(r["lat"]), float(r["lon"]))
 wanted = None
 if site_list:
     wanted = set()
@@ -185,9 +200,13 @@ for path in sorted(glob.glob(os.path.join(forcing_dir, "*.nc"))):
     site, y1, y2 = m.group(1), m.group(2), m.group(3)
     if wanted is not None and site not in wanted:
         continue
-    with Dataset(path) as ds:
-        lat = float(np.asarray(ds.variables["latitude"][:]).ravel()[0])
-        lon = float(np.asarray(ds.variables["longitude"][:]).ravel()[0])
+    if site in override:
+        lat, lon = override[site]
+        print(f"OVERRIDE {site}: nearest land point {lat:.4f},{lon:.4f}", file=sys.stderr)
+    else:
+        with Dataset(path) as ds:
+            lat = float(np.asarray(ds.variables["latitude"][:]).ravel()[0])
+            lon = float(np.asarray(ds.variables["longitude"][:]).ravel()[0])
     print(f"{site} {lat:.6f} {lon:.6f} {y1} {y2}")
 PY
 if [[ ! -s "${MANIFEST}" ]]; then
@@ -205,6 +224,7 @@ echo "Clim out     : ${CLIM_DIR}"
 echo "Portal       : ${PORTAL_DIR}"
 echo "Source       : ${FORCING_SOURCE}   which_surface: ${WHICH_SURFACE}"
 echo "Defaults     : ${DEFAULTS}"
+echo "Coord override: ${OVERRIDE_CSV:-<none>}"
 echo "Workers      : ${JOBS}"
 echo "Work dir     : ${WORK_DIR}"
 echo "Status       : ${STATUS_DIR}/<site> (OK / NOOUTPUT / ERROR)"

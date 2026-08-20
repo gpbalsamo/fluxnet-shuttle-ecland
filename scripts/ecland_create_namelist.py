@@ -181,12 +181,15 @@ if __name__ == "__main__":
         nlon=len(forcingFile.dimensions['x'])
         ndimcdf=1
     if forcing_type=='insitu':
-      if 'lat' in climFile.dimensions:
-        zphista=climFile.variables['zphista'][0].data[0]
-        zuv=climFile.variables['zuv'][0].data[0]
-      else:
-        zphista=climFile.variables['zphista'][0].data
-        zuv=climFile.variables['zuv'][0].data
+      # zphista/zuv are the forcing reference heights. They are scalar
+      # variables in the surfclim files -- both the PLUMBER2 ones and those
+      # built by create_forcing -- so indexing them as [0].data[0] depends
+      # entirely on how the installed netCDF4/numpy pair happens to treat a
+      # 0-d variable, and raises "too many indices" on newer ones. Flattening
+      # to an array first reads the same value from a scalar, a (1,) or a
+      # (1,1) variable, so this no longer varies with the environment.
+      zphista=float(np.ravel(np.asarray(climFile.variables['zphista'][...]))[0])
+      zuv=float(np.ravel(np.asarray(climFile.variables['zuv'][...]))[0])
     else:
       zphista=10.0
       zuv=10.0

@@ -22,7 +22,7 @@ By IGBP: GRA 145, CRO 138, WET 115, ENF 114, DBF 80, EBF 44, OSH 40, MF 24, WSA 
 
 Gap-fill intensity across all 7750 (file, variable) records, from `reference/qc_report_shuttle-all775-era5.csv`: mild 3755, medium 1603, heavy 1169, complete 1223. Roughly half the delivered data is lightly gap-filled; the heavily-filled remainder is labelled per file and variable rather than mixed in silently. Reaching full coverage does depend on ERA5 — sites vary from near-pure observations to records where pressure and precipitation are largely reanalysis.
 
-Physiography and initial conditions for those sites are being built now (see below); once complete, every input ecLand needs exists for the full pool.
+**Every input ecLand needs now exists for all 775 sites**: physiography and initial conditions were built for 775/775 (see [Physiography](#2c-physiography-and-initial-conditions)), and a 3-site pilot has been run end to end through the model, postprocessing and benchmarking — correlations of 0.81–0.93 against tower Qle/Qh. See [Pilot](#61-pilot-run-3-sites).
 
 What's validated vs. what's still open:
 
@@ -94,12 +94,14 @@ fluxnet-shuttle-ecland/
 │   ├── site_metadata_merged.csv    # FluxnetLSM's Site_metadata.csv + the 2026-08-18 Shuttle sites
 │   │                                 (1349 sites), for convert_fluxnetlsm.R --site-csv
 │   ├── noaa_gml_co2_monthly.csv    # NOAA GML monthly global mean CO2, the CO2 gapfill fallback
+│   ├── physiography_land_nudge.csv # The 17 sites whose physiography comes from the nearest land point
 │   └── qc_report_shuttle-all775-era5.csv  # Gap-fill intensity per (file, variable) for the 775-site run
 ├── scripts/
 │   ├── run_forcing_pipeline.sh     # NEW: batch Shuttle -> forcing driver (streaming, resumable, parallel)
 │   ├── extract_physiography_batch.sh # NEW: surfclim/surfinit for a whole group, via ecland-portal
 │   ├── submit_physiography_slurm.sh  # NEW: submit that to SLURM
 │   ├── check_physiography.py       # NEW: reject a NaN/no-land surfclim before it reaches a run
+│   ├── nearest_land_point.py       # NEW: nearest land gridpoint, for sites whose own has none
 │   ├── make_forcing_report.py      # NEW: regenerate docs/ Word summary from the QC report
 │   ├── submit_forcing_pipeline_slurm.sh # NEW: submit the batch driver to SLURM as a job array
 │   ├── build_site_metadata.py      # NEW: build reference/site_metadata_merged.csv
@@ -259,6 +261,16 @@ Output is `clim/<group>/surfclim_<site>_<Y1>-<Y2>.nc` and `surfinit_<site>_<Y1>-
 - **`-s auto` (the default) picks where each part comes from.** The static fields are always read at **O1280 (~9 km)**, from `climate.v021/1279_4`. The initial-conditions analysis comes from the **operational** archive for sites starting on or after 2015-06-01, and from **ERA5** before that: FLake entered the operational model in May 2015, so `marsod` holds none of the `8.228–14.228` lake fields before it, and `create_forcing` asks for all 26 analysis parameters or fails. Across the 775 sites the split is 388 operational / 387 ERA5. Verified that `surfclim` is *identical* whichever route a site takes — both read the same climate directory — so the physiography is uniform across the group and only `surfinit` differs.
 - **Resolution matters in terrain.** Against N640 (~18 km), O1280 halves the elevation error at mountain sites: ES-LJu 774 m → 338 m, CZ-BK2 339 m → 165 m, FI-Hyy 39 m → 13 m. It also rescues coastal points: CA-RBM (Richmond Brackish Marsh, in the Fraser delta) has no land at its nearest 18 km gridpoint, and `create_forcing` exits 0 while writing **NaN for every field**; at 9 km it resolves land and comes out clean.
 - **`check_physiography.py` refuses such a file** rather than copying it into `clim/`, marking the site `NOLAND`. Nothing downstream would otherwise notice — the filenames and dimensions are right, so a NaN file would be fed to the model and produce nonsense instead of an error.
+- **For those sites, take the physiography from the nearest land gridpoint.** 17 of the 775 have no land even at 9 km — Arctic coastal tundra around Barrow and Oliktok, the Turkey Point cluster on Lake Erie, Stordalen and Andøya, two salt marshes, Pond Inlet. `scripts/nearest_land_point.py` finds the nearest gridpoint with `lsm >= 0.5` in the same land-sea mask the extraction itself will use, and `-O` substitutes that coordinate:
+
+  ```bash
+  python3 scripts/nearest_land_point.py --sites-csv noland.csv --out reference/physiography_land_nudge.csv
+  scripts/extract_physiography_batch.sh -g <group> -S <those sites> -O reference/physiography_land_nudge.csv
+  ```
+
+  Offsets are 5.8–10.4 km, i.e. within a gridbox. The tower keeps its own coordinates for everything else — the forcing is its own measurements — and only the static fields *and the initial soil state* are borrowed, since a sea gridpoint has no soil to initialise from either. Every substitution is recorded in `reference/physiography_land_nudge.csv` with its distance.
+
+  **Treat these 17 as lower confidence, and two of them with real caution:** SE-St1 and SE-Sto (Stordalen palsa bog, 351 m) borrow land at 737 m in the Abisko mountains, a 386 m difference. The rest land within ~40 m of the tower's elevation where a published elevation exists.
 - Costs one MARS analysis request per site, so `-j` is a courtesy limit toward MARS as much as a throughput setting.
 
 Requires the `create_forcing` tool (`$PERM/ecland/tools/create_forcing`), read access to `/home/rdx/data/climate`, and `mars` — see [Requirements](#requirements).
@@ -308,6 +320,29 @@ python3 scripts/postproc.py --experiment-name shuttle-pilot20 --overwrite
 python3 scripts/benchmark.py --model-dir benchmark/models/shuttle-pilot20 \
   --out-dir benchmark/dashboards/shuttle-pilot20 --experiment-name shuttle-pilot20
 ```
+
+### 6.1 Pilot run (3 sites)
+
+Validated 2026-08-20 on Shuttle-sourced sites, the full chain from tower CSV to benchmark scores. `NLOOP=2`, tower forcing, O1280 physiography:
+
+| site | biome | variable | n | bias (W m⁻²) | RMSE | r |
+|---|---|---|---|---|---|---|
+| SN-Dhr (12 yr) | Sahel savanna | Qle | 69605 | −11.0 | 41.1 | **0.90** |
+| | | Qh | 59969 | +2.8 | 42.8 | **0.93** |
+| | | NEE | 50944 | +14.0 | 15.8 | 0.73 |
+| BR-Sa1 (10 yr) | Amazon forest | Qle | 96096 | −15.5 | 83.8 | 0.82 |
+| | | Qh | 100088 | +42.2 | 92.8 | 0.85 |
+| | | NEE | 36971 | −28.8 | 42.4 | 0.78 |
+| CZ-BK2 (7 yr) | montane spruce | Qle | 62194 | +11.3 | 38.0 | 0.81 |
+| | | Qh | 82234 | +30.4 | 64.6 | 0.84 |
+| | | NEE | 34709 | −6.1 | 14.9 | 0.87 |
+
+Two things this exposed:
+
+- **`Qh` is biased high at all three sites** (+2.8 to +42.2 W m⁻²), largest in the Amazon. Worth investigating before reading much into a 775-site benchmark; `NLOOP=2` may be too few spin-up loops.
+- **Cost scales with record length, steeply.** SN-Dhr (12 years, half-hourly) takes ~14 min per loop; a 29-year site takes over an hour. Across 5397 site-years at `NLOOP=2` that is roughly 210 CPU-hours — a few hours wall-clock in a job array, but not something to run interactively.
+
+`ecland_create_namelist.py` needed one fix to get here: it read the scalar `zphista`/`zuv` from surfclim as `[0].data[0]`, which raises `IndexError` on current netCDF4 builds. Those variables are scalar in PLUMBER2's clim files too, so this was never specific to Shuttle-sourced sites.
 
 ## Requirements
 
