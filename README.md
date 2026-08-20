@@ -8,7 +8,7 @@ As of the 2026-08-18 live Shuttle snapshot: **775 sites** (AmeriFlux 381, ICOS 3
 
 Generated with `scripts/plot_sites_map.py --snapshot-csv <listall snapshot>` — the same script (forked as-is from `plumber2-ecland`) that renders that repo's 170-site map, extended with a fourth Barren & Snow/Ice biome group and `DNF`/`CVM` IGBP classes for the sites outside the original PLUMBER2 pool.
 
-## Status (2026-08-18)
+## Status (2026-08-20)
 
 **Forcing now exists for the whole live site pool.** A full run on ECMWF HPC (2026-08-18 snapshot, ERA5 gapfilling, `complete` preset, NOAA CO2 fill) produced ecLand-ready forcing for **775 / 775 sites — 5397 site-years**, median 5 years per site, max 31:
 
@@ -22,9 +22,12 @@ By IGBP: GRA 145, CRO 138, WET 115, ENF 114, DBF 80, EBF 44, OSH 40, MF 24, WSA 
 
 Gap-fill intensity across all 7750 (file, variable) records, from `reference/qc_report_shuttle-all775-era5.csv`: mild 3755, medium 1603, heavy 1169, complete 1223. Roughly half the delivered data is lightly gap-filled; the heavily-filled remainder is labelled per file and variable rather than mixed in silently. Reaching full coverage does depend on ERA5 — sites vary from near-pure observations to records where pressure and precipitation are largely reanalysis.
 
-What's validated vs. what's still blocked:
+Physiography and initial conditions for those sites are being built now (see below); once complete, every input ecLand needs exists for the full pool.
+
+What's validated vs. what's still open:
 
 **Validated end-to-end, on real data:**
+- Physiography and initial conditions for an arbitrary site coordinate, at O1280 (~9 km), via `scripts/extract_physiography_batch.sh` — validated on 16 sites spanning boreal, Mediterranean mountain, Sahel, tropical, desert, coastal-marsh and Australian savanna cases before launching the full group.
 - Live Shuttle inventory pull, IGBP/record-length filtering, and download (`fluxnet-shuttle listall`/`download` + `scripts/filter_candidate_sites.py`) — see `reference/shuttle_pilot20_site_ids.txt` for the current 20-site fire/vegetation-stress pilot shortlist.
 - FluxnetLSM conversion of a real downloaded site (ES-LJu, ICOS) to ALMA-CF NetCDF (`scripts/install_fluxnetlsm.R` + `scripts/convert_fluxnetlsm.R`) — variables/dims are byte-identical to an existing PLUMBER2-170 file.
 - `scripts/regenerate_forcing.sh` (forked unmodified from `plumber2-ecland`) converts that FluxnetLSM output to ecLand's forcing convention with **no changes needed**. This was the step flagged as the real engineering risk going in; it isn't one for Shuttle-sourced sites.
@@ -39,10 +42,11 @@ What's validated vs. what's still blocked:
 - **CO2 was silently costing 97 sites.** `missing_met=0` drops a year if *any* met variable still has a gap, and CO2 is the one met variable the Shuttle's ERA5 file cannot fill (`ERAinterim_variable=NA` in FluxnetLSM's own schema — reanalysis surface files carry no atmospheric CO2). Those sites were being discarded over a variable ecLand is not driven by here (`LEAIRCO2COUP=.FALSE.`; CO2 appears only as model output). `scripts/fill_co2_from_noaa.py` fills it from the NOAA GML monthly global mean, flagged QC=3 so it still reports as gap-filled — recovering all 97 sites and 264 site-years without touching any acceptance threshold.
 - **One site is blocked by upstream metadata, not by data.** FluxnetLSM's packaged `Site_metadata.csv` marks CZ-BK2 `Exclude=TRUE` with `Exclude_reason=NA`, aborting conversion before any data is read. Verified it converts to a complete 7-year record; `build_site_metadata.py` carries a documented override (`EXCLUDE_OVERRIDES`), reversible with `--respect-upstream-excludes`.
 
-**Blocked, not yet solved:**
-- **No script generates `clim/<group>/surfclim_<site>.nc` / `surfinit_<site>.nc`** (soil, vegetation cover fractions, orography, LAI climatology — ecLand's non-meteorological static inputs) for a new site coordinate. `plumber2-ecland`'s versions of these files were produced externally and only ever fetched from Git LFS; FluxnetLSM doesn't produce them either (it only converts met/flux data).
+**The physiography blocker is solved** (2026-08-20). Producing `clim/<group>/surfclim_<site>_<Y1>-<Y2>.nc` and `surfinit_<site>_<Y1>-<Y2>.nc` — soil type, vegetation cover and type, orography, lake and ice masks, LAI, albedo, and the initial state of the prognostic variables — for an arbitrary site coordinate was the one thing standing between this forcing dataset and running ecLand over it. The [`ecland-portal`](https://github.com/gpbalsamo/ecland-portal) repo drives ecLand's own `create_forcing` tool to do exactly that for any lat/lon, and `scripts/extract_physiography_batch.sh` runs it over a whole site group. See [Physiography](#2c-physiography-and-initial-conditions).
 
-This is the only real blocker. ecLand itself runs locally on macOS — `scripts/run_parallel_local.sh` already produced the full 170-site PLUMBER2 benchmark on this machine (GPU-accelerated, 8 concurrent workers; see `plumber2-ecland/benchmark/dashboards/`), so once surfclim/surfinit exist for a site, running ecLand and postprocessing/benchmarking it is not an open problem here.
+It is fast, because the expensive part of `create_forcing` is a step we don't need: the static fields are a disk copy from `/home/rdx/data/climate/climate.<version>/<grid>`, and only the initial-conditions analysis goes to MARS. About 60–90 s per site, against the hour-per-month that retrieving *meteorological* forcing from MARS would cost — our forcing comes from the towers instead.
+
+With that in place, nothing structural remains: `scripts/run_parallel_local.sh` already produced the full 170-site PLUMBER2 benchmark on a Mac (GPU-accelerated, 8 concurrent workers; see `plumber2-ecland/benchmark/dashboards/`), and `ecland_run.sh` is the HPC equivalent, so running ecLand and postprocessing/benchmarking it is not an open problem.
 
 ## Pipeline
 
@@ -59,7 +63,11 @@ fluxnet-shuttle listall                              # live site inventory -> sn
        -> scripts/convert_fluxnetlsm.R                #   FLUXMET CSV -> ALMA-CF Met/Flux NetCDF (--preset, --gapfill)
        -> scripts/regenerate_forcing.sh               #   -> ecLand forcing convention (lon/lat/time, PSurf/Rainf)
   -> scripts/qc_classify.py                           # post-hoc: real per-variable gap-fill % -> mild/medium/heavy/complete
-  -> [BLOCKED: surfclim/surfinit for the new coordinate — see Status above]
+
+scripts/extract_physiography_batch.sh                # per site, via ecland-portal + ecLand's create_forcing:
+                                                     #   static fields off disk at O1280 (~9 km) -> surfclim_<site>_<Y1>-<Y2>.nc
+                                                     #   one MARS analysis      -> surfinit_<site>_<Y1>-<Y2>.nc
+  -> scripts/check_physiography.py                    # refuse NaN/no-land output instead of poisoning a run
   -> scripts/ecland_run_experiment.sh / run_parallel_local.sh   # runs locally on macOS (or HPC via ecland_run.sh)
   -> scripts/postproc.py                               # raw ecLand output -> common schema
   -> scripts/benchmark.py                              # score vs. flux obs -> dashboard
@@ -71,7 +79,11 @@ fluxnet-shuttle listall                              # live site inventory -> sn
 
 ```
 fluxnet-shuttle-ecland/
-├── clim/<group>/            # ecLand static/climatology inputs (NetCDF, Git LFS) — BLOCKED for new sites, see Status
+├── clim/<group>/            # ecLand static/climatology inputs (NetCDF, Git LFS), built by
+│                             scripts/extract_physiography_batch.sh
+├── config/
+│   └── physiography_defaults.yaml  # ecland-portal defaults + the era5_o1280 source (see Physiography)
+├── docs/                    # Generated reports (Word summary of the procedure and QC)
 ├── forcing/<group>/         # Meteorological forcing, ecLand-ready (NetCDF, Git LFS)
 ├── flux/<group>/            # Observed flux (evaluation) data, FLUXNET2015-schema (NetCDF, Git LFS)
 ├── namelists/               # ecLand namelist configuration files (forked as-is from plumber2-ecland)
@@ -85,6 +97,10 @@ fluxnet-shuttle-ecland/
 │   └── qc_report_shuttle-all775-era5.csv  # Gap-fill intensity per (file, variable) for the 775-site run
 ├── scripts/
 │   ├── run_forcing_pipeline.sh     # NEW: batch Shuttle -> forcing driver (streaming, resumable, parallel)
+│   ├── extract_physiography_batch.sh # NEW: surfclim/surfinit for a whole group, via ecland-portal
+│   ├── submit_physiography_slurm.sh  # NEW: submit that to SLURM
+│   ├── check_physiography.py       # NEW: reject a NaN/no-land surfclim before it reaches a run
+│   ├── make_forcing_report.py      # NEW: regenerate docs/ Word summary from the QC report
 │   ├── submit_forcing_pipeline_slurm.sh # NEW: submit the batch driver to SLURM as a job array
 │   ├── build_site_metadata.py      # NEW: build reference/site_metadata_merged.csv
 │   ├── fetch_noaa_co2.py           # NEW: fetch NOAA GML monthly global mean CO2
@@ -225,6 +241,28 @@ Add `-n` to write the job script and print it without submitting. Validated 2026
 - **Compute nodes need outbound HTTPS**, since every task downloads from ICOS/AmeriFlux/TERN. They have it at ECMWF; elsewhere the download step may have to run where the network is.
 - **Concurrency is a courtesy question.** The `-a 4 -j 4` default is 16 simultaneous downloads from the data hubs. Raise it knowingly.
 
+### 2c. Physiography and initial conditions
+
+ecLand needs more than weather: it needs the fixed description of each place — soil type, vegetation cover and type, orography, lake and ice masks, LAI and albedo — plus an initial state for its prognostic variables. `scripts/extract_physiography_batch.sh` produces both, for every site that already has forcing in the group:
+
+```bash
+scripts/extract_physiography_batch.sh -g shuttle-all775-era5 -j 8
+
+# or, for a whole group, as a batch job (~2 h for 775 sites)
+scripts/submit_physiography_slurm.sh -g shuttle-all775-era5 -j 8
+```
+
+Output is `clim/<group>/surfclim_<site>_<Y1>-<Y2>.nc` and `surfinit_<site>_<Y1>-<Y2>.nc`.
+
+- **Every input is derived from the forcing files themselves** — coordinates from each file's own `latitude`/`longitude`, the period from its filename. `ecland_run_model.sh` pairs clim and met files *by name*, so this removes any chance of running a site with physiography from a different place or period than its weather.
+- **The work is done by [`ecland-portal`](https://github.com/gpbalsamo/ecland-portal)**, whose `hpc_scripts/extract_physiography.sh` drives ecLand's own `create_forcing` tool. This script calls it rather than forking it. Point `-E`, or `ECLAND_PORTAL_DIR`, at your checkout.
+- **`-s auto` (the default) picks where each part comes from.** The static fields are always read at **O1280 (~9 km)**, from `climate.v021/1279_4`. The initial-conditions analysis comes from the **operational** archive for sites starting on or after 2015-06-01, and from **ERA5** before that: FLake entered the operational model in May 2015, so `marsod` holds none of the `8.228–14.228` lake fields before it, and `create_forcing` asks for all 26 analysis parameters or fails. Across the 775 sites the split is 388 operational / 387 ERA5. Verified that `surfclim` is *identical* whichever route a site takes — both read the same climate directory — so the physiography is uniform across the group and only `surfinit` differs.
+- **Resolution matters in terrain.** Against N640 (~18 km), O1280 halves the elevation error at mountain sites: ES-LJu 774 m → 338 m, CZ-BK2 339 m → 165 m, FI-Hyy 39 m → 13 m. It also rescues coastal points: CA-RBM (Richmond Brackish Marsh, in the Fraser delta) has no land at its nearest 18 km gridpoint, and `create_forcing` exits 0 while writing **NaN for every field**; at 9 km it resolves land and comes out clean.
+- **`check_physiography.py` refuses such a file** rather than copying it into `clim/`, marking the site `NOLAND`. Nothing downstream would otherwise notice — the filenames and dimensions are right, so a NaN file would be fed to the model and produce nonsense instead of an error.
+- Costs one MARS analysis request per site, so `-j` is a courtesy limit toward MARS as much as a throughput setting.
+
+Requires the `create_forcing` tool (`$PERM/ecland/tools/create_forcing`), read access to `/home/rdx/data/climate`, and `mars` — see [Requirements](#requirements).
+
 ### 3. Single site (manual invocation)
 
 Useful for debugging one site or inspecting FluxnetLSM's intermediate output:
@@ -262,7 +300,7 @@ python3 scripts/plot_sites_map.py --snapshot-csv fluxnet_shuttle_snapshot_*.csv 
 
 ### 6. Run ecLand and postprocess/benchmark
 
-Blocked until `clim/shuttle-pilot20/surfclim_<site>.nc` / `surfinit_<site>.nc` exist for these sites (see Status above). Once they do, the remaining steps are unchanged from `plumber2-ecland`'s workflow, just pointed at a different `GROUP` and `--experiment-name`:
+With `forcing/<group>/` and `clim/<group>/` both populated, the remaining steps are unchanged from `plumber2-ecland`'s workflow, just pointed at a different `GROUP` and `--experiment-name`:
 
 ```bash
 scripts/ecland_run_experiment.sh -g shuttle-pilot20 -t insitu -x <path_to_ecland_executable>
@@ -277,6 +315,7 @@ python3 scripts/benchmark.py --model-dir benchmark/models/shuttle-pilot20 \
 - Python: `numpy`, `xarray`, `netCDF4`, `pandas`, plus the [`fluxnet-shuttle`](https://github.com/fluxnet/shuttle) CLI.
 - R + [FluxnetLSM](https://github.com/aukkola/FluxnetLSM) — `scripts/install_fluxnetlsm.R` installs both (needs `brew install r netcdf gdal` first on macOS).
 - NCO tools (`ncrename`, `ncks`, `ncatted`, `nccopy`) for `scripts/regenerate_forcing.sh`, and `unzip` for `scripts/run_forcing_pipeline.sh`.
+- For the physiography step: an [`ecland-portal`](https://github.com/gpbalsamo/ecland-portal) checkout, ecLand's `create_forcing` tool, the `mars` client, and read access to `/home/rdx/data/climate` — i.e. it runs at ECMWF. On Atos, `module load prgenv/intel ecmwf-toolbox/new python3/new netcdf4/new cdo/2.2.0 nco eclib/new` (metview arrives with `ecmwf-toolbox`).
 - Enough scratch space for `scripts/work/` while the pipeline runs: a few GB is plenty at `-j 4`, since each site's download is deleted as soon as it's converted.
 
 ## License

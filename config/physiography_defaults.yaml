@@ -1,0 +1,399 @@
+# ecLand Anywhere -- centralised extraction defaults.
+#
+# Every value here was read out of a working ecLand configuration, not guessed.
+# Provenance is given per block. The two hpc_scripts render their per-job
+# create_forcing config.yaml from this file (via hpc_scripts/render_job_config.py),
+# so nothing is duplicated between them.
+#
+# Sources:
+#   [A] $PERM/ecland/tools/create_forcing/README.md
+#   [B] $PERM/ecland_v1.0/tools/create_forcing/config_ecmwf.yaml       (class ea)
+#   [C] $PERM/ecland_v1.0/tools/create_forcing/config_daily_reports.yaml (class od)
+#   [D] $PERM/ecland/tools/create_forcing/scripts/extract_site_clim.bash
+#   [E] $PERM/ecland/tools/create_forcing/scripts/extract_forcing_mars.bash
+#   [F] $PERM/ecland/tools/create_forcing/ecland_create_forcing_utils.py
+
+# ---------------------------------------------------------------------------
+# Where the create_forcing tool lives. scripts_dir is what the tool's own
+# config.yaml calls `scriptsdir`; it must be the scripts/ subdirectory. [B]
+# ---------------------------------------------------------------------------
+tool:
+  create_forcing_dir: "${PERM}/ecland/tools/create_forcing"
+  scripts_dir: "${PERM}/ecland/tools/create_forcing/scripts"
+  # `mars` (ECMWF internal) or `cds` (external). We are on Atos -> mars. [B]
+  retrieve_with: "mars"
+
+  # Namelist generation. Reused from plumber2-ecland rather than reimplemented:
+  # it reads the clim and forcing NetCDF and fills in the values that must agree
+  # with the data (nforcing, nstop, tstep, forcing_step, nlat/nlon, ndimcdf,
+  # zphista/zuv).
+  #
+  # SPECIFICALLY plumber2's copy, not fluxnet-shuttle's. The two have diverged and
+  # only plumber2's has read_single_value(), which handles zphista/zuv stored as
+  # 0-d scalars. The fluxnet copy does climFile.variables['zphista'][0].data[0]
+  # when the file has a `lat` dimension -- ours does, but stores those as scalars
+  # (climate.v021), so that copy raises IndexError on our files.
+  namelist_script: "${PERM}/plumber2-ecland/scripts/ecland_create_namelist.py"
+  # Template with {nstart} {nstop} {tstep} {nforcing} {nlat} {nlon} {ndimcdf}
+  # {zphista} {zuv} {forcing_step} placeholders. A request's namelist_override
+  # replaces this per job -- e.g. namelist_ecland_50R1_runoff_fix.
+  namelist_template: "${PERM}/plumber2-ecland/namelists/namelist_ecland_50R1_ctl"
+
+  # Model run. ../ecland ships its own runner (exposed as build/bin/
+  # ecland-run-model); used in preference to plumber2-ecland's copy because it
+  # comes from the same source tree as the binary -- plumber2's is a lightly
+  # modified fork (adds -m PARAM_FILE, commented-out rechunking).
+  run_model_script: "${PERM}/ecland/share/ecland/scripts/ecland_run_model.sh"
+  # ecLand 2.0.0, built 2026-07-20 from the ../ecland tree. Verified to resolve
+  # all its shared libraries under modules.model_run and to initialise MPL with
+  # MPL_NUMPROC=1, i.e. it runs serially -- no mpirun needed.
+  ecland_master: "${PERM}/ecland/build/bin/ecland-master-dp"
+
+  # Visualisation. ecLand4U's Landgram, written specifically for ecLand offline
+  # o_*.nc: https://github.com/gpbalsamo/ecLand4U -> scripts/landgram.py
+  # Verified that every variable alias it looks for resolves from our run output,
+  # so no --var overrides are needed.
+  landgram_script: "${PERM}/ecLand4U/scripts/landgram.py"
+
+# ---------------------------------------------------------------------------
+# Forcing sources.
+#
+# NOTE: create_forcing has NO era5-land code path -- `extract_forcing_mars.bash`
+# branches only on class `ea` vs everything-else (treated as operational), and
+# `ConfigInit` only knows the ERA5 and operational climate directories. The two
+# entries below are therefore the only sources that actually work, and both are
+# copied from a config file that has been run for real. [B][C][E]
+# ---------------------------------------------------------------------------
+forcing_sources:
+
+  era5:
+    label: "ERA5 reanalysis (class=ea)"
+    # -- initial_conditions block [B]
+    ini_class: "ea"
+    ini_stream: "oper"
+    ini_expver: 1
+    ini_hour: "00:00:00"
+    resol: "639"          # native ERA5 reduced Gaussian
+    gtype: "l_2"          # linear reduced Gaussian -> grid N640
+    climversion: "v021"
+    clim_data_loc: "ecmwf"
+    # -- forcing block [B]
+    forcing_class: "ea"
+    forcing_stream: "oper"
+    forcing_expver: 1
+    forcing_hour: "00:00:00"
+    forcing_common_name: "forcing_ea_1_oper_1"
+
+  # Added for fluxnet-shuttle-ecland: O1280 (~9 km) static physiography, but
+  # the initial-conditions analysis still from ERA5.
+  #
+  # RESOL/GTYPE do two separate jobs. They pick which read-only climate
+  # directory the static fields are copied from -- climate.v021/1279_4 is the
+  # ~9 km cubic octahedral set -- and they set GRID= on the one MARS request,
+  # for the analysis behind surfinit. Only the second is date-sensitive.
+  #
+  # Plain `oper` cannot be used here: the operational archive does not hold 7
+  # of the 26 analysis parameters before FLake entered the model in 2015 (the
+  # 8.228-14.228 lake fields). Confirmed 2026-08-19 -- CZ-BK2 at 20060101 got
+  # "expected 26, got 19" and the request failed. Flux-tower records start as
+  # early as 1994, so most sites would fail. ERA5 carries all 26 at every date
+  # because it was produced with one consistent model version, and MARS
+  # interpolates it onto O1280 on the way out.
+  era5_o1280:
+    label: "ERA5 analysis (class=ea) on O1280 -- ~9 km physiography"
+    ini_class: "ea"
+    ini_stream: "oper"
+    ini_expver: 1
+    ini_hour: "00:00:00"
+    resol: "1279"
+    gtype: "_4"
+    climversion: "v021"
+    clim_data_loc: "ecmwf"
+    forcing_class: "ea"
+    forcing_stream: "oper"
+    forcing_expver: 1
+    forcing_hour: "00:00:00"
+    forcing_common_name: "forcing_ea_1_oper_1"
+
+  oper:
+    label: "ECMWF operational analysis (class=od)"
+    # -- initial_conditions block [C]
+    ini_class: "od"
+    ini_stream: "oper"
+    ini_expver: 1
+    ini_hour: "00:00:00"
+    resol: "1279"         # operational cubic octahedral
+    gtype: "_4"           # cubic reduced Gaussian -> grid O1280
+    climversion: "v021"
+    clim_data_loc: "ecmwf"
+    # -- forcing block [C]
+    forcing_class: "od"
+    forcing_stream: "oper"
+    forcing_expver: 1
+    forcing_hour: "00:00:00"
+    forcing_common_name: "forcing_od_1_oper_1"
+
+# ---------------------------------------------------------------------------
+# Domain (area-subset) retrieval -- the fast path.
+#
+# Upstream create_forcing retrieves a WHOLE MONTH of GLOBAL ERA5 per month
+# touched, then reduces to a point. With extraction_mode=domain we instead ask
+# MARS for a small regular lat/lon box centred on the requested point. The output
+# is still a single point -- this is purely a retrieval/processing optimisation,
+# so met_era5HT_<SITE>_<Y1>-<Y2>.nc is unchanged in shape.
+#
+# MEASURED A/B, identical model-level retrieval, one day (2026-08-19):
+#     global N640              85.3 s wall, 197 MB delivered
+#     0.1 deg, +/-0.2 deg box  27.7 s wall,  68 KB delivered (5x5 regular_ll)
+# Same `Request cost: 48 fields, 40.681 Mbytes` both ways -- MARS charges the
+# same archive access, so the floor does not move. What collapses is delivery
+# and, mostly, the downstream metview arithmetic: in the point-mode validation
+# run that was 25 of the 57 minutes, done on 2M-point global fields.
+#
+# This requires two patches to the tool, applied to a shadow scripts directory
+# by hpc_scripts/make_shadow_scriptsdir.py -- upstream extract_forcing_mars.bash
+# has no area= support, and the land-sea mask has to be brought onto the same
+# grid or process_site_var.py interpolates the boxed forcing back to global N640.
+# See that script's docstring. ../ecland is never modified.
+# ---------------------------------------------------------------------------
+domain:
+  # Degrees each side of the requested point. 0.2 deg ~= 22 km -> 5x5 at 0.1 deg.
+  halo_deg: 0.2
+  # Target grid spacing. NOTE this is FINER than the source: ERA5 N640 has 0.141
+  # deg spacing and T639 (~31 km) spectral content, so a 0.1 deg box is
+  # upsampled from ~1-4 native points. It adds no information -- it is a
+  # convenient regular grid, not extra detail.
+  resolution_deg: 0.1
+  # ecLand needs a LAND point: process_site_var.py masks the forcing to
+  # lsm >= 0.5 before picking the nearest gridpoint. A small box near a coast or
+  # on an island can contain no land at all, which would yield missing data
+  # rather than a clean failure. hpc_scripts/domain_box.py therefore checks the
+  # box against the rdx mask (a cheap local regrid, no MARS) and doubles the halo
+  # until it finds land, giving up at max_halo_deg with an explicit error.
+  max_halo_deg: 2.0
+  # Skip that check to save a few seconds. Only safe for points known to be well
+  # inland; an all-water box will silently produce masked output.
+  skip_land_check: false
+
+# ---------------------------------------------------------------------------
+# Extraction behaviour
+# ---------------------------------------------------------------------------
+extraction:
+  # point  = upstream behaviour: global monthly retrieval, reduced to a point.
+  # domain = area-subset retrieval per the `domain` block above; same point
+  #          output, much faster. Overridable per request from the portal.
+  default_extraction_mode: "point"
+
+  # Which steps a job runs by default. Each is independently selectable per
+  # request, because they cost wildly different amounts: physiography is ~43 s,
+  # forcing is ~1 h per month spanned, namelist is ~1 s. Skipping forcing is
+  # useful when you only want the physiography for a point, or when a suitable
+  # met_*HT_ file is already in the job directory.
+  #
+  # DEPENDENCY: the namelist step reads BOTH the clim and the forcing NetCDF (it
+  # derives nforcing/nstop/tstep/forcing_step from the forcing time axis), so it
+  # needs those files to exist -- either produced by this job or already present.
+  # generate_namelist.sh says so explicitly rather than failing obscurely.
+  default_steps:
+    physiography: true
+    forcing: true
+    namelist: true
+    run: true
+    landgram: true
+
+  # Trim the concatenated forcing to the REQUESTED date range.
+  #
+  # This matters more than it looks. extract_forcing_mars.bash pins DATE1/DATE2 to
+  # calendar month boundaries, so a 7-day request yields a met file spanning the
+  # whole month -- 721 hourly instants for June. The namelist generator then
+  # derives nstop = nforcing - 2 = 719, i.e. 720 hourly timesteps, and NSTOP is
+  # what sets how long ecLand actually integrates. Untrimmed, a 7-day request
+  # would run the model for 30 days.
+  #
+  # Trimming here rather than special-casing the namelist means nforcing, nstop,
+  # tstep and forcing_step all fall out correctly with no changes to the reused
+  # generator: 7 days -> 169 instants -> NSTOP=167.
+  #
+  # The range is taken inclusively from start_date 00:00 to end_date 24:00, so a
+  # request for 01..07 June gives 168 h of integration (169 instants), not 167.
+  trim_forcing_to_range: true
+  # Keep the untrimmed whole-month file as met_..._fullmonth.nc. It was already
+  # retrieved at no extra cost and is useful for extending a run without going
+  # back to MARS. It is named so it cannot be mistaken for the canonical file by
+  # the namelist generator or the job status globs.
+  keep_untrimmed_forcing: true
+  ftype: "1D"                 # point extraction; 2D is a different action set
+  group: "ECLAND_ANYWHERE"    # ConfigCommon appends this to sodir/fodir [F]
+  # orig | land | lake | grass -- `land` forces 100% land fraction, which is
+  # what config_ecmwf.yaml and config_daily_reports.yaml both use. [B][C]
+  which_surface: "land"
+  nthreads: 1                 # [B][C]
+  # Reuse of previously downloaded monthly GRIB. With save_forcing_grib true the
+  # tool tars each month into forcing_cache_dir as
+  # <forcing_common_name>_<YYYYMM00>.tar.gz and a later job for the same month
+  # skips MARS entirely. Left false to match the confirmed configs; turn on if
+  # several jobs will share months. [B]
+  save_forcing_grib: false
+  forcing_cache_dir: ""       # only consulted when save_forcing_grib is true
+  # metview can be slow to start on a loaded node; the tool defaults to 3000. [F]
+  metview_python_start_timeout: 3000
+
+# ---------------------------------------------------------------------------
+# Model run
+# ---------------------------------------------------------------------------
+run:
+  # Spin-up loops: the forcing period is repeated NLOOP times, each writing
+  # o_gg_S<n>.nc. Soil moisture and temperature in particular need several
+  # cycles to forget the ERA5 initial state on a short period, so 1 is fine for
+  # a smoke test but not for science.
+  nloop: 1
+  # Cold start from surfinit. Restart chaining needs a previous run's
+  # restartout.nc, which is a phase-3 concern.
+  lrestart: false
+
+# ---------------------------------------------------------------------------
+# Landgram
+# ---------------------------------------------------------------------------
+landgram:
+  dpi: 160
+  # mmday shows water fluxes as rates (mm/day); mmstep as per-interval totals.
+  water_units: "mmday"
+
+# ---------------------------------------------------------------------------
+# SLURM
+#
+# qos `nf` is the serial/fractional QoS, and is what both plumber2-ecland and
+# fluxnet-shuttle-ecland submit with. Available to this account: nf ng dg ni np.
+# ---------------------------------------------------------------------------
+slurm:
+  qos: "nf"
+  # MEASURED, not guessed. End-to-end validation run 2026-08-19, FI-Hyy,
+  # 2020-06-01..2020-06-07, forcing_source=era5 (SLURM job 34902993):
+  #     physiography  00:00:43   (rdx disk copy + one small MARS analysis)
+  #     forcing       00:57:07   (one whole-month global ERA5 retrieval)
+  #     total         00:58:12   MaxRSS 814 MB
+  #
+  # The brief asked for ~30 min; that would have killed this job mid-forcing, so
+  # the default is 1h30 -- roughly 1.5x the measured single-month cost. A forcing
+  # step pulls a WHOLE calendar month of global ERA5 (5 surface params plus
+  # u/v/t/q on model level 137 plus lnsp, native resolution) for EVERY month the
+  # range touches, so budget ~1h per month spanned and raise this accordingly for
+  # multi-month requests: export ECLAND_PORTAL_TIME_LIMIT=HH:MM:SS. [E]
+  time_limit: "01:30:00"
+  cpus_per_task: 2
+  # 814 MB peak measured for one month; headroom left for longer ranges, where
+  # the model-level retrieval is the memory driver.
+  mem: "16G"
+
+# ---------------------------------------------------------------------------
+# Module environment.
+#
+# Verbatim from create_forcing's README "Quick instructions for ECMWF HPC" [A],
+# verified to resolve on Atos 2026-08-19 to: ecmwf-toolbox/2026.07.0.0,
+# python3/3.13.13-01, netcdf4/4.10.0, cdo/2.2.0, nco/5.3.7, eclib/1.1.0 --
+# with mars, grib_ls, grib_copy, metview, `import metview` and `import yaml`
+# all working.
+#
+# This is the EXTRACTION environment. Running the ecLand model itself (phase 2)
+# needs a different set, the one both siblings' run_sbatch.sh loads:
+#   prgenv/intel intel/2021.4 python3/3.10.10-01 hpcx-openmpi/2.9 netcdf4/4.9.1
+# Do not merge the two -- python3/new and python3/3.10.10-01 conflict.
+# ---------------------------------------------------------------------------
+modules:
+  extraction:
+    - "prgenv/intel"
+    - "ecmwf-toolbox/new"
+    - "python3/new"
+    - "netcdf4/new"
+    - "cdo/2.2.0"
+    - "nco"
+    - "eclib/new"
+  # Loaded by hpc_scripts/run_ecland.sh, which purges first -- python3/new and
+  # python3/3.10.10-01 conflict.
+  model_run:
+    - "prgenv/intel"
+    - "intel/2021.4"
+    - "python3/3.10.10-01"
+    - "hpcx-openmpi/2.9"
+    - "netcdf4/4.9.1"
+  # Landgram needs numpy/pandas/xarray/matplotlib/netCDF4. python3/new has all
+  # five (verified: numpy 2.3.5, pandas 2.3.3, xarray 2026.4.0, matplotlib
+  # 3.10.9, netCDF4 1.7.4). Separate from model_run, whose python3/3.10.10-01
+  # is not guaranteed to carry xarray.
+  landgram:
+    - "prgenv/intel"
+    - "python3/new"
+
+# ---------------------------------------------------------------------------
+# MARS parameter lists -- REFERENCE ONLY.
+#
+# These are not injected into any request by this repo. They are the exact
+# lists create_forcing itself issues, recorded here so that what the pipeline
+# retrieves is reviewable without reading the tool's bash. Editing them changes
+# nothing; change the tool if you need different fields.
+# ---------------------------------------------------------------------------
+reference_mars_params:
+
+  # Static physiography. NOT a MARS retrieval at ECMWF: with
+  # clim_data_loc=ecmwf these GRIB files are copied straight off disk from
+  # XDATA_DIR = /home/rdx/data/climate/climate.<climversion>/<resol><gtype>
+  # e.g. /home/rdx/data/climate/climate.v021/639l_2                      [D][F]
+  physiography_from_disk:
+    xdata_dir_template: "/home/rdx/data/climate/climate.{climversion}/{resol}{gtype}"
+    files:
+      - lsmoro          # land-sea mask + orography
+      - clake           # lake cover
+      - slt             # soil type
+      - sfc             # subgrid orography (anor/isor/slor/sdor) + veg cover/type
+      - lakedl          # lake depth
+      - wetlandf        # wetland fraction
+      - urban           # urban cover
+      - c3_c4_mask.grb  # C3/C4 photosynthesis mask
+      - month_laih      # monthly LAI, high vegetation
+      - month_lail      # monthly LAI, low vegetation
+    # Blended by metview into month_alb as 0.45976*aluvd + 0.54024*alnid [D]
+    albedo_files:
+      - month_alnid
+      - month_aluvd
+
+  # Initial conditions for the prognostic variables. THIS is the only MARS
+  # request the physiography step makes. levtype=sfc, type=an,
+  # time=<ini_hour>, grid=<N640 for 639l_2 | O1280 for 1279_4>          [D]
+  initial_conditions:
+    levtype: "sfc"
+    type: "an"
+    param: "SWVL1/SWVL2/SWVL3/SWVL4/STL1/STL2/STL3/STL4/SKT/ASN/RSN/SD/TSN/ISTL1/ISTL2/ISTL3/ISTL4/SRC/CI/8.228/9.228/10.228/11.228/12.228/13.228/14.228"
+
+  # Atmospheric forcing. Note this is the LOWEST MODEL LEVEL (~10 m), not 2m/10m
+  # post-processed fields -- consistent with how ecLand is forced when coupled
+  # to the atmospheric model (README "General description"). Retrieved one
+  # calendar month at a time, type=fc, steps 1..12, time=06/18 for class ea. [A][E]
+  forcing_surface:
+    levtype: "sfc"
+    type: "fc"
+    param: "SSRD/STRD/CP/LSP/SF"
+  forcing_model_level:
+    levtype: "ml"
+    type: "fc"
+    levelist: 137           # lowest model level of the 137-level ERA5 grid
+    param: "u/v/t/q"
+  forcing_surface_pressure:
+    levtype: "ml"
+    type: "fc"
+    levelist: 1
+    param: "lnsp"           # -> PSurf
+
+  # What ecLand actually consumes, after metview/cdo processing:
+  #   Rainf = max(0, cp + lsp - sf);  Ctpf = convective fraction of total precip
+  #   SWdown/LWdown/Snowf/Rainf divided by FREQ*3600                       [E]
+  ecland_forcing_variables:
+    - PSurf
+    - Tair
+    - Qair
+    - Wind_E
+    - Wind_N
+    - SWdown
+    - LWdown
+    - Rainf
+    - Snowf
+    - Ctpf
