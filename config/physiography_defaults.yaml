@@ -115,6 +115,88 @@ forcing_sources:
     forcing_hour: "00:00:00"
     forcing_common_name: "forcing_ea_1_oper_1"
 
+  era5_o2560:
+    label: "ERA5 analysis (class=ea) on TCo2559 -- ~4.5 km physiography"
+    ini_class: "ea"
+    ini_stream: "oper"
+    ini_expver: 1
+    ini_hour: "00:00:00"
+    resol: "2559"
+    gtype: "_4"
+    climversion: "v021"
+    clim_data_loc: "ecmwf"
+    forcing_class: "ea"
+    forcing_stream: "oper"
+    forcing_expver: 1
+    forcing_hour: "00:00:00"
+    forcing_common_name: "forcing_ea_1_oper_1"
+
+  oper_o2560:
+    label: "Operational analysis (class=od) on TCo2559 -- ~4.5 km physiography"
+    ini_class: "od"
+    ini_stream: "oper"
+    ini_expver: 1
+    ini_hour: "00:00:00"
+    resol: "2559"
+    gtype: "_4"
+    climversion: "v021"
+    clim_data_loc: "ecmwf"
+    forcing_class: "od"
+    forcing_stream: "oper"
+    forcing_expver: 1
+    forcing_hour: "00:00:00"
+    forcing_common_name: "forcing_od_1_oper_1"
+
+  era5_o4000:
+    label: "ERA5 analysis (class=ea) on TCo3999 -- ~2.5 km physiography"
+    ini_class: "ea"
+    ini_stream: "oper"
+    ini_expver: 1
+    ini_hour: "00:00:00"
+    resol: "3999"
+    gtype: "_4"
+    climversion: "v021"
+    clim_data_loc: "ecmwf"
+    forcing_class: "ea"
+    forcing_stream: "oper"
+    forcing_expver: 1
+    forcing_hour: "00:00:00"
+    forcing_common_name: "forcing_ea_1_oper_1"
+
+  oper_o4000:
+    label: "Operational analysis (class=od) on TCo3999 -- ~2.5 km physiography"
+    ini_class: "od"
+    ini_stream: "oper"
+    ini_expver: 1
+    ini_hour: "00:00:00"
+    resol: "3999"
+    gtype: "_4"
+    climversion: "v021"
+    clim_data_loc: "ecmwf"
+    forcing_class: "od"
+    forcing_stream: "oper"
+    forcing_expver: 1
+    forcing_hour: "00:00:00"
+    forcing_common_name: "forcing_od_1_oper_1"
+
+  # Alias of `oper` under the uniform <class>_<gridtag> naming the batch
+  # driver's -r option composes, so auto-selection works at any resolution.
+  oper_o1280:
+    label: "Operational analysis (class=od) on O1280 -- ~9 km physiography"
+    ini_class: "od"
+    ini_stream: "oper"
+    ini_expver: 1
+    ini_hour: "00:00:00"
+    resol: "1279"
+    gtype: "_4"
+    climversion: "v021"
+    clim_data_loc: "ecmwf"
+    forcing_class: "od"
+    forcing_stream: "oper"
+    forcing_expver: 1
+    forcing_hour: "00:00:00"
+    forcing_common_name: "forcing_od_1_oper_1"
+
   oper:
     label: "ECMWF operational analysis (class=od)"
     # -- initial_conditions block [C]

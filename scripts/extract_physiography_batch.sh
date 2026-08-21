@@ -72,6 +72,7 @@ DEFAULTS="${PROJECT_ROOT}/config/physiography_defaults.yaml"
 OPER_FROM="20150601"
 LIMIT=""
 OVERRIDE_CSV=""
+RES_TAG="o2560"
 
 usage() {
   cat <<EOF
@@ -88,7 +89,15 @@ Usage: $(basename "$0") -g GROUP [options]
                      <repo>/scripts/work). The create_forcing tool writes large
                      intermediates and points TMPDIR here, so it must be roomy
   -E PORTAL_DIR     ecland-portal checkout (default: ${PORTAL_DIR})
-  -s SOURCE         auto (default) | era5_o1280 | oper | era5.
+  -r RES_TAG        Grid the static fields are read at, when -s is auto:
+                     o2560 (default, TCo2559 ~4.5 km) | o1280 (~9 km) | o4000.
+                     Higher resolution puts a coastal site's nearest land point
+                     much closer to the tower (5.8-10.4 km at o1280 vs 1.2-4.2
+                     at o2560) and halves orography error in terrain, at ~4x the
+                     runtime. o4000 currently fails inside create_sites.py.
+                     NOTE: recompute the -O table against the SAME grid --
+                     a table built for another grid can be worse than none.
+  -s SOURCE         auto (default) | era5_<tag> | oper_<tag> | era5.
                      'auto' keeps surfclim at O1280 (~9 km) for every site and
                      picks where the surfinit analysis comes from by start date:
                      operational from ${OPER_FROM} on, ERA5 before it. The
@@ -110,7 +119,7 @@ Usage: $(basename "$0") -g GROUP [options]
 EOF
 }
 
-while getopts ":hg:S:n:j:W:E:s:u:p:D:O:" opt; do
+while getopts ":hg:S:n:j:W:E:s:u:p:D:O:r:" opt; do
   case "${opt}" in
     g) GROUP="${OPTARG}" ;;
     S) SITE_LIST_FILE="${OPTARG}" ;;
@@ -123,6 +132,7 @@ while getopts ":hg:S:n:j:W:E:s:u:p:D:O:" opt; do
     p) PYTHON_BIN="${OPTARG}" ;;
     D) DEFAULTS="${OPTARG}" ;;
     O) OVERRIDE_CSV="${OPTARG}" ;;
+    r) RES_TAG="${OPTARG}" ;;
     h) usage; exit 0 ;;
     \?) echo "ERROR: invalid option -${OPTARG}" >&2; usage >&2; exit 2 ;;
     :) echo "ERROR: option -${OPTARG} requires an argument" >&2; usage >&2; exit 2 ;;
@@ -142,6 +152,12 @@ fi
 # extract_physiography.sh and render_job_config.py both read this, so our extra
 # forcing_source and any path overrides reach the tool without patching either.
 export ECLAND_PORTAL_DEFAULTS="${DEFAULTS}"
+
+# Metview reads each static field whole, and its GRIB buffer defaults to 64 MiB.
+# One monthly albedo field is ~128 MB at TCo2559 and ~320 MB at TCo3999, which
+# segfaults the extraction ("wmo_read_any_from_file: Passed buffer is too
+# small"). Raise it unless the caller already has.
+export MARS_READANY_BUFFER_SIZE="${MARS_READANY_BUFFER_SIZE:-2147483648}"
 
 EXTRACT="${PORTAL_DIR}/hpc_scripts/extract_physiography.sh"
 if [[ ! -x "${EXTRACT}" ]]; then
@@ -222,7 +238,7 @@ echo "Sites        : ${n_sites} (${n_done} already processed)"
 echo "Forcing in   : ${FORCING_DIR}"
 echo "Clim out     : ${CLIM_DIR}"
 echo "Portal       : ${PORTAL_DIR}"
-echo "Source       : ${FORCING_SOURCE}   which_surface: ${WHICH_SURFACE}"
+echo "Source       : ${FORCING_SOURCE} (grid ${RES_TAG})   which_surface: ${WHICH_SURFACE}"
 echo "Defaults     : ${DEFAULTS}"
 echo "Coord override: ${OVERRIDE_CSV:-<none>}"
 echo "Workers      : ${JOBS}"
@@ -236,7 +252,7 @@ run_one() {
   local ini_date="${y1}0101"
   local source="${FORCING_SOURCE}"
   if [[ "${source}" == "auto" ]]; then
-    if [[ "${ini_date}" -ge "${OPER_FROM}" ]]; then source="oper"; else source="era5_o1280"; fi
+    if [[ "${ini_date}" -ge "${OPER_FROM}" ]]; then source="oper_${RES_TAG}"; else source="era5_${RES_TAG}"; fi
   fi
   if [[ -f "${STATUS_DIR}/${site}" ]]; then
     echo "[$(date '+%H:%M:%S')] SKIP (already processed) ${site}"
@@ -277,7 +293,7 @@ run_one() {
   echo "[$(date '+%H:%M:%S')] ${status}  ${site} [${source}] ($(( t1 - t0 ))s)"
 }
 export -f run_one
-export EXTRACT CLIM_DIR LOG_DIR STATUS_DIR RUN_DIR FORCING_SOURCE WHICH_SURFACE PYTHON_BIN SCRIPT_DIR ECLAND_PORTAL_DEFAULTS OPER_FROM
+export EXTRACT CLIM_DIR LOG_DIR STATUS_DIR RUN_DIR FORCING_SOURCE WHICH_SURFACE PYTHON_BIN SCRIPT_DIR ECLAND_PORTAL_DEFAULTS OPER_FROM RES_TAG MARS_READANY_BUFFER_SIZE
 
 start=$(date +%s)
 xargs -P "${JOBS}" -L1 bash -c 'run_one "$@"' _ < "${MANIFEST}"
