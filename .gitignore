@@ -44,3 +44,7 @@ __pycache__/
 .venv/
 venv/
 postprocessed/date_validation.csv
+
+# ECMWF sbatch jobfilter logs, written next to wherever sbatch was invoked.
+# Named ecsbatch.log.<jobid>, so the *.log rule above does not catch them.
+ecsbatch.log.*
