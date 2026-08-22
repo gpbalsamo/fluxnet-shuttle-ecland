@@ -38,24 +38,25 @@
 # (AssocMaxJobsLimit). Raising -a past 30 therefore does nothing, while -w buys
 # concurrency out of a node's CPUs instead -- these nodes carry 256 of them.
 #
-# So -a 5 -w 48 gives 240 concurrent sites for 5 job slots, where -a 25 -w 1
+# So -a 5 -w 36 gives 180 concurrent sites for 5 job slots, where -a 25 -w 1
 # gives 25 for 25. Both leave the run resumable and the claims safe: workers
 # inside one element claim by the same atomic mkdir as workers across nodes.
 #
-# 240 is past the point where concurrency pays, and deliberately so. The FLOOR is
-# the costliest single record -- 31 years, serial and unsplittable, about 2.33 h
-# -- and 240 workers drain the other 774 sites in 1.69 h, so the run ends on that
-# one site either way. -w 36 (180 workers, 2.26 h drain) is the cheaper shape and
-# finishes at the same time; -w 48 buys margin against a slow node rather than
-# speed. Below the floor, halving the work is the only lever left: NLOOP=1 from
-# an equilibrated restart.
+# 180 is the shape to keep, and going higher is measured waste. The FLOOR is the
+# costliest single record -- NL-Loo_1997-2025, 29 years, serial and unsplittable,
+# about 2.1 h with contention -- and any concurrency past ~165 workers drains the
+# other 774 sites faster than that, so the run ends on that one site regardless.
+# Job 36484197 ran the 371 remaining sites at -w 48 (240 workers) and finished in
+# 1 h 13 min bounded by its longest record; -w 36 reaches the same finish for 60
+# fewer CPUs. Below the floor, halving the work is the only lever left: NLOOP=1
+# from an equilibrated restart.
 #
 # WALL LIMIT. Size it on the per-worker DRAIN time, not on one site: a worker
 # takes site after site until the queue is empty, so it lives for roughly
-# total/N -- but never below the costliest single record, 2.33 h, since one worker
-# must carry it to the end. The 03:30:00 default clears that floor by 50% and
-# also covers the 1.69 h drain at 240 workers; raise it if you cut concurrency
-# below ~100 workers. A worker killed at the limit loses only its in-flight site
+# total/N -- but never below the costliest single record, about 2.1 h, since one
+# worker must carry it to the end. The 03:30:00 default clears that floor by two
+# thirds and also covers the 1.9 h drain at the default 180 workers; raise it if
+# you cut concurrency below ~100 workers. A worker killed at the limit loses only its in-flight site
 # (the claim is swept and the site retried next submission), but a limit below
 # the drain means every worker dies mid-queue and nothing is recorded: a 04:00:00
 # limit against 48 contended workers cost 480 CPU-hours here for zero sites.
@@ -72,7 +73,7 @@
 #   scripts/submit_ecland_slurm.sh -g GROUP -x ECLAND_MASTER [options]
 #
 #   scripts/submit_ecland_slurm.sh -g shuttle-all775-era5 \
-#     -x /perm/pad/ecland/build/bin/ecland-master-dp -a 5 -w 48 -O ${SCRATCH}
+#     -x /perm/pad/ecland/build/bin/ecland-master-dp -a 5 -w 36 -O ${SCRATCH}
 #
 # (C) Copyright 2026- ECMWF.
 #
@@ -93,19 +94,19 @@ GROUP=""
 ECLAND_MASTER="${ECLAND_MASTER:-${PERM:-/perm/${USER}}/ecland/build/bin/ecland-master-dp}"
 FORCING_TYPE="insitu"
 NLOOP=2
-# Concurrency is ARRAY_TASKS x WORKERS_PER_TASK = 240, from 5 of the 30 job slots
-# the association allows -- see "HOW MANY WORKERS" above. The run ends on the
-# costliest single record either way, so -w 36 finishes at the same time for
-# three quarters of the CPUs; -w 48 is margin against a slow node.
+# Concurrency is ARRAY_TASKS x WORKERS_PER_TASK = 180, from 5 of the 30 job slots
+# the association allows -- see "HOW MANY WORKERS" above. Measured: -w 48 (240
+# workers) finished the same run in the same time, because both are past the
+# floor, so the extra 60 CPUs bought nothing.
 ARRAY_TASKS=5
-WORKERS_PER_TASK=48
+WORKERS_PER_TASK=36
 THROTTLE=""
 # Clears the 2.33 h floor set by the longest record by 50%, and covers the drain
 # at any concurrency above ~100 workers. See "WALL LIMIT" above.
 WALLTIME="03:30:00"
 QOS="nf"
 # A single-point run needs under 400 MB. This is per CPU, so it multiplies by
-# -w -- at 8G, -w 48 would reserve 384 GB of a 480 GB node for no reason.
+# -w -- at 8G, -w 36 would reserve 288 GB of a 480 GB node for no reason.
 MEM_PER_CPU="2G"
 NAMELIST="${PROJECT_ROOT}/namelists/namelist_ecland_50R1_ctl"
 OUT_ROOT="${OUT_ROOT:-${SCRATCH:-${PROJECT_ROOT}/scripts/work}}"
@@ -134,7 +135,7 @@ Usage: $(basename "$0") -g GROUP [options]
   -w WORKERS        Parallel workers INSIDE each element (default:
                      ${WORKERS_PER_TASK}), taking one CPU each. Concurrency is
                      ARRAY_TASKS x WORKERS, so -w is the way past MaxJobs:
-                     -a 5 -w 48 gives 240 concurrent sites for 5 job slots.
+                     -a 5 -w 36 gives 180 concurrent sites for 5 job slots.
                      Lowering total concurrency lengthens the drain -- raise -T
   -p THROTTLE       Cap simultaneously running elements (SLURM's --array=..%N)
   -S SITE_LIST_FILE Restrict to these sites, one <site>_<Y1>-<Y2> per line

@@ -367,8 +367,10 @@ self-contained and cannot silently pick up a stale script or a `$PERM` executabl
 `pull` brings back only `postprocessed/` and `benchmark/`, never raw `output/`,
 which is ~750 GB per campaign and regenerable.
 
-Defaults are `-a 5 -w 48 -l 2 -T 03:30:00 -q nf -M 2G`: **240 concurrent sites
-from 5 SLURM job slots.** Add `-d` for a dry run (writes and prints the job
+Defaults are `-a 5 -w 36 -l 2 -T 03:30:00 -q nf -M 2G`: **180 concurrent sites
+from 5 SLURM job slots.** Measured: `-w 48` (240 workers) finishes the same run in
+the same time, because both are past the floor set by the costliest single record,
+so the extra 60 CPUs buy nothing. Add `-d` for a dry run (writes and prints the job
 script, submits nothing) and `-i` to put `output/` directly in the mirror tree.
 `scratch_mirror.sh -r` pushes run inputs only, skipping the 12 GB of `flux/`
 observations the model never reads — useful to get a run started sooner, but the
