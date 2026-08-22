@@ -308,6 +308,11 @@ done
 # node failure). Nothing is running now, so these are stale by definition:
 # clear them and the site is retried.
 n_swept=0
+# Workers reclaim a stale claim by renaming it to .stale_<site>_<pid> and then
+# deleting it (see ecland_run_queue.sh). A worker killed between those two steps
+# leaves the rename behind, and the loop below cannot see it: a leading dot is
+# not matched by *. Clear those first so they do not accumulate across runs.
+rm -rf "${CLAIM_DIR}"/.stale_* 2>/dev/null || true
 for c in "${CLAIM_DIR}"/*/; do
   [[ -d "${c}" ]] || continue
   site="$(basename "${c}")"
