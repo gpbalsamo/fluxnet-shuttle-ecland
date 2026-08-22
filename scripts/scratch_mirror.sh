@@ -38,9 +38,15 @@
 #   cd -; scripts/scratch_mirror.sh pull
 #
 # WHY -g. Unlike the sibling repo, forcing/, clim/ and flux/ here are split by
-# site group, and the groups are large (flux/ alone is 9.7 GB across three).
-# Pushing one group copies about 2 GB rather than 12, and a run only ever reads
-# its own group. Without -g the whole of each directory travels.
+# site group, and the groups are large. Pushing one group copies about 14 GB
+# against 26 for all three, and a run only ever reads its own group. Without -g
+# the whole of each directory travels.
+#
+# -r trims that further to the ~2 GB the model itself needs, by leaving out the
+# flux/ observations that only benchmark.py reads. It is a way to get a run
+# started sooner, not the normal path: the mirror is meant to be self-contained,
+# as it is in the sibling repo, so a plain push carries flux/ too and the whole
+# run/postproc/benchmark cycle works there without touching $PERM again.
 #
 # WHAT IS NOT COPIED BACK. Raw model output (output/), run state (status/,
 # claims/, logs/, slurm/, work/) and the git metadata. Raw output is the biggest

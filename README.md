@@ -332,17 +332,27 @@ instead of one job per site, and is the fast path on the ECMWF HPC. **Run it fro
 the `$SCRATCH` mirror, not from `$PERM`:**
 
 ```bash
-scripts/scratch_mirror.sh push -g shuttle-all775-era5 -r   # ~2 GB, ~2 min
+scripts/scratch_mirror.sh push -g shuttle-all775-era5   # ~14 GB for one group
 cd $SCRATCH/fluxnet-shuttle-ecland
 scripts/submit_ecland_slurm.sh -g shuttle-all775-era5 \
   -x $SCRATCH/fluxnet-shuttle-ecland/ecland-build/bin/ecland-master-dp
+python3 scripts/postproc.py --inputdir output --outdir postprocessed
+python3 scripts/benchmark.py
+cd -; scripts/scratch_mirror.sh pull                    # results only
 ```
+
+The push carries everything a run *and* its benchmark need — `forcing/`, `clim/`,
+`flux/`, `namelists/`, `scripts/` and the ecLand build — so the mirror is
+self-contained and cannot silently pick up a stale script or a `$PERM` executable.
+`pull` brings back only `postprocessed/` and `benchmark/`, never raw `output/`,
+which is ~750 GB per campaign and regenerable.
 
 Defaults are `-a 5 -w 48 -l 2 -T 03:30:00 -q nf -M 2G`: **240 concurrent sites
 from 5 SLURM job slots.** Add `-d` for a dry run (writes and prints the job
-script, submits nothing), `-r` to skip `flux/` in the push (12 GB of observations
-the model never reads — the benchmark does), and `-i` to put `output/` directly in
-the mirror tree.
+script, submits nothing) and `-i` to put `output/` directly in the mirror tree.
+`scratch_mirror.sh -r` pushes run inputs only, skipping the 12 GB of `flux/`
+observations the model never reads — useful to get a run started sooner, but the
+benchmark then needs a second push without `-r`.
 
 **Concurrency = `-a` × `-w`, and the two are not interchangeable.** The scarce
 resource is job slots, not CPUs: `sacctmgr show assoc user=$USER` gives
