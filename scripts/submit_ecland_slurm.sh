@@ -24,10 +24,12 @@
 # 191, p90 225). The 775-site group is 5397 site-years, so a full run is about
 # 290 CPU-hours uncontended and around 750 GB of raw output at ~140 MB per
 # site-year -- send it to $SCRATCH, never into the repository. Sharing a node
-# costs more on top: the sibling PLUMBER2 repo measured 1.32x with 30 workers per
-# node (memory bandwidth), and 48 is untested, so budget ~1.4x and about 406
-# CPU-hours. Refit rather than reuse across repositories -- the same law over
-# PLUMBER2 sites gives 86 s per site-year against 194 here.
+# costs a little on top: job 36484197 ran 1507 site-years through 240 workers at
+# -w 48 for 94.7 CPU-hours, which is 226 s per site-year, so the contention
+# factor at 48 workers is 1.17x (the sibling PLUMBER2 repo measured 1.32x at 30,
+# so it does not worsen with -w). Budget ~340 CPU-hours for the full group.
+# Refit rather than reuse across repositories -- the same law over PLUMBER2 sites
+# gives 86 s per site-year against 194 here.
 #
 # HOW MANY WORKERS. Concurrency is ARRAY_TASKS x WORKERS_PER_TASK, and the two
 # are not interchangeable, because the scarce resource is job slots rather than

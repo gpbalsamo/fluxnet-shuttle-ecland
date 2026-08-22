@@ -365,8 +365,11 @@ output is seeded as done, so re-submitting picks up where it stopped.
 
 Cost refitted on 358 of our own completed sites: **193.6 s per site-year** at
 `NLOOP=2` (median 191, p90 225), so the 775-site group is ~290 CPU-hours
-uncontended and ~750 GB of raw output. Do not carry this figure to
-`plumber2-ecland`, whose sites cost 86 s per site-year.
+uncontended. Measured end to end at `-w 48`, job 36484197 put 1507 site-years
+through 240 workers in **1 h 13 min for 94.7 CPU-hours** — 226 s per site-year,
+a contention factor of 1.17× — and the full group's raw output is **711 GB**. Do
+not carry these figures to `plumber2-ecland`, whose sites cost 86 s per
+site-year.
 
 **Two mistakes here cost 480 CPU-hours for zero completed sites, both worth
 understanding before changing the defaults.**
