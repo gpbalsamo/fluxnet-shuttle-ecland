@@ -149,6 +149,17 @@ git clone git@github.com:gpbalsamo/fluxnet-shuttle-ecland.git
 cd fluxnet-shuttle-ecland
 ```
 
+## Requirements
+
+- ecLand executable (built separately; see [ECMWF ecLand](https://github.com/ecmwf-ifs/ecland)) — runs on ECMWF HPC or locally on macOS (already validated for the 170-site PLUMBER2 benchmark, see `plumber2-ecland`'s README).
+- Python: `numpy`, `xarray`, `netCDF4`, `pandas`, plus the [`fluxnet-shuttle`](https://github.com/fluxnet/shuttle) CLI.
+- R + [FluxnetLSM](https://github.com/aukkola/FluxnetLSM) — `scripts/install_fluxnetlsm.R` installs both (needs `brew install r netcdf gdal` first on macOS).
+- NCO tools (`ncrename`, `ncks`, `ncatted`, `nccopy`) for `scripts/regenerate_forcing.sh`, and `unzip` for `scripts/run_forcing_pipeline.sh`.
+- For the physiography step: an [`ecland-portal`](https://github.com/gpbalsamo/ecland-portal) checkout, ecLand's `create_forcing` tool, the `mars` client, and read access to `/home/rdx/data/climate` — i.e. it runs at ECMWF. On Atos, `module load prgenv/intel ecmwf-toolbox/new python3/new netcdf4/new cdo/2.2.0 nco eclib/new` (metview arrives with `ecmwf-toolbox`).
+- Enough scratch space for `scripts/work/` while the pipeline runs: a few GB is plenty at `-j 4`, since each site's download is deleted as soon as it's converted.
+
+## Usage
+
 ### 1. Pull the live Shuttle inventory, site metadata, and a candidate shortlist
 
 ```bash
@@ -326,7 +337,7 @@ python3 scripts/benchmark.py --model-dir benchmark/models/shuttle-pilot20 \
   --out-dir benchmark/dashboards/shuttle-pilot20 --experiment-name shuttle-pilot20
 ```
 
-#### The whole group at once: one job array draining a shared site queue
+#### Faster on the HPC: one job array draining a shared site queue
 
 `scripts/submit_ecland_slurm.sh` runs a whole group as one SLURM job array whose
 elements are interchangeable workers draining a shared queue, rather than one job
@@ -399,11 +410,8 @@ resumable — a site whose output already exists is skipped. Defaults are
 at 128 GB, so lower `-w` (and raise `-M`) if a long-record group is killed for
 memory.
 
-`benchmark.py` needs two flags whose defaults are inherited from the sibling repo:
-`--flux-dir flux/<group>` (it defaults to `flux/PLUMBER2_original`, absent here)
-and an `--experiment-name` **identical** to the post-processing's, or every site
-is skipped as "no model output". It writes `<out-dir>/<run-name>/index.html`
-alongside `benchmark_metrics.csv` and `benchmark_data.json`.
+`benchmark.py` needs `--flux-dir` and a matching `--experiment-name`; see
+[Obs-vs-model benchmark dashboard](#obs-vs-model-benchmark-dashboard).
 
 #### Working on `$SCRATCH`
 
@@ -452,14 +460,71 @@ Two things this exposed:
 
 `ecland_create_namelist.py` needed one fix to get here: it read the scalar `zphista`/`zuv` from surfclim as `[0].data[0]`, which raises `IndexError` on current netCDF4 builds. Those variables are scalar in PLUMBER2's clim files too, so this was never specific to Shuttle-sourced sites.
 
-## Requirements
+## Benchmarking
 
-- ecLand executable (built separately; see [ECMWF ecLand](https://github.com/ecmwf-ifs/ecland)) — runs on ECMWF HPC or locally on macOS (already validated for the 170-site PLUMBER2 benchmark, see `plumber2-ecland`'s README).
-- Python: `numpy`, `xarray`, `netCDF4`, `pandas`, plus the [`fluxnet-shuttle`](https://github.com/fluxnet/shuttle) CLI.
-- R + [FluxnetLSM](https://github.com/aukkola/FluxnetLSM) — `scripts/install_fluxnetlsm.R` installs both (needs `brew install r netcdf gdal` first on macOS).
-- NCO tools (`ncrename`, `ncks`, `ncatted`, `nccopy`) for `scripts/regenerate_forcing.sh`, and `unzip` for `scripts/run_forcing_pipeline.sh`.
-- For the physiography step: an [`ecland-portal`](https://github.com/gpbalsamo/ecland-portal) checkout, ecLand's `create_forcing` tool, the `mars` client, and read access to `/home/rdx/data/climate` — i.e. it runs at ECMWF. On Atos, `module load prgenv/intel ecmwf-toolbox/new python3/new netcdf4/new cdo/2.2.0 nco eclib/new` (metview arrives with `ecmwf-toolbox`).
-- Enough scratch space for `scripts/work/` while the pipeline runs: a few GB is plenty at `-j 4`, since each site's download is deleted as soon as it's converted.
+Curated site lists live in `reference/`: `shuttle_pilot20_site_ids.txt` (the
+20-site fire/vegetation-stress shortlist) and `plumber2_170_site_ids.txt` (the
+original PLUMBER2 pool, for like-for-like comparison with `plumber2-ecland`). To
+run ecLand over a subset rather than the whole group, pass `-S` to the submitter:
+
+```bash
+scripts/submit_ecland_slurm.sh -g shuttle-all775-era5 \
+  -S reference/shuttle_pilot20_site_ids.txt \
+  -x $PWD/ecland-build/bin/ecland-master-dp
+```
+
+### Obs-vs-model benchmark dashboard
+
+`scripts/benchmark.py` scores a postprocessed model run against the observed
+tower flux data in `flux/<group>/` for `Qle`, `Qh` and `NEE`, using only
+quality-controlled (measured, non-gapfilled) observation half-hours. For each site
+it computes bias/RMSE/R/NME plus compact monthly-climatology, seasonal-diurnal and
+long-term-trend aggregates, then builds a self-contained interactive dashboard
+(`scripts/dashboard_template.html`) with a pannable/zoomable site map, Taylor
+diagram, per-biome skill breakdown, a searchable/sortable ranked table, and a
+per-site drill-down.
+
+It is model-agnostic: any directory of per-site NetCDF files works as
+`--model-dir`, whether named in the postproc convention
+(`ecLand_<experiment>_<site>_<period>.nc`) or a site-only convention with no
+period in the filename (`*.{SITE}.nc`, e.g. JULES output), and it scores whichever
+of `Qle`/`Qh`/`NEE` the model actually provides.
+
+Convention: keep each model/experiment's postprocessed output under its own
+`benchmark/models/<model-name>/` directory (e.g. `ecland_cy50r1` for a control
+run, `ecland_cy50r1_<variant>` for a namelist variant) so multiple runs can be
+compared side by side.
+
+```bash
+python3 scripts/benchmark.py \
+  --flux-dir flux/shuttle-all775-era5 \
+  --model-dir benchmark/models/<model-name> \
+  --out-dir benchmark/dashboards/<model-name> \
+  --run-name shuttle-all775-era5 \
+  --experiment-name shuttle-all775-era5
+```
+
+`--out-dir` is a base path: results go to `<out-dir>/<run-name>/`, defaulting to
+`all` when neither `--run-name` nor `--sites-file` is given. `--site` filters to
+one or more specific sites. Each run writes a metrics CSV, a JSON payload, and
+`index.html` (named so uploading the output folder to a static host opens the
+dashboard automatically) — open it directly in a browser, no server required.
+
+Two flags differ from `plumber2-ecland`'s defaults and must be set here:
+`--flux-dir flux/<group>` (the default `flux/PLUMBER2_original` does not exist in
+this repo) and an `--experiment-name` **identical** to the one given to the
+post-processing, or every site is skipped as "no model output".
+
+## Namelist
+
+- `namelists/namelist_ecland_50R1_ctl` — the ecLand 50R1 control configuration,
+  the default used by `submit_ecland_slurm.sh` and `ecland_run_experiment.sh`
+  when `-n` is omitted.
+
+New namelist variants should follow this naming pattern
+(`namelist_ecland_50R1_<variant>`) and pair with a matching
+`benchmark/models/ecland_cy50r1_<variant>/` output directory (see
+[Benchmarking](#benchmarking)) so runs stay easy to tell apart.
 
 ## License
 
