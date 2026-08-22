@@ -326,105 +326,108 @@ python3 scripts/benchmark.py --model-dir benchmark/models/shuttle-pilot20 \
   --out-dir benchmark/dashboards/shuttle-pilot20 --experiment-name shuttle-pilot20
 ```
 
-#### The whole group at once: one job array draining a shared queue
+#### The whole group at once: one job array draining a shared site queue
 
-`scripts/submit_ecland_slurm.sh` runs a whole group as a single SLURM job array
-instead of one job per site, and is the fast path on the ECMWF HPC. **Run it from
-the `$SCRATCH` mirror, not from `$PERM`:**
+`scripts/submit_ecland_slurm.sh` runs a whole group as one SLURM job array whose
+elements are interchangeable workers draining a shared queue, rather than one job
+per site. Sites are claimed with an atomic `mkdir` and recorded individually, so
+the run is resumable and a failure costs one site, not a slice.
+
+**Run it from the `$SCRATCH` mirror**, which is a requirement above ~25 concurrent
+sites, not a preference — see [Working on `$SCRATCH`](#working-on-scratch):
 
 ```bash
-scripts/scratch_mirror.sh push -g shuttle-all775-era5   # ~14 GB for one group
+scripts/scratch_mirror.sh push -g shuttle-all775-era5
 cd $SCRATCH/fluxnet-shuttle-ecland
 scripts/submit_ecland_slurm.sh -g shuttle-all775-era5 \
-  -x $SCRATCH/fluxnet-shuttle-ecland/ecland-build/bin/ecland-master-dp
+  -x $PWD/ecland-build/bin/ecland-master-dp
+```
+
+Defaults are `-a 5 -w 36 -l 2 -T 03:30:00 -q nf -M 2G`. Add `-d` for a dry run,
+`-h` for the full option list. Measured over the 775-site group at `NLOOP=2`:
+
+| | |
+|---|---|
+| Wall clock | **1 h 13 min** (0 failures) |
+| CPU time | **94.7 CPU-hours** for 1507 site-years |
+| Raw output | **711 GB** (~140 MB per site-year) |
+| Cost law | **194 s per site-year**, ×1.17 when 36+ workers share a node |
+
+Forcing is half-hourly at 766 of the 775 sites, so site-years is a sound
+predictor here. Don't reuse these timings for `plumber2-ecland`, whose sites cost
+86 s per site-year and mix resolutions; refit per repo from `len(time)`.
+
+**Concurrency is `-a` × `-w`.** Job slots are the scarce resource, not CPUs:
+`MaxJobs=30` per account on QoS `nf`, counted per array element, so `-a` above 30
+only adds `PENDING` elements while `-w` buys concurrency from a node's 256 CPUs.
+`-a 5 -w 36` gives 180 concurrent sites for 5 job slots.
+
+**180 workers is the number worth remembering.** Anything at or above ~165
+finishes in the same ~2.1 h, the cost of `NL-Loo_1997-2025` running alone, serial
+and unsplittable — `-w 48` measured no faster. Below that floor the only lever is
+`NLOOP=1` from an equilibrated restart. If you *lower* concurrency, raise `-T` to
+match: a worker lives for the whole drain (≈ total/N), and a limit below it kills
+every worker mid-queue and records nothing.
+
+Output, work dirs, logs and queue state go under `<-O>/ecland_<GROUP>/`, which
+defaults to `$SCRATCH`. Pass `-i` to make the run root the tree itself, so
+`output/` sits where postproc and benchmark expect it. The generated job script
+exports `OMPI_MCA_hwloc_base_binding_policy=none`, `OMP_NUM_THREADS=1`,
+`KMP_AFFINITY=disabled` and an empty `LAUNCH`; all four are required, and the run
+is ~13× slower without them. The script header explains why.
+
+Re-submitting picks up where it stopped: completed output is seeded as done, and
+claims orphaned by a killed job are reclaimed — mid-run by any live worker, and
+between runs by the submitter's sweep. Retry only the failures with
+`grep -lx FAILED <run_root>/status/* | xargs rm`.
+
+#### Post-process and benchmark
+
+```bash
 scripts/submit_postproc_slurm.sh -I $SCRATCH/ecland_shuttle-all775-era5/output \
-  -e shuttle-all775-era5                                # ~30 min at 40 workers
+  -e shuttle-all775-era5
 python3 scripts/benchmark.py --flux-dir flux/shuttle-all775-era5 \
   --model-dir postprocessed --out-dir benchmark/dashboards \
   --run-name shuttle-all775-era5 --experiment-name shuttle-all775-era5
-cd -; scripts/scratch_mirror.sh pull                    # results only
 ```
 
-**Post-process with the submitter, not `postproc.py` directly.** It is serial at
-~90 s per site, so 775 sites is ~19 CPU-hours — half a day, on a login node where
-it shouldn't run at all. `submit_postproc_slurm.sh` splits the sites across 40
-workers in one SLURM job and finishes in ~30 minutes. It's resumable for free,
-since `postproc.py` skips a site whose output already exists: after a wall kill,
-just submit again. Note that QoS `nf` caps a job at **128 GB**, and `postproc.py`
-peaks near 1.4 GB per worker, so `-w` × `-M` must stay under it — the script
-checks and tells you both ways out rather than letting sbatch return
-`QOSMaxMemoryPerJob`.
+`postproc.py` maps raw ecLand output onto the common variable schema, one
+`ecLand_<experiment>_<site>_<period>.nc` per site. It is serial at ~90 s per site,
+so use the submitter, which splits the sites across workers in one job and is
+resumable — a site whose output already exists is skipped. Defaults are
+`-w 40 -M 3G`; per-worker memory scales with record length and QoS `nf` caps a job
+at 128 GB, so lower `-w` (and raise `-M`) if a long-record group is killed for
+memory.
 
-Two flags `benchmark.py` needs here that its defaults get wrong, both inherited
-from the sibling repo: `--flux-dir flux/<group>` (it defaults to
-`flux/PLUMBER2_original`, which doesn't exist here) and an `--experiment-name`
-**identical** to the one given to the post-processing, or the postprocessed
-filenames won't resolve and every site is skipped as "no model output".
+`benchmark.py` needs two flags whose defaults are inherited from the sibling repo:
+`--flux-dir flux/<group>` (it defaults to `flux/PLUMBER2_original`, absent here)
+and an `--experiment-name` **identical** to the post-processing's, or every site
+is skipped as "no model output". It writes `<out-dir>/<run-name>/index.html`
+alongside `benchmark_metrics.csv` and `benchmark_data.json`.
 
-The push carries everything a run *and* its benchmark need — `forcing/`, `clim/`,
-`flux/`, `namelists/`, `scripts/` and the ecLand build — so the mirror is
-self-contained and cannot silently pick up a stale script or a `$PERM` executable.
-`pull` brings back only `postprocessed/` and `benchmark/`, never raw `output/`,
-which is ~750 GB per campaign and regenerable.
+#### Working on `$SCRATCH`
 
-Defaults are `-a 5 -w 36 -l 2 -T 03:30:00 -q nf -M 2G`: **180 concurrent sites
-from 5 SLURM job slots.** Measured: `-w 48` (240 workers) finishes the same run in
-the same time, because both are past the floor set by the costliest single record,
-so the extra 60 CPUs buy nothing. Add `-d` for a dry run (writes and prints the job
-script, submits nothing) and `-i` to put `output/` directly in the mirror tree.
-`scratch_mirror.sh -r` pushes run inputs only, skipping the 12 GB of `flux/`
-observations the model never reads — useful to get a run started sooner, but the
-benchmark then needs a second push without `-r`.
+`$PERM` is a single NFS filer, `$SCRATCH` is Lustre: measured with 30 concurrent
+writers, 530 MB/s against 4863 MB/s. Reads count as much as writes, since all
+workers in one element share their node's NFS client — so forcing, clim and the
+executable all have to be on Lustre too. Bulk work happens there; only results
+come back:
 
-**Concurrency = `-a` × `-w`, and the two are not interchangeable.** The scarce
-resource is job slots, not CPUs: `sacctmgr show assoc user=$USER` gives
-**MaxJobs=30**, and array elements count individually, so element 31+ just sits in
-`PENDING (AssocMaxJobsLimit)`. `-w` runs several workers *inside* one element,
-buying concurrency from a node's CPUs (these nodes have 256) instead of from that
-budget. Sites are claimed with an atomic `mkdir`, so workers inside one element
-are exactly as safe as workers across nodes, and the run is resumable: completed
-output is seeded as done, so re-submitting picks up where it stopped.
+```bash
+scripts/scratch_mirror.sh push -g <group>   # inputs + code + ecland-build -> $SCRATCH
+# ... run, postproc, benchmark on the mirror ...
+scripts/scratch_mirror.sh pull              # postprocessed/ + benchmark/ -> $PERM
+```
 
-Cost refitted on 358 of our own completed sites: **193.6 s per site-year** at
-`NLOOP=2` (median 191, p90 225), so the 775-site group is ~290 CPU-hours
-uncontended. Measured end to end at `-w 48`, job 36484197 put 1507 site-years
-through 240 workers in **1 h 13 min for 94.7 CPU-hours** — 226 s per site-year,
-a contention factor of 1.17× — and the full group's raw output is **711 GB**. Do
-not carry these figures to `plumber2-ecland`, whose sites cost 86 s per
-site-year.
-
-**Two mistakes here cost 480 CPU-hours for zero completed sites, both worth
-understanding before changing the defaults.**
-
-*1. Everything must be on Lustre — including the inputs and the executable.*
-Measured with 30 concurrent writers, `$PERM` (NFS) sustains 530 MB/s against
-4863 MB/s on `$SCRATCH` (Lustre), a factor of 9.2. But the reads are the half
-that gets missed: the workers inside one element share that node's *single* NFS
-client, so forcing read over NFS starves them even when output is already on
-Lustre. The executable counts too — it demand-pages five shared objects through
-an `$ORIGIN/../lib64` rpath. `scripts/scratch_mirror.sh push` assembles a
-self-contained tree, build included; `pull` brings back only `postprocessed/` and
-`benchmark/`, never raw `output/`. The submit script warns if any of the three is
-still on NFS above 25 workers.
-
-*2. Workers must be unbound and single-threaded.* Four separate mechanisms will
-otherwise collapse every worker onto core 0 or oversubscribe the node, all of
-them fixed by exports the job script now sets (`OMP_NUM_THREADS=1`,
-`KMP_AFFINITY=disabled`, `OMPI_MCA_hwloc_base_binding_policy=none`, `LAUNCH=''`):
-ecLand's OpenMP defaults to the whole cgroup; Intel's OpenMP runtime pins threads
-itself and *ignores* `OMP_PROC_BIND`; ecLand calls `MPI_Init` even for one point,
-so the bare binary is an OpenMPI singleton that still applies default binding;
-and `mpirun -np 1` binds its rank to the first core. Symptom to watch for: ~7% CPU
-per worker with every process reporting `Cpus_allowed_list=0,128`. Healthy looks
-like 48 model processes on 47 distinct cores at ~98% CPU each.
-
-**Size the wall limit on the drain time, not the median site.** A worker takes
-site after site until the queue is empty, so it lives ≈ total/N — but never less
-than the costliest single record (31 years, ~2.33 h), which is serial and cannot
-be split. The `03:30:00` default clears that floor by 50%. A limit below the drain
-kills every worker mid-queue and records *nothing*, which is exactly how the 480
-CPU-hours were lost: a 4 h wall against 48 contended workers whose median site had
-swollen from 756 s to 9845 s.
+The mirror keeps this repository's layout, so scripts work there unchanged. `push`
+sends `scripts`, `namelists`, and the `forcing`, `clim` and `flux` for the group
+named by `-g`, plus `ecland-build/{bin,lib,lib64}` — the executable resolves five
+shared objects through an `$ORIGIN/../lib64` rpath, so it travels too. `-r` skips
+`flux/`, which only the benchmark reads, for a faster first push. `pull` returns
+**only** `postprocessed/` and `benchmark/{models,dashboards}`; raw `output/` never
+comes back. Neither direction uses `--delete`. **`$SCRATCH` is pruned
+automatically**, so anything not pulled back is eventually gone;
+`scratch_mirror.sh status` shows both sides.
 
 ### 6.1 Pilot run (3 sites)
 
