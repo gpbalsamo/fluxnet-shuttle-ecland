@@ -1,0 +1,776 @@
+site,period,lat,lon,country,source,declared_country,derived_country,derived_iso_a2,offshore_km,border_km
+AR-Bal,2012-2013,-37.75960,-58.30240,Argentina,derived,,Argentina,AR,0.0,
+AR-CCa,2013-2020,-35.62100,-61.31810,Argentina,derived,,Argentina,AR,0.0,
+AR-CCg,2018-2024,-35.92440,-61.18550,Argentina,derived,,Argentina,AR,0.0,
+AR-TF1,2017-2017,-54.97330,-66.73350,Argentina,derived,,Argentina,AR,0.1,
+AR-TF2,2017-2017,-54.82690,-68.45490,Argentina,derived,,Argentina,AR,0.0,12.2
+AT-Mmg,2022-2024,47.31656,10.97009,Austria,derived,,Austria,AT,0.0,8.3
+AT-Neu,2002-2019,47.11667,11.31750,Austria,declared,Austria,Austria,AT,0.0,14.4
+AT-Nsd,2019-2022,47.76914,16.75849,Austria,derived,,Austria,AT,0.0,8.0
+AT-PsM,2016-2019,47.58145,14.34720,Austria,derived,,Austria,AT,0.0,
+AT-Zoe,2015-2023,47.84225,14.44414,Austria,derived,,Austria,AT,0.0,80.6
+AU-APL,2018-2021,-36.86222,147.32083,Australia,derived,,Australia,AU,0.0,
+AU-ASM,2011-2025,-22.28300,133.24899,Australia,declared,Australia,Australia,AU,0.0,
+AU-Ade,2008-2008,-13.07690,131.11780,Australia,declared,Australia,Australia,AU,0.0,
+AU-Boy,2018-2024,-32.47709,116.93856,Australia,declared,Australia,Australia,AU,0.0,
+AU-Col,2018-2018,-33.42000,116.23700,Australia,declared,Australia,Australia,AU,0.0,
+AU-Cow,2009-2024,-16.23819,145.42715,Australia,declared,Australia,Australia,AU,0.0,
+AU-Cpr,2011-2025,-34.00206,140.58913,Australia,declared,Australia,Australia,AU,0.0,
+AU-Ctr,2010-2017,-16.10328,145.44685,Australia,declared,Australia,Australia,AU,0.0,
+AU-Cum,2014-2025,-33.61330,150.72247,Australia,declared,Australia,Australia,AU,0.0,
+AU-DaP,2008-2012,-14.06330,131.31810,Australia,declared,Australia,Australia,AU,0.0,
+AU-DaS,2008-2025,-14.15928,131.38800,Australia,declared,Australia,Australia,AU,0.0,
+AU-Dry,2010-2024,-15.25880,132.37061,Australia,declared,Australia,Australia,AU,0.0,
+AU-Emr,2012-2013,-23.85870,148.47459,Australia,declared,Australia,Australia,AU,0.0,
+AU-Fle,2023-2025,-19.88729,146.18913,Australia,declared,Australia,Australia,AU,0.0,
+AU-Fog,2007-2007,-12.54520,131.30721,Australia,declared,Australia,Australia,AU,0.0,
+AU-GWW,2013-2024,-30.19130,120.65410,Australia,declared,Australia,Australia,AU,0.0,
+AU-Gin,2012-2024,-31.37500,115.65000,Australia,declared,Australia,Australia,AU,0.0,
+AU-How,2002-2024,-12.49520,131.14999,Australia,declared,Australia,Australia,AU,0.0,
+AU-Lit,2016-2024,-13.17904,130.79449,Australia,declared,Australia,Australia,AU,0.0,
+AU-Lon,2019-2024,-23.52327,144.31041,Australia,declared,Australia,Australia,AU,0.0,
+AU-Lox,2008-2009,-34.47040,140.65511,Australia,declared,Australia,Australia,AU,0.0,
+AU-MvA,2024-2024,-30.54300,150.02000,Australia,derived,,Australia,AU,0.0,
+AU-MvB,2024-2024,-30.69700,150.09000,Australia,derived,,Australia,AU,0.0,
+AU-Otw,2008-2010,-38.53234,142.81680,Australia,declared,Australia,Australia,AU,0.0,
+AU-RDF,2012-2012,-14.56360,132.47760,Australia,declared,Australia,Australia,AU,0.0,
+AU-Rgf,2016-2024,-32.50610,116.96683,Australia,declared,Australia,Australia,AU,0.0,
+AU-Rig,2011-2016,-36.64990,145.57590,Australia,declared,Australia,Australia,AU,0.0,
+AU-Rob,2014-2024,-17.11750,145.63010,Australia,declared,Australia,Australia,AU,0.0,
+AU-Sam,2011-2017,-27.38810,152.87781,Australia,declared,Australia,Australia,AU,0.0,
+AU-Sil,2020-2024,-42.09056,147.08749,Australia,derived,,Australia,AU,0.0,
+AU-Sno,2024-2024,-36.37565,148.43585,Australia,derived,,Australia,AU,0.0,
+AU-Stp,2009-2024,-17.15070,133.35020,Australia,declared,Australia,Australia,AU,0.0,
+AU-TTE,2013-2025,-22.28700,133.64000,Australia,declared,Australia,Australia,AU,0.0,
+AU-Tum,2002-2021,-35.65660,148.15170,Australia,declared,Australia,Australia,AU,0.0,
+AU-Wac,2006-2008,-37.42900,145.18726,Australia,declared,Australia,Australia,AU,0.0,
+AU-Wel,2024-2025,-32.57270,148.98430,Australia,derived,,Australia,AU,0.0,
+AU-Wgt,2024-2025,-42.09139,147.07944,Australia,derived,,Australia,AU,0.0,
+AU-Whr,2012-2025,-36.67320,145.02940,Australia,declared,Australia,Australia,AU,0.0,
+AU-Wom,2011-2025,-37.42220,144.09441,Australia,declared,Australia,Australia,AU,0.0,
+AU-Wrr,2015-2020,-43.09502,146.65450,Australia,declared,Australia,Australia,AU,0.0,
+AU-Ya1,2023-2024,-33.61347,150.73486,Australia,derived,,Australia,AU,0.0,
+AU-Ya2,2023-2024,-33.62081,150.76329,Australia,derived,,Australia,AU,0.0,
+AU-Ync,2013-2024,-34.98930,146.29070,Australia,declared,Australia,Australia,AU,0.0,
+BE-Bra,2000-2023,51.30917,4.52056,Belgium,declared,Belgium,Belgium,BE,0.0,12.5
+BE-Dor,2011-2024,50.31171,4.96831,Belgium,declared,Belgium,Belgium,BE,0.0,21.7
+BE-Lcr,2019-2022,51.10000,3.85000,Belgium,declared,Belgium,Belgium,BE,0.0,11.7
+BE-Lon,2005-2024,50.55159,4.74613,Belgium,declared,Belgium,Belgium,BE,0.0,44.0
+BE-Maa,2016-2025,50.98044,5.63131,Belgium,declared,Belgium,Belgium,BE,0.0,10.4
+BE-Vie,1997-2024,50.30507,5.99805,Belgium,declared,Belgium,Belgium,BE,0.0,14.4
+BJ-Bfg,2009-2016,9.79100,1.71800,Benin,derived,,Benin,BJ,0.0,41.2
+BJ-Db1,2023-2024,6.60734,2.54304,Benin,derived,,Benin,BJ,0.0,20.9
+BJ-Nhu,2008-2016,9.74000,1.60000,Benin,derived,,Benin,BJ,0.0,28.0
+BR-CST,2014-2015,-7.96820,-38.38420,Brazil,derived,,Brazil,BR,0.0,
+BR-ITA,2021-2023,-23.06040,-48.64670,Brazil,derived,,Brazil,BR,0.0,
+BR-Ji3,2004-2009,-10.07806,-61.93310,Brazil,declared,Brazil,Brazil,BR,0.0,
+BR-Ma2,2000-2016,-2.60910,-60.20930,Brazil,declared,Brazil,Brazil,BR,0.0,
+BR-Ma3,2009-2017,-2.39070,-59.88350,Brazil,derived,,Brazil,BR,0.0,
+BR-Npw,2014-2016,-16.49800,-56.41200,Brazil,derived,,Brazil,BR,0.0,
+BR-SM1,2015-2016,-30.27710,-53.14790,Brazil,derived,,Brazil,BR,0.0,
+BR-Sa1,2002-2011,-2.85670,-54.95890,Brazil,declared,Brazil,Brazil,BR,0.0,
+BR-Sa3,2001-2003,-3.01803,-54.97144,Brazil,declared,Brazil,Brazil,BR,0.0,
+BR-Xpw,2018-2021,-16.37300,-56.46100,Brazil,derived,,Brazil,BR,0.0,
+BW-Gum,2018-2019,-18.96472,22.37111,Botswana,derived,,Botswana,BW,0.0,90.7
+BW-Nxr,2019-2019,-19.54806,23.17917,Botswana,derived,,Botswana,BW,0.0,
+CA-ARB,2012-2023,52.69500,-83.94520,Canada,derived,,Canada,CA,0.0,
+CA-ARF,2012-2023,52.70080,-83.95500,Canada,derived,,Canada,CA,0.0,
+CA-BOU,2019-2019,50.52440,-63.20640,Canada,derived,,Canada,CA,0.0,
+CA-CF1,2007-2008,58.66580,-93.83000,Canada,derived,,Canada,CA,0.0,
+CA-CF2,2009-2010,58.66580,-93.83000,Canada,derived,,Canada,CA,0.0,
+CA-CF3,2023-2025,58.66580,-93.83040,Canada,derived,,Canada,CA,0.0,
+CA-Ca1,1998-2010,49.86725,-125.33360,"British Columbia, Canada",declared,"British Columbia, Canada",Canada,CA,0.0,
+CA-Ca2,2001-2010,49.87048,-125.29087,"British Columbia, Canada",declared,"British Columbia, Canada",Canada,CA,0.0,
+CA-Ca3,2011-2024,49.53462,-124.90044,"British Columbia, Canada",declared,"British Columbia, Canada",Canada,CA,0.0,
+CA-Cbo,1996-2024,44.31850,-79.93420,"Ontario, Canada",declared,"Ontario, Canada",Canada,CA,0.0,
+CA-DB2,2020-2024,49.11900,-122.99510,Canada,derived,,Canada,CA,0.0,14.7
+CA-DBB,2016-2024,49.12930,-122.98490,Canada,derived,,Canada,CA,0.0,16.2
+CA-DSM,2022-2024,49.08870,-122.89540,Canada,derived,,Canada,CA,0.0,17.5
+CA-EM1,2022-2023,50.36230,-100.20240,Canada,derived,,Canada,CA,0.0,
+CA-EM2,2022-2023,50.37060,-100.53390,Canada,derived,,Canada,CA,0.0,
+CA-Gro,2004-2013,48.21670,-82.15560,"Ontario, Canada",declared,"Ontario, Canada",Canada,CA,0.0,
+CA-HPC,2018-2018,68.32030,-133.51880,Canada,derived,,Canada,CA,0.0,
+CA-KLP,2012-2019,51.59020,-81.76840,Canada,derived,,Canada,CA,0.0,
+CA-LP1,2008-2023,55.11190,-122.84140,Canada,declared,Canada,Canada,CA,0.0,
+CA-LU1,2021-2022,59.59510,-117.28620,Canada,derived,,Canada,CA,0.0,
+CA-LU2,2021-2022,59.44050,-117.24220,Canada,derived,,Canada,CA,0.0,
+CA-MA1,2010-2010,50.16447,-97.87622,"Manitoba, Canada",declared,"Manitoba, Canada",Canada,CA,0.0,
+CA-MA2,2010-2010,50.17097,-97.87622,"Manitoba, Canada",declared,"Manitoba, Canada",Canada,CA,0.0,
+CA-MA3,2010-2010,50.17744,-97.86864,"Manitoba, Canada",declared,"Manitoba, Canada",Canada,CA,0.0,
+CA-Man,1995-2007,55.87960,-98.48080,"Manitoba, Canada",declared,"Manitoba, Canada",Canada,CA,0.0,
+CA-Mer,1999-2020,45.40940,-75.51870,"Ontario, Canada",declared,"Ontario, Canada",Canada,CA,0.0,66.5
+CA-Mtk,2024-2024,72.66950,-77.99810,Canada,derived,,Canada,CA,0.0,
+CA-Na1,2004-2005,46.47384,-67.09933,"New Brunswick, Canada",declared,"New Brunswick, Canada",Canada,CA,0.0,77.1
+CA-Ojp,2000-2010,53.91634,-104.69203,"Saskatchewan, Canada",declared,"Saskatchewan, Canada",Canada,CA,0.0,
+CA-PB1,2017-2023,54.94170,-83.45790,Canada,derived,,Canada,CA,0.0,
+CA-PB2,2018-2023,54.93890,-83.47360,Canada,derived,,Canada,CA,0.0,
+CA-Qc2,2008-2009,49.75984,-74.57110,"Quebec, Canada",declared,"Quebec, Canada",Canada,CA,0.0,
+CA-Qfo,2004-2010,49.69250,-74.34210,"Quebec, Canada",declared,"Quebec, Canada",Canada,CA,0.0,
+CA-RBM,2023-2024,49.13130,-123.19640,Canada,derived,,Canada,CA,0.0,19.4
+CA-SCB,2015-2018,61.30890,-121.29840,Canada,derived,,Canada,CA,0.0,
+CA-SCC,2014-2018,61.30790,-121.29920,Canada,derived,,Canada,CA,0.0,
+CA-SF1,2004-2005,54.48500,-105.81760,"Saskatchewan, Canada",declared,"Saskatchewan, Canada",Canada,CA,0.0,
+CA-SF2,2003-2004,54.25390,-105.87750,"Saskatchewan, Canada",declared,"Saskatchewan, Canada",Canada,CA,0.0,
+CA-SF3,2002-2005,54.09160,-106.00530,"Saskatchewan, Canada",declared,"Saskatchewan, Canada",Canada,CA,0.0,
+CA-SJ2,2004-2007,53.94470,-104.64930,"Saskatchewan, Canada",declared,"Saskatchewan, Canada",Canada,CA,0.0,
+CA-SMC,2018-2018,63.15340,-123.25220,Canada,derived,,Canada,CA,0.0,
+CA-TP1,2003-2023,42.66090,-80.55950,"Ontario, Canada",declared,"Ontario, Canada",Canada,CA,0.0,37.6
+CA-TP2,2003-2006,42.77440,-80.45880,"Ontario, Canada",declared,"Ontario, Canada",Canada,CA,0.0,48.4
+CA-TP3,2003-2023,42.70680,-80.34830,"Ontario, Canada",declared,"Ontario, Canada",Canada,CA,0.0,39.2
+CA-TP4,2003-2023,42.71020,-80.35740,"Ontario, Canada",declared,"Ontario, Canada",Canada,CA,0.0,39.7
+CA-TPA,2021-2023,42.69470,-80.34870,Canada,derived,,Canada,CA,0.0,37.8
+CA-TPD,2012-2023,42.63530,-80.55770,"Ontario, Canada",declared,"Ontario, Canada",Canada,CA,0.0,34.8
+CA-TVC,2017-2017,68.74620,-133.50169,Canada,derived,,Canada,CA,0.0,
+CD-Ygb,2021-2024,0.81444,24.50247,Democratic Republic of the Congo,derived,,Democratic Republic of the Congo,CD,0.0,
+CG-Tch,2007-2009,-4.28920,11.65640,Congo - Kinshasa,declared,Congo - Kinshasa,Republic of the Congo,CG,0.0,65.6
+CH-Aws,2007-2024,46.58331,9.79042,Switzerland,declared,Switzerland,Switzerland,CH,0.0,25.1
+CH-Cha,2006-2024,47.21022,8.41044,Switzerland,declared,Switzerland,Switzerland,CH,0.0,41.1
+CH-Crs,2015-2016,47.04360,7.04750,Switzerland,derived,,Switzerland,CH,0.0,24.5
+CH-Dav,1997-2024,46.81533,9.85592,Switzerland,declared,Switzerland,Switzerland,CH,0.0,12.0
+CH-For,2024-2024,46.52721,6.75954,Switzerland,derived,,Switzerland,CH,0.0,10.6
+CH-Frk,2013-2014,46.57764,8.42159,Switzerland,derived,,Switzerland,CH,0.0,14.1
+CH-Fru,2006-2024,47.11583,8.53778,Switzerland,declared,Switzerland,Switzerland,CH,0.0,52.6
+CH-Lae,2005-2024,47.47808,8.36500,Switzerland,declared,Switzerland,Switzerland,CH,0.0,11.4
+CH-Oe1,2003-2011,47.28583,7.73194,Switzerland,declared,Switzerland,Switzerland,CH,0.0,29.2
+CH-Oe2,2004-2024,47.28630,7.73433,Switzerland,declared,Switzerland,Switzerland,CH,0.0,29.1
+CH-Oe3,2003-2011,47.28542,7.73244,Switzerland,derived,,Switzerland,CH,0.0,29.2
+CH-Rh1,2019-2021,47.30000,9.50000,Switzerland,derived,,Switzerland,CH,0.0,4.5
+CH-Rh2,2019-2021,47.30000,9.50000,Switzerland,derived,,Switzerland,CH,0.0,4.5
+CH-Rtb,2010-2022,47.38040,8.99340,Switzerland,derived,,Switzerland,CH,0.0,30.9
+CH-Tnk,2024-2024,47.48058,8.91177,Switzerland,derived,,Switzerland,CH,0.0,19.0
+CL-ACF,2019-2020,-40.17260,-73.44390,Chile,derived,,Chile,CL,0.0,
+CL-SDF,2014-2021,-41.88300,-73.67600,Chile,declared,Chile,Chile,CL,0.0,
+CL-SDP,2014-2021,-41.87900,-73.66600,Chile,declared,Chile,Chile,CL,0.0,
+CN-Aro,2013-2024,38.04734,100.46432,China,derived,,China,CN,0.0,
+CN-Ash,2009-2018,24.53806,101.02917,China,derived,,China,CN,0.0,
+CN-BeO,2012-2020,40.02621,116.39143,China,derived,,China,CN,0.0,
+CN-DaW,2011-2019,30.46910,91.06240,China,derived,,China,CN,0.0,
+CN-Dan,2011-2019,30.49780,91.06640,China,declared,China,China,CN,0.0,
+CN-Dda,2011-2014,41.64397,110.33147,China,derived,,China,CN,0.0,
+CN-Din,2010-2020,23.17330,112.53610,China,declared,China,China,CN,0.0,
+CN-Dmn,2013-2024,38.85551,100.37223,China,derived,,China,CN,0.0,
+CN-Dsh,2014-2024,38.83992,98.94060,China,derived,,China,CN,0.0,
+CN-Du2,2011-2019,42.04670,116.28360,China,declared,China,China,CN,0.0,
+CN-Dzo,2010-2020,19.54600,109.47500,China,derived,,China,CN,0.0,
+CN-Erg,2016-2019,50.18690,119.38890,China,derived,,China,CN,0.0,4.5
+CN-GuT,2015-2017,34.35481,100.48720,China,derived,,China,CN,0.0,
+CN-Ha2,2011-2019,37.60860,101.32690,China,declared,China,China,CN,0.0,
+CN-HaM,2002-2014,37.37000,101.18000,China,declared,China,China,CN,0.0,
+CN-HaW,2011-2018,37.60765,101.32899,China,derived,,China,CN,0.0,
+CN-HeD,2020-2023,42.11350,100.98720,China,derived,,China,CN,0.0,49.0
+CN-HeM,2014-2024,41.99029,101.13349,China,derived,,China,CN,0.0,60.6
+CN-Huz,2016-2023,51.47000,123.01000,China,declared,China,China,CN,0.0,
+CN-Jng,2019-2024,37.83869,101.11450,China,derived,,China,CN,0.0,
+CN-Jzh,2016-2016,41.14806,121.20167,China,derived,,China,CN,0.0,
+CN-Lch,2017-2020,37.88936,114.69289,China,derived,,China,CN,0.0,
+CN-Lsh,2003-2006,45.27984,127.57821,China,derived,,China,CN,0.0,
+CN-Mxn,2015-2018,31.69480,103.89510,China,derived,,China,CN,0.0,
+CN-Nmn,2015-2019,42.94611,120.72694,China,derived,,China,CN,0.0,
+CN-Qng,2023-2023,33.46807,108.49102,China,derived,,China,CN,0.0,
+CN-Sb1,2021-2024,42.40907,117.31461,China,derived,,China,CN,0.0,
+CN-Sb2,2021-2024,42.39117,117.37017,China,derived,,China,CN,0.0,
+CN-Sdq,2014-2024,42.00119,101.13741,China,derived,,China,CN,0.0,59.3
+CN-SnB,2021-2021,31.69050,121.65630,China,derived,,China,CN,3.2,
+CN-Wnb,2021-2021,40.42876,106.74229,China,derived,,China,CN,0.0,
+CN-Xi2,2011-2020,43.55278,116.67139,China,declared,China,China,CN,0.0,
+CN-YaS,2012-2020,37.70877,107.22655,China,derived,,China,CN,0.0,
+CN-Yan,2016-2018,37.82861,107.49278,China,derived,,China,CN,0.0,
+CN-You,2015-2024,38.01419,100.24206,China,derived,,China,CN,0.0,
+CN-Yuc,2015-2020,36.95000,116.60000,China,declared,China,China,CN,0.0,
+CN-Zha,2013-2024,39.00000,100.00000,China,declared,China,China,CN,0.0,
+CR-AqC,2010-2016,9.93837,-83.72890,Costa Rica,derived,,Costa Rica,CR,0.0,88.2
+CR-Fsc,2015-2018,10.41890,-85.47320,Costa Rica,derived,,Costa Rica,CR,0.0,75.1
+CZ-BK1,2004-2025,49.50213,18.53686,Czech Republic,declared,Czech Republic,Czech Republic,CZ,0.0,2.0
+CZ-BK2,2006-2012,49.49443,18.54285,Czech Republic,declared,Czech Republic,Czech Republic,CZ,0.0,1.0
+CZ-KrP,2014-2023,49.57326,15.07877,Czech Republic,declared,Czech Republic,Czech Republic,CZ,0.0,63.1
+CZ-LnG,2020-2024,48.70422,16.92625,Czech Republic,derived,,Czech Republic,CZ,0.0,3.4
+CZ-Lnz,2015-2025,48.68155,16.94633,Czech Republic,declared,Czech Republic,Czech Republic,CZ,0.0,4.4
+CZ-RAJ,2012-2024,49.44372,16.69651,Czech Republic,declared,Czech Republic,Czech Republic,CZ,0.0,72.2
+CZ-Stn,2010-2024,49.03598,17.96990,Czech Republic,declared,Czech Republic,Czech Republic,CZ,0.0,1.6
+CZ-wet,2007-2025,49.02465,14.77035,Czech Republic,declared,Czech Republic,Czech Republic,CZ,0.0,22.3
+DE-Akm,2010-2024,53.86617,13.68342,Germany,declared,Germany,Germany,DE,0.0,54.8
+DE-Amv,2023-2025,52.17570,6.95537,Germany,derived,,Germany,DE,0.0,1.2
+DE-Brs,2024-2025,52.29663,10.44871,Germany,derived,,Germany,DE,0.0,
+DE-Etn,2024-2024,48.26849,7.87824,Germany,derived,,Germany,DE,0.0,16.3
+DE-Fen,2024-2024,47.83290,11.06070,Germany,declared,Germany,Germany,DE,0.0,39.9
+DE-Geb,2021-2024,51.10010,10.91430,Germany,declared,Germany,Germany,DE,0.0,
+DE-Gri,2004-2024,50.94947,13.51253,Germany,declared,Germany,Germany,DE,0.0,27.4
+DE-GsB,2015-2023,52.03007,11.10339,Germany,declared,Germany,Germany,DE,0.0,
+DE-Gwg,2024-2024,47.57083,11.03261,Germany,declared,Germany,Germany,DE,0.0,16.8
+DE-Hai,2000-2024,51.07917,10.45300,Germany,declared,Germany,Germany,DE,0.0,
+DE-Har,2020-2024,47.93440,7.60100,Germany,declared,Germany,Germany,DE,0.0,1.6
+DE-Hdn,2021-2022,53.86825,13.26854,Germany,derived,,Germany,DE,0.0,
+DE-HoH,2015-2025,52.08531,11.22223,Germany,declared,Germany,Germany,DE,0.0,
+DE-Hte,2009-2017,54.21305,12.17994,Germany,derived,,Germany,DE,0.0,46.0
+DE-Hzd,2022-2024,50.96381,13.48978,Germany,declared,Germany,Germany,DE,0.0,29.5
+DE-Kli,2018-2024,50.89288,13.52251,Germany,declared,Germany,Germany,DE,0.0,21.0
+DE-Lkb,2010-2013,49.09962,13.30467,Germany,declared,Germany,Czech Republic,CZ,0.0,0.9
+DE-Lnf,2003-2024,51.32820,10.36780,Germany,declared,Germany,Germany,DE,0.0,
+DE-Msr,2021-2024,47.80927,11.45791,Germany,declared,Germany,Germany,DE,0.0,30.2
+DE-Obe,2009-2024,50.78362,13.71963,Germany,declared,Germany,Germany,DE,0.0,7.3
+DE-Rns,2022-2024,51.49495,9.93212,Germany,derived,,Germany,DE,0.0,
+DE-RuC,2014-2024,50.50310,6.33600,Germany,derived,,Germany,DE,0.0,2.4
+DE-RuM,2012-2018,50.92979,6.29699,Germany,derived,,Germany,DE,0.0,26.0
+DE-RuR,2012-2024,50.62191,6.30413,Germany,declared,Germany,Germany,DE,0.0,6.0
+DE-RuS,2012-2024,50.86591,6.44717,Germany,declared,Germany,Germany,DE,0.0,35.5
+DE-RuW,2012-2024,50.50491,6.33102,Germany,declared,Germany,Germany,DE,0.0,2.6
+DE-SbM,2023-2024,51.76493,10.51799,Germany,derived,,Germany,DE,0.0,
+DE-Seh,2008-2009,50.87062,6.44965,Germany,declared,Germany,Germany,DE,0.0,36.1
+DE-SfS,2011-2019,47.80629,11.32757,Germany,derived,,Germany,DE,0.0,34.6
+DE-Spw,2011-2014,51.89230,14.03369,Germany,declared,Germany,Germany,DE,0.0,61.4
+DE-Tha,1997-2024,50.96361,13.56694,Germany,declared,Germany,Germany,DE,0.0,28.2
+DK-Gds,2021-2022,56.07370,9.33410,Denmark,declared,Denmark,Denmark,DK,0.0,
+DK-RCW,2023-2024,55.68068,12.10140,Denmark,declared,Denmark,Denmark,DK,0.0,74.2
+DK-Skj,2021-2022,55.91273,8.40481,Denmark,derived,,Denmark,DK,0.0,94.1
+DK-Sor,1997-2024,55.48587,11.64464,Denmark,declared,Denmark,Denmark,DK,0.0,
+DK-Vng,2021-2022,56.03748,9.16071,Denmark,derived,,Denmark,DK,0.0,
+EE-Pts,2023-2024,58.56230,24.36993,Estonia,derived,,Estonia,EE,0.0,70.9
+EE-Rng,2024-2024,57.91314,26.69405,Estonia,derived,,Estonia,EE,0.0,36.8
+EE-Stg,2017-2024,58.02364,26.07075,Estonia,derived,,Estonia,EE,0.0,21.0
+ES-Abr,2016-2020,38.70184,-6.78588,Spain,derived,,Spain,ES,0.0,34.5
+ES-Agu,2007-2024,36.94005,-2.03321,Spain,declared,Spain,Spain,ES,0.0,
+ES-Amo,2008-2019,36.83360,-2.25230,Spain,declared,Spain,Spain,ES,0.0,
+ES-Cnd,2015-2020,37.91500,-3.22766,Spain,derived,,Spain,ES,0.0,
+ES-Crg,2022-2024,39.11926,-0.95852,Spain,derived,,Spain,ES,0.0,
+ES-Dnn,2024-2024,36.99680,-6.51180,Spain,derived,,Spain,ES,0.0,
+ES-FtD,2021-2024,36.99818,-6.43457,Spain,declared,Spain,Spain,ES,0.0,
+ES-Gdn,2015-2020,37.91092,-3.22844,Spain,declared,Spain,Spain,ES,0.0,
+ES-HdD,2024-2024,38.49679,-5.11130,Spain,derived,,Spain,ES,0.0,
+ES-HeB,2019-2024,38.40475,-1.72622,Spain,derived,,Spain,ES,0.0,
+ES-Hen,2019-2024,38.41109,-1.69753,Spain,derived,,Spain,ES,0.0,
+ES-LJu,2005-2024,36.92660,-2.75210,Spain,declared,Spain,Spain,ES,0.0,
+ES-LM1,2015-2024,39.94269,-5.77868,Spain,declared,Spain,Spain,ES,0.0,
+ES-LM2,2015-2024,39.94269,-5.77868,Spain,declared,Spain,Spain,ES,0.0,
+ES-LMa,2020-2024,39.94269,-5.77336,Spain,declared,Spain,Spain,ES,0.0,
+ES-Ln2,2009-2009,36.96950,-3.47582,Spain,declared,Spain,Spain,ES,0.0,
+ES-Mcd,2019-2024,39.58819,-0.39969,Spain,derived,,Spain,ES,0.0,
+ES-MtB,2022-2024,37.02021,-6.55440,Spain,derived,,Spain,ES,0.0,95.4
+ES-MtN,2024-2024,36.99180,-6.48263,Spain,declared,Spain,Spain,ES,0.0,
+ES-Mzn,2024-2024,40.08950,-0.82741,Spain,derived,,Spain,ES,0.0,
+ES-Pdu,2014-2016,37.01698,-3.60923,Spain,declared,Spain,Spain,ES,0.0,
+ES-Pzb,2021-2024,38.36212,-4.76733,Spain,derived,,Spain,ES,0.0,
+ES-Srn,2024-2024,40.15047,-0.83808,Spain,derived,,Spain,ES,0.0,
+ES-TzM,2021-2024,39.26579,-1.93972,Spain,derived,,Spain,ES,0.0,
+ES-VDA,2023-2024,42.15218,1.44850,Spain,declared,Spain,Spain,ES,0.0,31.2
+ES-Yst,2020-2024,38.33893,-2.35061,Spain,declared,Spain,Spain,ES,0.0,
+FI-Ant,2022-2022,63.16347,27.23499,Finland,derived,,Finland,FI,0.0,
+FI-Hyy,1997-2025,61.84750,24.29500,Finland,declared,Finland,Finland,FI,0.0,
+FI-Jok,2001-2002,60.89860,23.51350,Finland,declared,Finland,Finland,FI,0.0,
+FI-Ken,2018-2024,67.98723,24.24305,Finland,declared,Finland,Finland,FI,0.0,64.6
+FI-Let,2010-2024,60.64180,23.95970,Finland,declared,Finland,Finland,FI,0.0,
+FI-Nsv,2022-2024,62.86390,24.08382,Finland,derived,,Finland,FI,0.0,
+FI-Pap,2022-2022,63.13806,27.24612,Finland,derived,,Finland,FI,0.0,
+FI-Qvd,2019-2023,60.29524,22.39161,Finland,derived,,Finland,FI,0.0,
+FI-Rk2,2020-2023,61.18288,25.26268,Finland,derived,,Finland,FI,0.0,
+FI-Ruk,2020-2023,64.68398,25.10632,Finland,derived,,Finland,FI,0.0,
+FI-Sar,2022-2022,63.15143,27.19906,Finland,derived,,Finland,FI,0.0,
+FI-Si2,2013-2015,61.83730,24.16973,Finland,derived,,Finland,FI,0.0,
+FI-Sii,2019-2024,61.83268,24.19278,Finland,declared,Finland,Finland,FI,0.0,
+FI-Sod,2024-2024,67.36186,26.63783,Finland,declared,Finland,Finland,FI,0.0,
+FI-Var,2016-2024,67.75690,29.61600,Finland,declared,Finland,Finland,FI,0.0,8.4
+FR-Aur,2006-2024,43.54960,1.10615,France,declared,France,France,-99,0.0,85.4
+FR-Bil,2015-2025,44.49389,-0.95594,France,declared,France,France,-99,0.0,
+FR-CLt,2020-2023,45.04140,6.41053,France,derived,,France,-99,0.0,22.4
+FR-EM2,2017-2024,49.87211,3.02065,France,declared,France,France,-99,0.0,77.0
+FR-FBn,2009-2024,43.24083,5.67917,France,declared,France,France,-99,0.0,
+FR-Fon,2020-2024,48.47640,2.78014,France,declared,France,France,-99,0.0,
+FR-Gri,2005-2025,48.84422,1.95191,France,declared,France,France,-99,0.0,
+FR-Hes,1998-2024,48.67416,7.06556,France,declared,France,France,-99,0.0,48.2
+FR-LBr,1998-2008,44.71711,-0.76930,France,declared,France,France,-99,0.0,
+FR-LGt,2018-2024,47.32292,2.28410,France,derived,,France,-99,0.0,
+FR-Lam,2021-2023,43.49650,1.23790,France,declared,France,France,-99,0.0,82.1
+FR-Lqu,2023-2024,45.64440,2.73490,France,derived,,France,-99,0.0,
+FR-Lus,2023-2024,46.41557,0.11922,France,declared,France,France,-99,0.0,
+FR-Mau,2007-2010,43.38528,1.29222,France,declared,France,France,-99,0.0,71.8
+FR-Mej,2019-2024,48.11840,-1.79635,France,derived,,France,-99,0.0,
+FR-Nzn,2016-2024,48.00581,-2.81721,France,derived,,France,-99,0.0,
+FR-Pue,2001-2025,43.74139,3.59583,France,declared,France,France,-99,0.0,
+FR-Tou,2018-2024,43.57286,1.37474,France,derived,,France,-99,0.0,94.5
+GF-Guy,2017-2023,5.27877,-52.92486,French Guiana,declared,French Guiana,France,-99,0.0,
+GH-Ank,2012-2013,5.26850,-2.69420,Ghana,declared,Ghana,Ghana,GH,0.0,9.5
+GL-Dsk,2020-2024,69.25349,-53.51413,Greenland,derived,,Greenland,GL,0.0,
+GL-NuF,2020-2023,64.13094,-51.38607,Greenland,derived,,Greenland,GL,0.0,
+GL-ZaF,2023-2024,74.48152,-20.55577,Greenland,derived,,Greenland,GL,0.0,
+GL-ZaH,2021-2023,74.47330,-20.55087,Greenland,derived,,Greenland,GL,0.0,
+HK-MPM,2017-2018,22.49817,114.02924,Hong Kong,derived,,Hong Kong,HK,0.3,
+ID-JOP,2015-2023,-1.69306,103.39139,Indonesia,derived,,Indonesia,ID,0.0,
+ID-PaB,2004-2016,-2.34080,114.03790,Indonesia,derived,,Indonesia,ID,0.0,
+ID-PaD,2001-2017,-2.34607,114.03641,Indonesia,derived,,Indonesia,ID,0.0,
+ID-Pag,2004-2018,-2.34500,114.03639,Indonesia,declared,Indonesia,Indonesia,ID,0.0,
+IE-CaC,2004-2006,52.85879,-6.91814,Ireland,derived,,Ireland,IE,0.0,
+IE-CaN,2004-2006,52.85879,-6.91814,Ireland,derived,,Ireland,IE,0.0,
+IE-Cra,2020-2024,53.32308,-7.64177,Ireland,derived,,Ireland,IE,0.0,90.3
+IE-Gwr,2016-2016,52.63650,-7.01131,Ireland,derived,,Ireland,IE,0.0,
+IL-RmH,2016-2019,32.55550,34.94728,Israel,derived,,Israel,IL,0.0,16.6
+IL-Yat,2001-2024,31.34500,35.05150,Israel,declared,Israel,Israel,IL,0.0,2.0
+IT-Arz,2017-2023,45.61902,10.00228,Italy,derived,,Italy,IT,0.0,66.9
+IT-BCi,2005-2025,40.52380,14.95744,Italy,declared,Italy,Italy,IT,0.0,
+IT-BFt,2019-2024,45.20222,10.74271,Italy,declared,Italy,Italy,IT,0.0,
+IT-BsB,2022-2024,45.11823,7.16199,Italy,derived,,Italy,IT,0.0,15.7
+IT-Bsn,2020-2021,45.11924,7.16043,Italy,derived,,Italy,IT,0.0,15.5
+IT-CA1,2012-2014,42.38041,12.02656,Italy,declared,Italy,Italy,IT,0.0,71.0
+IT-CA2,2012-2014,42.37722,12.02604,Italy,declared,Italy,Italy,IT,0.0,70.8
+IT-CA3,2012-2014,42.38000,12.02220,Italy,declared,Italy,Italy,IT,0.0,71.3
+IT-Cp2,2013-2025,41.70427,12.35729,Italy,declared,Italy,Italy,IT,0.0,24.5
+IT-Cpz,2001-2008,41.70525,12.37611,Italy,declared,Italy,Italy,IT,0.0,23.5
+IT-Lav,2003-2020,45.95620,11.28132,Italy,declared,Italy,Italy,IT,0.0,95.6
+IT-Lsn,2016-2024,45.74048,12.75030,Italy,derived,,Italy,IT,0.0,84.3
+IT-MBo,2003-2024,46.01468,11.04583,Italy,declared,Italy,Italy,IT,0.0,83.9
+IT-MtM,2014-2019,46.68713,10.57960,Italy,derived,,Italy,IT,0.0,15.1
+IT-MtP,2015-2018,46.68428,10.58518,Italy,derived,,Italy,IT,0.0,15.5
+IT-NiG,2020-2024,45.51919,7.17143,Italy,derived,,Italy,IT,0.0,11.6
+IT-Niv,2020-2023,45.49091,7.13943,Italy,derived,,Italy,IT,0.0,7.3
+IT-Noe,2022-2024,40.60613,8.15146,Italy,declared,Italy,Italy,IT,0.0,
+IT-Ren,1999-2025,46.58686,11.43369,Italy,declared,Italy,Italy,IT,0.0,42.7
+IT-Ro1,2001-2008,42.40812,11.93001,Italy,declared,Italy,Italy,IT,0.0,80.6
+IT-Ro2,2002-2012,42.39026,11.92093,Italy,declared,Italy,Italy,IT,0.0,80.0
+IT-SR2,2013-2024,43.73203,10.29095,Italy,declared,Italy,Italy,IT,0.0,
+IT-SRo,1999-2012,43.72786,10.28444,Italy,declared,Italy,Italy,IT,0.0,
+IT-Tor,2009-2023,45.84444,7.57806,Italy,declared,Italy,Italy,IT,0.0,14.6
+IT-TrF,2013-2024,45.82376,7.56089,Italy,declared,Italy,Italy,IT,0.0,16.1
+JP-Api,2001-2022,40.00136,140.93658,Japan,derived,,Japan,JP,0.0,
+JP-BBY,2014-2020,43.32300,141.81065,Japan,derived,,Japan,JP,0.0,
+JP-Fhk,2006-2023,35.44355,138.76469,Japan,derived,,Japan,JP,0.0,
+JP-Fjy,2001-2020,35.45454,138.76225,Japan,derived,,Japan,JP,0.0,
+JP-Fmt,2014-2022,35.63874,139.37975,Japan,derived,,Japan,JP,0.0,
+JP-Hc2,2003-2004,34.53752,133.92755,Japan,derived,,Japan,JP,0.0,
+JP-Hc3,2005-2008,34.53967,133.91173,Japan,derived,,Japan,JP,0.0,
+JP-KaP,1997-1997,36.08313,140.24033,Japan,derived,,Japan,JP,0.0,
+JP-Khw,2010-2021,33.13658,130.70834,Japan,derived,,Japan,JP,0.0,
+JP-Kzw,2005-2005,36.40679,138.57257,Japan,derived,,Japan,JP,0.0,
+JP-MBF,2005-2010,44.38690,142.31860,Japan,declared,Japan,Japan,JP,0.0,
+JP-MMF,2005-2010,44.32190,142.26140,Japan,declared,Japan,Japan,JP,0.0,
+JP-Mse,2002-2006,36.05393,140.02693,Japan,derived,,Japan,JP,0.0,
+JP-Nkm,2019-2023,35.80806,137.83388,Japan,derived,,Japan,JP,0.0,
+JP-NsC,2005-2014,36.91505,139.93684,Japan,derived,,Japan,JP,0.0,
+JP-NsM,2005-2014,36.91604,139.93600,Japan,derived,,Japan,JP,0.0,
+JP-Nuf,2000-2001,35.15242,136.97189,Japan,derived,,Japan,JP,0.0,
+JP-Om2,2023-2025,34.54245,135.50822,Japan,derived,,Japan,JP,0.0,
+JP-SMF,2003-2014,35.26170,137.07880,Japan,declared,Japan,Japan,JP,0.0,
+JP-Sb1,2008-2009,45.10470,141.68797,Japan,derived,,Japan,JP,0.0,98.8
+JP-Sb2,2008-2009,45.10339,141.68080,Japan,derived,,Japan,JP,0.0,99.2
+JP-Shn,2015-2019,35.86575,137.93256,Japan,derived,,Japan,JP,0.0,
+JP-Spp,2000-2017,42.98684,141.38533,Japan,derived,,Japan,JP,0.0,
+JP-Srk,2010-2015,40.56556,140.12778,Japan,declared,Japan,Japan,JP,0.0,
+JP-Ta2,2006-2015,36.13972,137.37083,Japan,declared,Japan,Japan,JP,0.0,
+JP-Tak,1998-2021,36.14617,137.42311,Japan,declared,Japan,Japan,JP,0.0,
+JP-Tef,2002-2023,45.05634,142.10620,Japan,declared,Japan,Japan,JP,0.0,93.8
+JP-Tgf,2002-2004,36.11353,140.09488,Japan,derived,,Japan,JP,0.0,
+JP-Tkb,2018-2019,36.17338,140.17664,Japan,derived,,Japan,JP,0.0,
+JP-Tmd,2005-2023,42.73591,141.52315,Japan,derived,,Japan,JP,0.0,
+JP-Tmk,2001-2003,42.73931,141.51483,Japan,derived,,Japan,JP,0.0,
+JP-Toc,2011-2014,42.70973,141.56590,Japan,derived,,Japan,JP,0.0,
+JP-Yms,2000-2023,34.79028,135.84094,Japan,derived,,Japan,JP,0.0,
+JP-Ynf,2014-2022,26.75100,128.21266,Japan,derived,,Japan,JP,0.0,
+KE-Aq1,2019-2019,-1.57781,37.06705,Kenya,derived,,Kenya,KE,0.0,
+KE-Aq2,2023-2023,-1.56620,37.10017,Kenya,derived,,Kenya,KE,0.0,
+KE-Chk,2023-2023,-3.66630,38.35019,Kenya,derived,,Kenya,KE,0.0,36.6
+KE-Kpt,2019-2023,-1.61419,37.13311,Kenya,derived,,Kenya,KE,0.0,
+KE-Mkt,2019-2023,-3.42586,38.14066,Kenya,derived,,Kenya,KE,0.0,44.6
+KH-Kmp,2011-2014,12.74458,105.47857,Cambodia,derived,,Cambodia,KH,0.0,
+KR-AdC,2016-2018,36.50565,126.35909,South Korea,derived,,South Korea,KR,0.0,
+KR-CRK,2016-2021,38.20130,127.24970,South Korea,derived,,South Korea,KR,0.0,12.1
+KR-CmF,2012-2019,37.15990,127.65365,South Korea,derived,,South Korea,KR,0.0,
+KR-GmP,2012-2013,35.74502,126.85222,South Korea,derived,,South Korea,KR,0.0,
+KR-GmR,2017-2019,35.74862,126.86432,South Korea,derived,,South Korea,KR,0.0,
+KR-GmS,2017-2019,35.75089,126.81378,South Korea,derived,,South Korea,KR,0.0,
+KR-HPK,2017-2017,34.47722,126.48105,South Korea,derived,,South Korea,KR,0.0,
+KR-HcM,2016-2018,37.61938,127.84571,South Korea,derived,,South Korea,KR,0.0,75.0
+KR-Hnm,2016-2018,34.55380,126.56992,South Korea,derived,,South Korea,KR,0.0,
+KR-JjM,2015-2018,33.31798,126.56772,South Korea,derived,,South Korea,KR,0.0,
+KR-Kw1,2016-2020,37.74861,127.16253,South Korea,declared,South Korea,South Korea,KR,0.0,50.2
+KR-Kw2,2017-2020,37.75000,127.15000,South Korea,declared,South Korea,South Korea,KR,0.0,49.3
+KR-Nj1,2024-2024,35.02753,126.82093,South Korea,derived,,South Korea,KR,0.0,
+KR-Nj2,2023-2024,35.02690,126.82190,South Korea,derived,,South Korea,KR,0.0,
+KR-PcD,2015-2018,37.48184,128.51604,South Korea,derived,,South Korea,KR,0.0,
+KR-ScC,2015-2018,37.22141,129.29863,South Korea,derived,,South Korea,KR,0.0,
+KR-SmM,2015-2020,37.93894,126.95471,South Korea,derived,,South Korea,KR,0.0,19.3
+KR-TwB,2024-2024,37.30406,127.31395,South Korea,derived,,South Korea,KR,0.0,91.8
+KR-TwC,2024-2024,37.30493,127.31743,South Korea,derived,,South Korea,KR,0.0,92.0
+KR-UAO,2018-2019,36.41682,128.79904,South Korea,derived,,South Korea,KR,0.0,
+KR-WdE,2016-2018,34.35956,126.67779,South Korea,derived,,South Korea,KR,0.0,
+ML-Kem,2008-2008,15.22370,-1.56620,Mali,declared,Mali,Mali,ML,0.0,61.3
+MN-Hst,2016-2019,47.59293,105.85497,Mongolia,derived,,Mongolia,MN,0.0,
+MN-Kbu,2003-2008,47.21397,108.73734,Mongolia,derived,,Mongolia,MN,0.0,
+MN-Nkh,2016-2019,47.69359,107.48934,Mongolia,derived,,Mongolia,MN,0.0,
+MN-Udg,2011-2011,48.25649,106.85116,Mongolia,derived,,Mongolia,MN,0.0,
+MX-Aog,2017-2018,26.99680,-108.78920,Mexico,derived,,Mexico,MX,0.0,
+MX-PMm,2017-2018,20.84620,-86.89920,Mexico,derived,,Mexico,MX,0.0,
+MX-Tes,2005-2008,27.84000,-109.30000,"Sonora, Mexico",declared,"Sonora, Mexico",Mexico,MX,0.0,
+MY-LHP,2010-2018,4.20101,114.03908,Malaysia,derived,,Malaysia,MY,0.0,27.7
+NL-Hrw,2002-2010,51.97247,5.64123,Netherlands,derived,,Netherlands,NL,0.0,36.6
+NL-Loo,1997-2025,52.16658,5.74356,Netherlands,declared,Netherlands,Netherlands,NL,0.0,44.2
+NL-Vkp,2015-2024,51.98093,5.61882,Netherlands,derived,,Netherlands,NL,0.0,39.3
+NO-And,2009-2014,69.14278,16.02222,Norway,declared,Norway,Norway,-99,0.0,
+NO-Fns,2021-2023,60.59384,7.52710,Norway,derived,,Norway,-99,0.0,
+NO-Hur,2024-2024,60.37163,11.07949,Norway,derived,,Norway,-99,0.0,
+NO-Ikr,2020-2021,69.34000,25.30000,Norway,derived,,Norway,-99,0.0,50.4
+NZ-ADd,2017-2019,-43.64405,172.35464,New Zealand,derived,,New Zealand,NZ,0.0,
+NZ-ADw,2016-2021,-43.64935,172.34952,New Zealand,derived,,New Zealand,NZ,0.0,
+NZ-BFm,2013-2014,-43.59353,171.92961,New Zealand,derived,,New Zealand,NZ,0.0,
+NZ-BFu,2013-2013,-43.59183,171.92683,New Zealand,derived,,New Zealand,NZ,0.0,
+NZ-Cla,2023-2024,-43.78628,171.59558,New Zealand,derived,,New Zealand,NZ,0.0,
+NZ-Kop,2012-2015,-37.38792,175.55389,New Zealand,declared,New Zealand,New Zealand,NZ,0.0,
+NZ-Lau,2020-2025,-45.03890,169.68111,New Zealand,derived,,New Zealand,NZ,0.0,
+NZ-Oxf,2006-2010,-43.26090,172.21588,New Zealand,derived,,New Zealand,NZ,0.0,
+NZ-ScF,2008-2011,-37.46000,175.22000,New Zealand,derived,,New Zealand,NZ,0.0,
+PA-SPn,2008-2008,9.31810,-79.63460,Panama,declared,Panama,Panama,PA,0.0,
+PA-SPs,2008-2009,9.31380,-79.63140,Panama,declared,Panama,Panama,PA,0.0,
+PE-QFR,2018-2019,-3.83440,-73.31900,Peru,derived,,Peru,PE,0.0,
+PR-xGU,2019-2024,17.96960,-66.86870,Puerto Rico,derived,,Puerto Rico,PR,0.0,
+PR-xLA,2020-2024,18.02120,-67.07690,Puerto Rico,derived,,Puerto Rico,PR,0.0,
+RU-Ch2,2015-2020,68.61689,161.35089,Russia,declared,Russia,Russia,RU,0.0,
+RU-Che,2014-2020,68.61304,161.34143,Russia,declared,Russia,Russia,RU,0.0,
+RU-Ege,2011-2017,60.01551,133.82401,Russia,derived,,Russia,RU,0.0,
+RU-Fy2,2016-2024,56.44760,32.90190,Russia,declared,Russia,Russia,RU,0.0,
+RU-Fy3,2017-2017,56.44350,33.04780,Russia,derived,,Russia,RU,0.0,
+RU-Fy4,2016-2020,56.47270,33.04130,Russia,derived,,Russia,RU,0.0,
+RU-Fyo,1999-2024,56.46153,32.92208,Russia,declared,Russia,Russia,RU,0.0,
+RU-Ha1,2003-2003,54.72517,90.00215,Russia,declared,Russia,Russia,RU,0.0,
+RU-NeB,1999-2000,62.32594,129.48734,Russia,derived,,Russia,RU,0.0,
+RU-NeC,2001-2006,62.31484,129.50008,Russia,derived,,Russia,RU,0.0,
+RU-NeF,2001-2005,62.31562,129.49997,Russia,derived,,Russia,RU,0.0,
+RU-Sk2,2005-2007,62.24136,129.65047,Russia,derived,,Russia,RU,0.0,
+RU-SkP,2005-2013,62.25500,129.16800,Russia,declared,Russia,Russia,RU,0.0,
+RU-Tur,2004-2004,64.20889,100.46355,Russia,declared,Russia,Russia,RU,0.0,
+SD-Dem,2008-2008,13.28290,30.47830,Sudan,declared,Sudan,Sudan,SD,0.0,
+SE-Deg,2020-2024,64.18197,19.55669,Sweden,declared,Sweden,Sweden,SE,0.0,
+SE-HfM,2021-2023,64.15955,19.55150,Sweden,derived,,Sweden,SE,0.0,
+SE-Hmr,2021-2023,64.15955,19.55150,Sweden,derived,,Sweden,SE,0.0,
+SE-Htm,2019-2024,56.09763,13.41897,Sweden,declared,Sweden,Sweden,SE,0.0,88.7
+SE-Nor,2019-2024,60.08650,17.47950,Sweden,declared,Sweden,Sweden,SE,0.0,
+SE-Ros,2015-2020,64.17250,19.73800,Sweden,declared,Sweden,Sweden,SE,0.0,
+SE-Srj,2021-2022,64.17498,19.56381,Sweden,derived,,Sweden,SE,0.0,
+SE-St1,2013-2018,68.35410,19.05030,Sweden,declared,Sweden,Sweden,SE,0.0,16.3
+SE-Sto,2023-2024,68.35600,19.04521,Sweden,declared,Sweden,Sweden,SE,0.0,16.2
+SE-Svb,2020-2024,64.25610,19.77451,Sweden,declared,Sweden,Sweden,SE,0.0,
+SE-Trb,2022-2022,64.18092,19.83728,Sweden,derived,,Sweden,SE,0.0,
+SN-Dhr,2011-2022,15.40278,-15.43222,Senegal,declared,Senegal,Senegal,SN,0.0,
+SN-Nkr,2019-2024,14.49581,-16.45357,Senegal,derived,,Senegal,SN,0.0,
+TH-Kog,2005-2013,18.80000,98.90000,Thailand,declared,Thailand,Thailand,TH,0.0,
+TH-Mae,2005-2016,14.57500,98.85833,Thailand,declared,Thailand,Thailand,TH,0.0,37.8
+UK-AMo,2003-2024,55.79167,-3.23889,United Kingdom,declared,United Kingdom,United Kingdom,GB,0.0,
+UK-Ags,2023-2024,53.30970,-4.30044,United Kingdom,derived,,United Kingdom,GB,0.0,89.9
+UK-BnB,2022-2024,54.82326,-6.66984,United Kingdom,derived,,United Kingdom,GB,0.0,53.3
+UK-CCr,2023-2024,52.25420,-3.93357,United Kingdom,derived,,United Kingdom,GB,0.0,
+UK-Cvn,2024-2024,52.43339,0.16218,United Kingdom,derived,,United Kingdom,GB,0.0,
+UK-GaB,2023-2024,55.10994,-6.52993,United Kingdom,derived,,United Kingdom,GB,0.0,47.4
+UK-Gnn,2023-2024,54.96185,-6.76076,United Kingdom,derived,,United Kingdom,GB,0.0,34.9
+UK-Gwr,2023-2024,54.85464,-5.98828,United Kingdom,derived,,United Kingdom,GB,0.0,89.5
+UK-HgF,2024-2024,52.55218,0.51506,United Kingdom,derived,,United Kingdom,GB,0.0,
+UK-HpF,2024-2024,52.24809,-0.04983,United Kingdom,derived,,United Kingdom,GB,0.0,
+US-A03,2016-2020,70.49530,-149.88229,United States,derived,,United States,US,0.0,
+US-A10,2012-2021,71.32420,-156.61490,United States,derived,,United States,US,0.0,
+US-A32,2016-2016,36.81930,-97.81980,United States,derived,,United States,US,0.0,
+US-A37,2024-2024,36.31060,-97.92800,United States,derived,,United States,US,0.0,
+US-A39,2024-2024,36.37760,-96.06900,United States,derived,,United States,US,0.0,
+US-A74,2016-2017,36.80850,-97.54890,United States,derived,,United States,US,0.0,
+US-ABa,2014-2015,27.13010,-81.20110,United States,derived,,United States,US,0.0,
+US-ABb,2014-2015,27.13460,-81.20310,United States,derived,,United States,US,0.0,
+US-ABc,2014-2014,27.16330,-81.18730,United States,derived,,United States,US,0.0,
+US-ABd,2014-2014,27.16990,-81.21520,United States,derived,,United States,US,0.0,
+US-ABe,2014-2015,27.16560,-81.21610,United States,derived,,United States,US,0.0,
+US-ADR,2012-2016,36.76530,-116.69330,United States,declared,United States,United States,US,0.0,
+US-ALQ,2016-2025,46.03080,-89.60670,United States,derived,,United States,US,0.0,
+US-AR1,2010-2012,36.42670,-99.42000,"Oklahoma, United States",declared,"Oklahoma, United States",United States,US,0.0,
+US-AR2,2010-2011,36.63580,-99.59750,"Oklahoma, United States",declared,"Oklahoma, United States",United States,US,0.0,
+US-ARM,2003-2025,36.60580,-97.48880,"Oklahoma, United States",declared,"Oklahoma, United States",United States,US,0.0,
+US-ARb,2005-2006,35.54974,-98.04023,"Oklahoma, United States",declared,"Oklahoma, United States",United States,US,0.0,
+US-ARc,2005-2006,35.54649,-98.04000,"Oklahoma, United States",declared,"Oklahoma, United States",United States,US,0.0,
+US-ASH,2016-2016,36.16970,-120.20100,United States,derived,,United States,US,0.0,
+US-ASM,2016-2016,36.17770,-120.20260,United States,derived,,United States,US,0.0,
+US-Akn,2016-2021,33.38330,-81.56560,"South Carolina, United States",declared,"South Carolina, United States",United States,US,0.0,
+US-Aud,2003-2024,31.59070,-110.50920,United States,declared,United States,United States,US,0.0,29.2
+US-BRG,2018-2019,39.21670,-86.54060,United States,derived,,United States,US,0.0,
+US-BZB,2017-2024,64.69550,-148.32080,United States,derived,,United States,US,0.0,
+US-BZF,2017-2024,64.70130,-148.31210,United States,derived,,United States,US,0.0,
+US-BZo,2019-2024,64.69360,-148.33000,United States,derived,,United States,US,0.0,
+US-Bar,2005-2023,44.06464,-71.28808,"New Hampshire, United States",declared,"New Hampshire, United States",United States,US,0.0,
+US-Bi1,2017-2024,38.09920,-121.49930,United States,derived,,United States,US,0.0,
+US-Bi2,2018-2024,38.10910,-121.53510,United States,derived,,United States,US,0.0,
+US-CAK,2024-2025,64.86180,-163.70020,United States,derived,,United States,US,0.0,
+US-CF1,2018-2021,46.78150,-117.08210,United States,derived,,United States,US,0.0,
+US-CF2,2018-2020,46.78400,-117.09080,United States,derived,,United States,US,0.0,
+US-CF3,2018-2021,46.75510,-117.12610,United States,derived,,United States,US,0.0,
+US-CF4,2018-2021,46.75180,-117.12850,United States,derived,,United States,US,0.0,
+US-CGG,2020-2023,37.93800,-121.97610,United States,derived,,United States,US,0.0,
+US-CLF,2018-2019,40.63660,-77.94240,United States,derived,,United States,US,0.0,
+US-CMW,2002-2021,31.66370,-110.17770,United States,derived,,United States,US,0.0,37.3
+US-CRK,2022-2024,31.46290,-95.34150,United States,derived,,United States,US,0.0,
+US-CRT,2011-2013,41.62850,-83.34710,United States,declared,United States,United States,US,0.0,39.0
+US-CS1,2018-2019,44.10310,-89.53790,United States,derived,,United States,US,0.0,
+US-CS2,2019-2021,44.14670,-89.50020,United States,declared,United States,United States,US,0.0,
+US-CS3,2019-2020,44.13940,-89.57270,United States,derived,,United States,US,0.0,
+US-CS4,2020-2021,44.15970,-89.54750,United States,derived,,United States,US,0.0,
+US-CS5,2021-2021,44.10950,-89.53770,United States,derived,,United States,US,0.0,
+US-CS6,2022-2023,44.42970,-89.54400,United States,derived,,United States,US,0.0,
+US-CS8,2023-2023,44.43380,-89.53640,United States,derived,,United States,US,0.0,
+US-CdM,2020-2024,37.52410,-109.74710,United States,derived,,United States,US,0.0,
+US-Ced,2006-2014,39.83794,-74.37910,"New Jersey, United States",declared,"New Jersey, United States",United States,US,0.0,
+US-ChR,2006-2019,35.93109,-84.33242,United States,declared,United States,United States,US,0.0,
+US-Cms,2001-2004,71.32020,-156.62230,United States,derived,,United States,US,0.0,
+US-Cop,2003-2006,38.09000,-109.39000,"Utah, United States",declared,"Utah, United States",United States,US,0.0,
+US-Cst,2014-2017,33.04420,-91.92040,United States,declared,United States,United States,US,0.0,
+US-Cwt,2011-2024,35.05920,-83.42750,United States,derived,,United States,US,0.0,
+US-DFC,2019-2024,43.34480,-89.71170,United States,derived,,United States,US,0.0,
+US-DFK,2019-2020,43.34530,-89.71540,United States,derived,,United States,US,0.0,
+US-DPW,2014-2016,28.05210,-81.43610,United States,derived,,United States,US,0.0,
+US-DS1,2019-2019,38.13350,-121.53900,United States,derived,,United States,US,0.0,
+US-DS2,2021-2022,38.13750,-121.51400,United States,derived,,United States,US,0.0,
+US-DS3,2022-2024,38.12350,-121.54900,United States,derived,,United States,US,0.0,
+US-Dix,2005-2007,39.97123,-74.43455,"New Jersey, United States",declared,"New Jersey, United States",United States,US,0.0,
+US-Dk1,2002-2008,35.97120,-79.09338,"North Carolina, United States",declared,"North Carolina, United States",United States,US,0.0,
+US-Dk2,2002-2008,35.97358,-79.10043,"North Carolina, United States",declared,"North Carolina, United States",United States,US,0.0,
+US-Dk3,2002-2008,35.97817,-79.09420,"North Carolina, United States",declared,"North Carolina, United States",United States,US,0.0,
+US-Dmg,2022-2025,38.00150,-121.66910,United States,derived,,United States,US,0.0,
+US-EA4,2022-2024,29.66330,-98.38160,United States,derived,,United States,US,0.0,
+US-EA5,2022-2022,29.35840,-99.95760,United States,derived,,United States,US,0.0,83.1
+US-EA6,2023-2023,29.65610,-99.95880,United States,derived,,United States,US,0.0,99.0
+US-EDN,2019-2024,37.61560,-122.11400,United States,derived,,United States,US,0.0,
+US-EKH,2023-2024,36.80940,-121.75230,United States,derived,,United States,US,0.0,
+US-EKN,2024-2024,36.83570,-121.73280,United States,derived,,United States,US,0.0,
+US-EKP,2023-2024,36.85580,-121.74880,United States,derived,,United States,US,0.0,
+US-EML,2009-2022,63.87840,-149.25360,United States,declared,United States,United States,US,0.0,
+US-Elm,2009-2024,25.55190,-80.78260,United States,declared,United States,United States,US,0.0,
+US-Esm,2008-2023,25.43790,-80.59460,United States,declared,United States,United States,US,0.0,
+US-EvM,2021-2022,25.35390,-80.38100,United States,derived,,United States,US,0.0,
+US-Fcr,2011-2014,65.39680,-148.93480,United States,derived,,United States,US,0.0,
+US-Fmf,2006-2010,35.14160,-111.72730,"Arizona, United States",declared,"Arizona, United States",United States,US,0.0,
+US-Fo1,2014-2023,70.08500,-148.56709,United States,derived,,United States,US,0.0,
+US-Fo2,2023-2024,70.02290,-148.65981,United States,derived,,United States,US,0.0,
+US-Fuf,2006-2010,35.08900,-111.76200,"Arizona, United States",declared,"Arizona, United States",United States,US,0.0,
+US-Fwf,2006-2010,35.44540,-111.77180,"Arizona, United States",declared,"Arizona, United States",United States,US,0.0,
+US-GLE,2006-2019,41.36650,-106.23990,"Wyoming, United States",declared,"Wyoming, United States",United States,US,0.0,
+US-HB1,2018-2024,33.34550,-79.19570,United States,derived,,United States,US,0.0,
+US-HB2,2019-2024,33.32420,-79.24400,United States,derived,,United States,US,0.0,
+US-HB3,2019-2024,33.34820,-79.23220,United States,derived,,United States,US,0.0,
+US-HB4,2021-2024,33.20150,-79.29750,United States,derived,,United States,US,0.0,
+US-HBK,2017-2023,43.93970,-71.71810,United States,derived,,United States,US,0.0,
+US-HRA,2016-2023,34.58520,-91.75170,United States,derived,,United States,US,0.0,
+US-HRC,2016-2023,34.58880,-91.75170,United States,derived,,United States,US,0.0,
+US-HVs,1995-1995,69.16720,-148.85690,United States,derived,,United States,US,0.0,
+US-HWB,2016-2017,40.86080,-77.84880,United States,derived,,United States,US,0.0,
+US-Ha1,1994-2024,42.53780,-72.17150,"Massachusetts, United States",declared,"Massachusetts, United States",United States,US,0.0,
+US-Hn2,2016-2018,46.68890,-119.46410,United States,derived,,United States,US,0.0,
+US-Hn3,2018-2018,46.68780,-119.46140,United States,derived,,United States,US,0.0,
+US-Ho2,1999-2024,45.20912,-68.74700,"Maine, United States",declared,"Maine, United States",United States,US,0.0,
+US-Ho3,2004-2021,45.20722,-68.72500,"Maine, United States",declared,"Maine, United States",United States,US,0.0,
+US-Hsm,2022-2025,38.23680,-122.02120,United States,derived,,United States,US,0.0,
+US-IAB,2020-2023,42.00010,-93.70160,United States,derived,,United States,US,0.0,
+US-IAC,2020-2023,41.99840,-93.70160,United States,derived,,United States,US,0.0,
+US-IAM,2020-2023,41.99940,-93.70420,United States,derived,,United States,US,0.0,
+US-ICh,2008-2025,68.60700,-149.29601,"Alaska, United States",declared,"Alaska, United States",United States,US,0.0,
+US-ICs,2008-2025,68.60600,-149.31100,"Alaska, United States",declared,"Alaska, United States",United States,US,0.0,
+US-ICt,2009-2025,68.60600,-149.30400,"Alaska, United States",declared,"Alaska, United States",United States,US,0.0,
+US-Jo1,2010-2021,32.58200,-106.63500,United States,derived,,United States,US,0.0,89.7
+US-Jo2,2011-2020,32.58490,-106.60320,United States,derived,,United States,US,0.0,90.0
+US-KFS,2008-2019,39.05610,-95.19070,"Kansas, United States",declared,"Kansas, United States",United States,US,0.0,
+US-KLS,2013-2019,38.77450,-97.56840,United States,declared,United States,United States,US,0.0,
+US-KPL,2022-2024,60.53820,-150.50610,United States,derived,,United States,US,0.0,
+US-KS1,2002-2003,28.45830,-80.67090,"Florida, United States",declared,"Florida, United States",United States,US,0.0,
+US-KS2,2003-2006,28.60858,-80.67153,"Florida, United States",declared,"Florida, United States",United States,US,0.0,
+US-KS3,2018-2018,28.70840,-80.74270,United States,derived,,United States,US,0.0,
+US-Kon,2004-2019,39.08239,-96.56028,"Kansas, United States",declared,"Kansas, United States",United States,US,0.0,
+US-LA2,2022-2022,29.85870,-90.28690,United States,derived,,United States,US,0.0,
+US-LA3,2020-2023,29.49360,-89.91530,United States,derived,,United States,US,0.0,
+US-LS1,2004-2007,31.56150,-110.14030,United States,derived,,United States,US,0.0,26.0
+US-LS2,2003-2007,31.56590,-110.13440,United States,derived,,United States,US,0.0,26.5
+US-Lin,2009-2010,36.35660,-119.84230,United States,declared,United States,United States,US,0.0,
+US-Los,2001-2024,46.08270,-89.97920,"Wisconsin, United States",declared,"Wisconsin, United States",United States,US,0.0,
+US-MBP,2009-2024,47.50510,-93.48930,United States,derived,,United States,US,0.0,
+US-MEF,2024-2025,39.10060,-105.10240,United States,derived,,United States,US,0.0,
+US-MMS,1999-2023,39.32320,-86.41310,"Indiana, United States",declared,"Indiana, United States",United States,US,0.0,
+US-MN1,2018-2024,45.61680,-96.12690,United States,derived,,United States,US,0.0,
+US-MN2,2018-2024,45.62700,-96.12710,United States,derived,,United States,US,0.0,
+US-MN3,2021-2024,45.60910,-96.12650,United States,derived,,United States,US,0.0,
+US-MOz,2005-2021,38.74411,-92.20001,"Missouri, United States",declared,"Missouri, United States",United States,US,0.0,
+US-MZA,2024-2025,43.04410,-76.78970,United States,derived,,United States,US,0.0,64.8
+US-Me1,2004-2005,44.57940,-121.50000,"Oregon, United States",declared,"Oregon, United States",United States,US,0.0,
+US-Me3,2004-2008,44.31540,-121.60780,"Oregon, United States",declared,"Oregon, United States",United States,US,0.0,
+US-Me5,2001-2002,44.43720,-121.56680,"Oregon, United States",declared,"Oregon, United States",United States,US,0.0,
+US-Me6,2011-2025,44.32330,-121.60780,"Oregon, United States",declared,"Oregon, United States",United States,US,0.0,
+US-Me7,2023-2023,44.45340,-121.56190,United States,derived,,United States,US,0.0,
+US-Mo1,2016-2024,39.22980,-92.11670,United States,derived,,United States,US,0.0,
+US-Mo2,2018-2024,38.94880,-91.99450,United States,derived,,United States,US,0.0,
+US-Mo3,2017-2023,39.23220,-92.14930,United States,derived,,United States,US,0.0,
+US-Mpj,2008-2025,34.43845,-106.23769,United States,declared,United States,United States,US,0.0,
+US-MtB,2010-2024,32.41667,-110.72551,"Arizona, United States",declared,"Arizona, United States",United States,US,0.0,
+US-Myb,2011-2024,38.04980,-121.76510,"California, United States",declared,"California, United States",United States,US,0.0,
+US-NC1,2005-2012,35.81147,-76.71147,"North Carolina, United States",declared,"North Carolina, United States",United States,US,0.0,
+US-NC2,2005-2025,35.80310,-76.66791,"North Carolina, United States",declared,"North Carolina, United States",United States,US,0.0,
+US-NC3,2014-2020,35.79900,-76.65600,United States,declared,United States,United States,US,0.0,
+US-NC4,2010-2025,35.78790,-75.90380,United States,declared,United States,United States,US,0.0,
+US-NC5,2025-2025,36.15650,-78.78780,United States,derived,,United States,US,0.0,
+US-NGB,2013-2022,71.28000,-156.60921,United States,declared,United States,United States,US,0.0,
+US-NGC,2018-2022,64.86180,-163.70020,United States,derived,,United States,US,0.0,
+US-NR1,2004-2015,40.03290,-105.54640,"Colorado, United States",declared,"Colorado, United States",United States,US,0.0,
+US-NR3,2008-2023,40.05200,-105.58640,United States,derived,,United States,US,0.0,
+US-NSa,2024-2024,36.60290,-119.50610,United States,derived,,United States,US,0.0,
+US-NSb,2024-2024,36.33540,-120.11830,United States,derived,,United States,US,0.0,
+US-Ne1,2002-2024,41.16510,-96.47660,"Nebraska, United States",declared,"Nebraska, United States",United States,US,0.0,
+US-Ne2,2003-2024,41.16490,-96.47010,"Nebraska, United States",declared,"Nebraska, United States",United States,US,0.0,
+US-Ne3,2002-2024,41.17970,-96.43970,"Nebraska, United States",declared,"Nebraska, United States",United States,US,0.0,
+US-ONA,2017-2022,27.38360,-81.95090,United States,derived,,United States,US,0.0,
+US-OPE,2022-2022,39.02930,-76.84570,United States,derived,,United States,US,0.0,
+US-OWC,2016-2024,41.37950,-82.51250,United States,declared,United States,United States,US,0.0,32.4
+US-Oho,2004-2012,41.55450,-83.84380,"Ohio, United States",declared,"Ohio, United States",United States,US,0.0,89.7
+US-PAS,2022-2022,27.39440,-81.95100,United States,derived,,United States,US,0.0,
+US-PFL,2019-2019,45.94090,-90.31770,United States,derived,,United States,US,0.0,
+US-PFb,2019-2019,45.97200,-90.32320,United States,derived,,United States,US,0.0,
+US-PFc,2019-2019,45.96770,-90.30880,United States,derived,,United States,US,0.0,
+US-PFd,2019-2019,45.96890,-90.30100,United States,derived,,United States,US,0.0,
+US-PFf,2019-2019,45.94580,-90.29440,United States,derived,,United States,US,0.0,
+US-PFg,2019-2019,45.97350,-90.27230,United States,derived,,United States,US,0.0,
+US-PFh,2019-2019,45.95570,-90.24060,United States,derived,,United States,US,0.0,
+US-PFi,2019-2019,45.97490,-90.23270,United States,derived,,United States,US,0.0,
+US-PFj,2019-2019,45.96190,-90.22700,United States,derived,,United States,US,0.0,
+US-PFk,2019-2019,45.91490,-90.34250,United States,derived,,United States,US,0.0,
+US-PFm,2019-2019,45.92070,-90.30990,United States,derived,,United States,US,0.0,
+US-PFn,2019-2019,45.93920,-90.28230,United States,derived,,United States,US,0.0,
+US-PFp,2019-2019,45.93650,-90.26410,United States,derived,,United States,US,0.0,
+US-PFq,2019-2019,45.92710,-90.24750,United States,derived,,United States,US,0.0,
+US-PFr,2019-2019,45.92450,-90.24750,United States,derived,,United States,US,0.0,
+US-PFt,2019-2019,45.91970,-90.22880,United States,derived,,United States,US,0.0,
+US-PLo,2023-2023,42.74960,-70.91570,United States,derived,,United States,US,0.0,
+US-PSH,2016-2016,36.23470,-119.92470,United States,derived,,United States,US,0.0,
+US-PSL,2016-2016,36.82760,-120.13970,United States,derived,,United States,US,0.0,
+US-Prr,2011-2022,65.12370,-147.48759,United States,declared,United States,United States,US,0.0,
+US-RC1,2012-2015,46.78370,-117.07770,United States,derived,,United States,US,0.0,
+US-RC2,2013-2015,46.77760,-117.08070,United States,derived,,United States,US,0.0,
+US-RC3,2012-2015,46.99100,-118.59800,United States,derived,,United States,US,0.0,
+US-RC4,2013-2015,46.75800,-116.94900,United States,derived,,United States,US,0.0,
+US-RC5,2014-2014,47.01000,-119.24800,United States,derived,,United States,US,0.0,
+US-RGA,2022-2024,34.41590,-91.67330,United States,derived,,United States,US,0.0,
+US-RGB,2022-2023,39.57820,-121.85790,United States,derived,,United States,US,0.0,
+US-RGF,2024-2024,37.69950,-121.13690,United States,derived,,United States,US,0.0,
+US-RGW,2023-2024,33.62160,-91.43060,United States,derived,,United States,US,0.0,
+US-RGo,2022-2024,39.68050,-122.00260,United States,derived,,United States,US,0.0,
+US-RRC,2023-2023,37.33440,-77.20650,United States,derived,,United States,US,0.0,
+US-Rls,2015-2022,43.14390,-116.73560,United States,derived,,United States,US,0.0,
+US-Rms,2015-2022,43.06450,-116.74860,United States,derived,,United States,US,0.0,
+US-Ro1,2004-2016,44.71431,-93.08984,"Minnesota, United States",declared,"Minnesota, United States",United States,US,0.0,
+US-Ro2,2008-2016,44.72879,-93.08885,United States,declared,United States,United States,US,0.0,
+US-Ro3,2005-2007,44.72171,-93.08934,"Minnesota, United States",declared,"Minnesota, United States",United States,US,0.0,
+US-Ro4,2014-2025,44.40410,-93.42010,United States,declared,United States,United States,US,0.0,
+US-Ro5,2017-2024,44.69100,-93.05760,United States,derived,,United States,US,0.0,
+US-Ro6,2017-2024,44.69460,-93.05780,United States,derived,,United States,US,0.0,
+US-Rpf,2009-2024,65.11980,-147.42900,United States,derived,,United States,US,0.0,
+US-Rwe,2004-2006,43.06530,-116.75910,United States,derived,,United States,US,0.0,
+US-Rwf,2015-2022,43.12070,-116.72310,United States,derived,,United States,US,0.0,
+US-Rws,2015-2022,43.16750,-116.71320,United States,derived,,United States,US,0.0,
+US-SD1,2024-2024,41.20480,-86.02960,United States,derived,,United States,US,0.0,
+US-SD2,2024-2024,41.17850,-85.99770,United States,derived,,United States,US,0.0,
+US-SHC,2018-2019,39.43150,-120.23980,United States,derived,,United States,US,0.0,
+US-SP1,2001-2020,29.73807,-82.21877,"Florida, United States",declared,"Florida, United States",United States,US,0.0,
+US-SRC,2009-2013,31.90830,-110.83950,"Arizona, United States",declared,"Arizona, United States",United States,US,0.0,64.5
+US-SRG,2009-2025,31.78940,-110.82770,United States,declared,United States,United States,US,0.0,51.3
+US-SRM,2004-2025,31.82140,-110.86600,United States,declared,United States,United States,US,0.0,54.9
+US-SRS,2012-2017,31.81730,-110.85080,United States,derived,,United States,US,0.0,54.4
+US-SSH,2016-2020,40.66580,-77.90410,United States,derived,,United States,US,0.0,
+US-Sag,1996-1996,69.51310,-148.56760,United States,derived,,United States,US,0.0,
+US-Seg,2007-2025,34.36233,-106.70195,"New Mexico, United States",declared,"New Mexico, United States",United States,US,0.0,
+US-Ses,2007-2025,34.33494,-106.74417,"New Mexico, United States",declared,"New Mexico, United States",United States,US,0.0,
+US-Slt,2005-2021,39.91375,-74.59598,"New Jersey, United States",declared,"New Jersey, United States",United States,US,0.0,
+US-Sne,2017-2020,38.03690,-121.75470,United States,derived,,United States,US,0.0,
+US-Snf,2019-2019,38.04020,-121.72720,United States,derived,,United States,US,0.0,
+US-Srr,2015-2016,38.20060,-122.02640,United States,derived,,United States,US,0.0,
+US-StJ,2016-2020,39.08820,-75.43720,United States,declared,United States,United States,US,0.0,
+US-Sta,2006-2008,41.39660,-106.80240,United States,declared,United States,United States,US,0.0,
+US-Syv,2002-2025,46.24200,-89.34770,"Michigan, United States",declared,"Michigan, United States",United States,US,0.0,
+US-TKs,2019-2024,68.63370,-149.57690,United States,derived,,United States,US,0.0,
+US-TLR,2024-2024,35.91680,-76.14630,United States,derived,,United States,US,0.0,
+US-TaS,2017-2022,25.19080,-80.63910,United States,derived,,United States,US,0.5,
+US-Ton,2002-2025,38.43160,-120.96600,"California, United States",declared,"California, United States",United States,US,0.0,
+US-Tw1,2012-2023,38.10740,-121.64690,United States,declared,United States,United States,US,0.0,
+US-Tw2,2012-2013,38.10470,-121.64330,United States,declared,United States,United States,US,0.0,
+US-Tw3,2014-2017,38.11590,-121.64670,United States,declared,United States,United States,US,0.0,
+US-Tw4,2014-2024,38.10300,-121.64140,United States,declared,United States,United States,US,0.0,
+US-Tw5,2019-2019,38.10720,-121.64260,United States,derived,,United States,US,0.0,
+US-Twt,2010-2016,38.10870,-121.65300,"California, United States",declared,"California, United States",United States,US,0.0,
+US-UC1,2020-2024,40.75360,-78.00560,United States,derived,,United States,US,0.0,
+US-UC2,2020-2024,40.75590,-77.99980,United States,derived,,United States,US,0.0,
+US-UMd,2008-2024,45.56250,-84.69750,United States,declared,United States,United States,US,0.0,97.6
+US-UTB,2022-2023,40.78480,-113.82990,United States,derived,,United States,US,0.0,
+US-UTD,2023-2024,38.10380,-109.59520,United States,derived,,United States,US,0.0,
+US-UTE,2024-2025,37.73530,-111.57080,United States,derived,,United States,US,0.0,
+US-UTJ,2024-2025,37.28180,-109.53480,United States,derived,,United States,US,0.0,
+US-UTL,2024-2025,40.18770,-109.65790,United States,derived,,United States,US,0.0,
+US-UTM,2023-2023,38.58790,-109.57750,United States,derived,,United States,US,0.0,
+US-UTP,2024-2024,41.06040,-112.10130,United States,derived,,United States,US,0.0,
+US-UTV,2024-2024,40.12660,-109.95460,United States,derived,,United States,US,0.0,
+US-UTW,2022-2023,39.44530,-110.72880,United States,derived,,United States,US,0.0,
+US-Uaf,2004-2024,64.86630,-147.85550,United States,declared,United States,United States,US,0.0,
+US-UiA,2009-2024,40.06460,-88.19610,United States,derived,,United States,US,0.0,
+US-UiB,2009-2024,40.06280,-88.19840,United States,derived,,United States,US,0.0,
+US-UiC,2009-2024,40.06280,-88.19610,United States,derived,,United States,US,0.0,
+US-UiD,2009-2024,40.06460,-88.19850,United States,derived,,United States,US,0.0,
+US-UiE,2019-2024,40.06290,-88.20330,United States,derived,,United States,US,0.0,
+US-UiF,2019-2022,40.06650,-88.20150,United States,derived,,United States,US,0.0,
+US-UiG,2019-2023,40.06290,-88.20090,United States,derived,,United States,US,0.0,
+US-VT1,2024-2024,40.40640,-87.52140,United States,derived,,United States,US,0.0,
+US-VT2,2024-2024,40.40180,-87.52130,United States,derived,,United States,US,0.0,
+US-Var,2001-2025,38.41330,-120.95073,"California, United States",declared,"California, United States",United States,US,0.0,
+US-Vcm,2007-2025,35.88845,-106.53211,"New Mexico, United States",declared,"New Mexico, United States",United States,US,0.0,
+US-Vcp,2007-2025,35.86236,-106.59743,United States,declared,United States,United States,US,0.0,
+US-WCr,2000-2024,45.80590,-90.07990,"Wisconsin, United States",declared,"Wisconsin, United States",United States,US,0.0,
+US-WPT,2011-2013,41.46460,-82.99620,United States,declared,United States,United States,US,0.0,35.1
+US-WT1,2024-2024,34.36740,-101.81540,United States,derived,,United States,US,0.0,
+US-Whs,2008-2025,31.74380,-110.05220,"Arizona, United States",declared,"Arizona, United States",United States,US,0.0,46.2
+US-Wjs,2008-2024,34.42549,-105.86155,United States,declared,United States,United States,US,0.0,
+US-Wkg,2005-2025,31.73650,-109.94190,"Arizona, United States",declared,"Arizona, United States",United States,US,0.0,45.4
+US-YK1,2020-2024,61.27230,-163.22279,United States,derived,,United States,US,0.0,
+US-YK2,2020-2024,61.25480,-163.25900,United States,derived,,United States,US,0.0,
+US-ZF1,2025-2025,40.79760,-87.53550,United States,derived,,United States,US,0.0,
+US-ZF2,2025-2025,40.79390,-87.53550,United States,derived,,United States,US,0.0,
+US-xAB,2021-2023,45.76240,-122.33030,United States,derived,,United States,US,0.0,
+US-xAE,2019-2024,35.41060,-99.05880,United States,derived,,United States,US,0.0,
+US-xBA,2020-2023,71.28240,-156.61940,United States,derived,,United States,US,0.0,
+US-xBL,2020-2024,39.06030,-78.07160,United States,derived,,United States,US,0.0,
+US-xBN,2019-2023,65.15400,-147.50259,United States,derived,,United States,US,0.0,
+US-xBR,2019-2023,44.06390,-71.28730,United States,declared,United States,United States,US,0.0,
+US-xCL,2020-2024,33.40120,-97.57000,United States,derived,,United States,US,0.0,
+US-xCP,2019-2024,40.81550,-104.74560,United States,derived,,United States,US,0.0,
+US-xDC,2019-2024,47.16170,-99.10660,United States,derived,,United States,US,0.0,
+US-xDJ,2019-2024,63.88110,-145.75140,United States,derived,,United States,US,0.0,
+US-xDL,2020-2024,32.54170,-87.80390,United States,derived,,United States,US,0.0,
+US-xDS,2020-2024,28.12500,-81.43620,United States,derived,,United States,US,0.0,
+US-xGR,2020-2024,35.68900,-83.50190,United States,derived,,United States,US,0.0,
+US-xHA,2020-2024,42.53690,-72.17270,United States,derived,,United States,US,0.0,
+US-xHE,2019-2024,63.87570,-149.21330,United States,derived,,United States,US,0.0,
+US-xJE,2020-2024,31.19480,-84.46860,United States,derived,,United States,US,0.0,
+US-xJR,2019-2023,32.59070,-106.84250,United States,derived,,United States,US,0.0,90.6
+US-xKA,2021-2024,39.11040,-96.61290,United States,derived,,United States,US,0.0,
+US-xKZ,2019-2024,39.10080,-96.56310,United States,derived,,United States,US,0.0,
+US-xLE,2020-2023,31.85390,-88.16120,United States,derived,,United States,US,0.0,
+US-xMB,2020-2024,38.24830,-109.38830,United States,derived,,United States,US,0.0,
+US-xML,2020-2024,37.37830,-80.52480,United States,derived,,United States,US,0.0,
+US-xNG,2019-2024,46.76970,-100.91540,United States,derived,,United States,US,0.0,
+US-xNQ,2020-2024,40.17760,-112.45240,United States,derived,,United States,US,0.0,
+US-xNW,2020-2024,40.05430,-105.58240,United States,derived,,United States,US,0.0,
+US-xPU,2020-2024,19.55310,-155.31731,United States,derived,,United States,US,0.0,
+US-xRM,2019-2024,40.27590,-105.54590,United States,derived,,United States,US,0.0,
+US-xRN,2020-2024,35.96410,-84.28260,United States,derived,,United States,US,0.0,
+US-xSB,2020-2024,29.68930,-81.99340,United States,derived,,United States,US,0.0,
+US-xSC,2019-2024,38.89290,-78.13950,United States,derived,,United States,US,0.0,
+US-xSE,2020-2024,38.89010,-76.56000,United States,derived,,United States,US,0.0,
+US-xSJ,2020-2024,37.10880,-119.73230,United States,derived,,United States,US,0.0,
+US-xSL,2020-2024,40.46190,-103.02930,United States,derived,,United States,US,0.0,
+US-xSP,2020-2024,37.03340,-119.26220,United States,derived,,United States,US,0.0,
+US-xSR,2019-2024,31.91070,-110.83550,United States,derived,,United States,US,0.0,64.8
+US-xST,2019-2024,45.50890,-89.58640,United States,derived,,United States,US,0.0,
+US-xTA,2020-2024,32.95050,-87.39330,United States,derived,,United States,US,0.0,
+US-xTE,2020-2024,37.00580,-119.00600,United States,derived,,United States,US,0.0,
+US-xTL,2019-2024,68.66110,-149.37050,United States,derived,,United States,US,0.0,
+US-xTR,2019-2023,45.49370,-89.58570,United States,derived,,United States,US,0.0,
+US-xUK,2020-2024,39.04040,-95.19210,United States,derived,,United States,US,0.0,
+US-xUN,2019-2024,46.23390,-89.53730,United States,derived,,United States,US,0.0,
+US-xWD,2020-2024,47.12820,-99.24140,United States,derived,,United States,US,0.0,
+US-xWR,2019-2024,45.82050,-121.95190,United States,derived,,United States,US,0.0,
+US-xYE,2019-2024,44.95350,-110.53910,United States,derived,,United States,US,0.0,
+VU-Coc,2002-2003,-15.44272,167.19194,Vanuatu,declared,Vanuatu,Vanuatu,VU,0.0,
+ZA-BfK,2021-2024,-28.85648,24.83985,South Africa,derived,,South Africa,ZA,0.0,
+ZA-BfS,2021-2024,-28.89060,24.86112,South Africa,derived,,South Africa,ZA,0.0,
+ZA-Jks,2024-2024,-33.99029,18.95543,South Africa,derived,,South Africa,ZA,0.0,
+ZA-Spk,2024-2024,-28.70408,29.52614,South Africa,derived,,South Africa,ZA,0.0,49.0
+ZA-Uby,2024-2024,-27.39520,32.58890,South Africa,derived,,South Africa,ZA,0.0,60.0
+ZM-Mon,2008-2008,-15.43778,23.25278,Zambia,declared,Zambia,Zambia,ZM,0.0,

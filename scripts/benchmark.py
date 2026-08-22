@@ -27,6 +27,12 @@ import xarray as xr
 DEFAULT_FLUX_DIR = Path('flux/PLUMBER2_original')
 DEFAULT_MODEL_DIR = Path('postprocessed')
 DEFAULT_OUT_DIR = Path('benchmark')
+# Country per site, for the towers whose flux file carries no `country`
+# attribute -- FluxnetLSM only supplies one for the ~874 sites in its bundled
+# metadata, which leaves 475 of the 775 Shuttle sites blank. Built from the site
+# coordinates by scripts/fill_site_country.py; the declared attribute always wins.
+DEFAULT_COUNTRY_CSV = Path('reference/site_country.csv')
+COUNTRY_BY_SITE: dict[str, str] = {}
 DEFAULT_EXPERIMENT_NAME = 'ecland'
 DASHBOARD_TEMPLATE = Path(__file__).parent / 'dashboard_template.html'
 
@@ -177,7 +183,7 @@ def process_site(site: str, period: str, flux_path: Path, model_path: Path) -> d
     record = {
         'site': site,
         'site_name': obs_ds.attrs.get('site_name', site),
-        'country': obs_ds.attrs.get('country', ''),
+        'country': (obs_ds.attrs.get('country', '') or '').strip() or COUNTRY_BY_SITE.get(site, ''),
         'igbp': decode_char_var(obs_ds, 'IGBP_veg_short', 'UNK'),
         'igbp_long': decode_char_var(obs_ds, 'IGBP_veg_long', 'Unknown'),
         'lat': nanround(float(obs_ds['latitude'].values.squeeze()), 4),
@@ -259,6 +265,10 @@ def process_site(site: str, period: str, flux_path: Path, model_path: Path) -> d
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--flux-dir', type=Path, default=DEFAULT_FLUX_DIR)
+    p.add_argument('--country-csv', type=Path, default=DEFAULT_COUNTRY_CSV,
+                    help=f'Per-site country lookup, used only where the flux file has no '
+                         f'country attribute (default: {DEFAULT_COUNTRY_CSV}). Build it with '
+                         f'scripts/fill_site_country.py.')
     p.add_argument('--model-dir', type=Path, default=DEFAULT_MODEL_DIR)
     p.add_argument('--out-dir', type=Path, default=DEFAULT_OUT_DIR,
                     help="Base output directory; results are written to <out-dir>/<run-name>/.")
@@ -295,6 +305,14 @@ def main() -> None:
     run_name = args.run_name or (args.sites_file.stem if args.sites_file else 'all')
     out_dir = args.out_dir / run_name
     out_dir.mkdir(parents=True, exist_ok=True)
+
+    if args.country_csv.is_file():
+        import csv as _csv
+        with args.country_csv.open() as fh:
+            for row in _csv.DictReader(fh):
+                if row.get('country'):
+                    COUNTRY_BY_SITE[row['site']] = row['country']
+        print(f'Country lookup: {len(COUNTRY_BY_SITE)} sites from {args.country_csv}')
 
     pairs = discover_pairs(args.flux_dir, args.model_dir, args.experiment_name)
     if args.site:
