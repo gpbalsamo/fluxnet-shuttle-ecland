@@ -122,6 +122,9 @@ fluxnet-shuttle-ecland/
 │   ├── run_and_proc.sh / run_and_proc_macos.sh   # forked + generalized (GROUP/EXPERIMENT_NAME vars)
 │   ├── run_parallel_local.sh       # forked + generalized (run_parallel_local_macos.sh): -g GROUP now required
 │   ├── ecland_run.sh               # forked + generalized HPC job template (edit GROUP/paths per run)
+│   ├── submit_ecland_slurm.sh      # NEW: run a whole group as one job array (see 6, the fast path)
+│   ├── ecland_run_queue.sh         # NEW: one worker draining the shared site queue, claims via mkdir
+│   ├── scratch_mirror.sh           # NEW: push inputs+build to $SCRATCH (Lustre), pull results back
 │   └── ecland_run_experiment.sh, ecland_run_model.sh, ecland_run_test.sh, ecland_retrieve.sh,
 │       ecland_retrieve_lfs.sh, ecland_parse_commandline.sh, ecland_runtime.sh, ecland_validate.sh,
 │       ecland_validate_stats.py, ecland_extract_stats.py, ecland_create_namelist.py, ecland-launch,
@@ -322,6 +325,72 @@ python3 scripts/benchmark.py --model-dir benchmark/models/shuttle-pilot20 \
   --out-dir benchmark/dashboards/shuttle-pilot20 --experiment-name shuttle-pilot20
 ```
 
+#### The whole group at once: one job array draining a shared queue
+
+`scripts/submit_ecland_slurm.sh` runs a whole group as a single SLURM job array
+instead of one job per site, and is the fast path on the ECMWF HPC. **Run it from
+the `$SCRATCH` mirror, not from `$PERM`:**
+
+```bash
+scripts/scratch_mirror.sh push -g shuttle-all775-era5 -r   # ~2 GB, ~2 min
+cd $SCRATCH/fluxnet-shuttle-ecland
+scripts/submit_ecland_slurm.sh -g shuttle-all775-era5 \
+  -x $SCRATCH/fluxnet-shuttle-ecland/ecland-build/bin/ecland-master-dp
+```
+
+Defaults are `-a 5 -w 48 -l 2 -T 03:30:00 -q nf -M 2G`: **240 concurrent sites
+from 5 SLURM job slots.** Add `-d` for a dry run (writes and prints the job
+script, submits nothing), `-r` to skip `flux/` in the push (12 GB of observations
+the model never reads — the benchmark does), and `-i` to put `output/` directly in
+the mirror tree.
+
+**Concurrency = `-a` × `-w`, and the two are not interchangeable.** The scarce
+resource is job slots, not CPUs: `sacctmgr show assoc user=$USER` gives
+**MaxJobs=30**, and array elements count individually, so element 31+ just sits in
+`PENDING (AssocMaxJobsLimit)`. `-w` runs several workers *inside* one element,
+buying concurrency from a node's CPUs (these nodes have 256) instead of from that
+budget. Sites are claimed with an atomic `mkdir`, so workers inside one element
+are exactly as safe as workers across nodes, and the run is resumable: completed
+output is seeded as done, so re-submitting picks up where it stopped.
+
+Cost refitted on 358 of our own completed sites: **193.6 s per site-year** at
+`NLOOP=2` (median 191, p90 225), so the 775-site group is ~290 CPU-hours
+uncontended and ~750 GB of raw output. Do not carry this figure to
+`plumber2-ecland`, whose sites cost 86 s per site-year.
+
+**Two mistakes here cost 480 CPU-hours for zero completed sites, both worth
+understanding before changing the defaults.**
+
+*1. Everything must be on Lustre — including the inputs and the executable.*
+Measured with 30 concurrent writers, `$PERM` (NFS) sustains 530 MB/s against
+4863 MB/s on `$SCRATCH` (Lustre), a factor of 9.2. But the reads are the half
+that gets missed: the workers inside one element share that node's *single* NFS
+client, so forcing read over NFS starves them even when output is already on
+Lustre. The executable counts too — it demand-pages five shared objects through
+an `$ORIGIN/../lib64` rpath. `scripts/scratch_mirror.sh push` assembles a
+self-contained tree, build included; `pull` brings back only `postprocessed/` and
+`benchmark/`, never raw `output/`. The submit script warns if any of the three is
+still on NFS above 25 workers.
+
+*2. Workers must be unbound and single-threaded.* Four separate mechanisms will
+otherwise collapse every worker onto core 0 or oversubscribe the node, all of
+them fixed by exports the job script now sets (`OMP_NUM_THREADS=1`,
+`KMP_AFFINITY=disabled`, `OMPI_MCA_hwloc_base_binding_policy=none`, `LAUNCH=''`):
+ecLand's OpenMP defaults to the whole cgroup; Intel's OpenMP runtime pins threads
+itself and *ignores* `OMP_PROC_BIND`; ecLand calls `MPI_Init` even for one point,
+so the bare binary is an OpenMPI singleton that still applies default binding;
+and `mpirun -np 1` binds its rank to the first core. Symptom to watch for: ~7% CPU
+per worker with every process reporting `Cpus_allowed_list=0,128`. Healthy looks
+like 48 model processes on 47 distinct cores at ~98% CPU each.
+
+**Size the wall limit on the drain time, not the median site.** A worker takes
+site after site until the queue is empty, so it lives ≈ total/N — but never less
+than the costliest single record (31 years, ~2.33 h), which is serial and cannot
+be split. The `03:30:00` default clears that floor by 50%. A limit below the drain
+kills every worker mid-queue and records *nothing*, which is exactly how the 480
+CPU-hours were lost: a 4 h wall against 48 contended workers whose median site had
+swollen from 756 s to 9845 s.
+
 ### 6.1 Pilot run (3 sites)
 
 Validated 2026-08-20 on Shuttle-sourced sites, the full chain from tower CSV to benchmark scores. `NLOOP=2`, tower forcing, O1280 physiography:
@@ -341,7 +410,7 @@ Validated 2026-08-20 on Shuttle-sourced sites, the full chain from tower CSV to 
 Two things this exposed:
 
 - **`Qh` is biased high at all three sites** (+2.8 to +42.2 W m⁻²), largest in the Amazon. Worth investigating before reading much into a 775-site benchmark; `NLOOP=2` may be too few spin-up loops.
-- **Cost scales with record length, steeply.** SN-Dhr (12 years, half-hourly) takes ~14 min per loop; a 29-year site takes over an hour. Across 5397 site-years at `NLOOP=2` that is roughly 210 CPU-hours — a few hours wall-clock in a job array, but not something to run interactively.
+- **Cost scales with record length, steeply.** SN-Dhr (12 years, half-hourly) takes ~14 min per loop; a 29-year site takes over an hour. Across 5397 site-years at `NLOOP=2` that is roughly 290 CPU-hours (refitted on 358 completed sites at 193.6 s per site-year) — a few hours wall-clock in a job array, but not something to run interactively.
 
 `ecland_create_namelist.py` needed one fix to get here: it read the scalar `zphista`/`zuv` from surfclim as `[0].data[0]`, which raises `IndexError` on current netCDF4 builds. Those variables are scalar in PLUMBER2's clim files too, so this was never specific to Shuttle-sourced sites.
 
