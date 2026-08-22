@@ -176,7 +176,11 @@ def process_site(site: str, period: str, flux_path: Path, model_path: Path) -> d
         'igbp_long': decode_char_var(obs_ds, 'IGBP_veg_long'),
         'lat': nanround(float(obs_ds['latitude'].values.squeeze()), 4),
         'lon': nanround(float(obs_ds['longitude'].values.squeeze()), 4),
-        'elevation': nanround(float(obs_ds['elevation'].values.squeeze()), 1),
+        # Optional: PLUMBER2's FluxnetLSM output carries elevation, the FLUXNET
+        # Shuttle pipeline's does not (it has reference_height instead). It is
+        # dashboard metadata, so absence must not cost the whole site.
+        'elevation': (nanround(float(obs_ds['elevation'].values.squeeze()), 1)
+                      if 'elevation' in obs_ds else None),
         'period': period,
         'years': nanround(common_time.size / (steps_per_day * 365.25), 2),
         'metrics': {},

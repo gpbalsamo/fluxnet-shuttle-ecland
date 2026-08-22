@@ -978,7 +978,7 @@
       <div class="insp-head">
         <div class="insp-title">
           <span class="code">${site.site} <span style="color:var(--text-muted); font-weight:500; font-size:14px;">— ${site.site_name}, ${site.country}</span></span>
-          <span class="sub">${site.igbp_long} · ${site.lat.toFixed(2)}°, ${site.lon.toFixed(2)}° · ${site.elevation}m · ${site.period} (${site.years} yrs)</span>
+          <span class="sub">${site.igbp_long} · ${site.lat.toFixed(2)}°, ${site.lon.toFixed(2)}° · ${site.elevation != null ? site.elevation + 'm · ' : ''}${site.period} (${site.years} yrs)</span>
         </div>
         <button class="insp-close" id="insp-close-btn" aria-label="Close">✕</button>
       </div>
