@@ -22,7 +22,7 @@ By IGBP: GRA 145, CRO 138, WET 115, ENF 114, DBF 80, EBF 44, OSH 40, MF 24, WSA 
 
 Gap-fill intensity across all 7750 (file, variable) records, from `reference/qc_report_shuttle-all775-era5.csv`: mild 3755, medium 1603, heavy 1169, complete 1223. Roughly half the delivered data is lightly gap-filled; the heavily-filled remainder is labelled per file and variable rather than mixed in silently. Reaching full coverage does depend on ERA5 — sites vary from near-pure observations to records where pressure and precipitation are largely reanalysis.
 
-**Every input ecLand needs now exists for all 775 sites**: physiography and initial conditions were built for 775/775 (see [Physiography](#2c-physiography-and-initial-conditions)), and a 3-site pilot has been run end to end through the model, postprocessing and benchmarking — correlations of 0.81–0.93 against tower Qle/Qh. See [Pilot](#61-pilot-run-3-sites).
+**The whole pool has been run end to end**: physiography and initial conditions for 775/775 (see [Physiography](#2c-physiography-and-initial-conditions)), then ecLand, postprocessing and benchmarking over all 775 sites — median `r` of 0.79 (`Qle`) and 0.82 (`Qh`) against the towers. See [Results](#61-results-the-full-775-site-run).
 
 What's validated vs. what's still open:
 
@@ -437,28 +437,38 @@ comes back. Neither direction uses `--delete`. **`$SCRATCH` is pruned
 automatically**, so anything not pulled back is eventually gone;
 `scratch_mirror.sh status` shows both sides.
 
-### 6.1 Pilot run (3 sites)
+### 6.1 Results: the full 775-site run
 
-Validated 2026-08-20 on Shuttle-sourced sites, the full chain from tower CSV to benchmark scores. `NLOOP=2`, tower forcing, O1280 physiography:
+The complete chain from tower CSV to benchmark scores, at `NLOOP=2` with tower
+forcing and O1280 physiography. Dashboard:
+[`benchmark/dashboards/shuttle-all775-era5/index.html`](benchmark/dashboards/shuttle-all775-era5/index.html).
 
-| site | biome | variable | n | bias (W m⁻²) | RMSE | r |
-|---|---|---|---|---|---|---|
-| SN-Dhr (12 yr) | Sahel savanna | Qle | 69605 | −11.0 | 41.1 | **0.90** |
-| | | Qh | 59969 | +2.8 | 42.8 | **0.93** |
-| | | NEE | 50944 | +14.0 | 15.8 | 0.73 |
-| BR-Sa1 (10 yr) | Amazon forest | Qle | 96096 | −15.5 | 83.8 | 0.82 |
-| | | Qh | 100088 | +42.2 | 92.8 | 0.85 |
-| | | NEE | 36971 | −28.8 | 42.4 | 0.78 |
-| CZ-BK2 (7 yr) | montane spruce | Qle | 62194 | +11.3 | 38.0 | 0.81 |
-| | | Qh | 82234 | +30.4 | 64.6 | 0.84 |
-| | | NEE | 34709 | −6.1 | 14.9 | 0.87 |
+| variable | sites scored | median r | median bias | median RMSE |
+|---|---|---|---|---|
+| `Qle` | 775 | **0.79** | +5.1 W m⁻² | 56.7 |
+| `Qh` | 775 | **0.82** | +12.0 W m⁻² | 59.7 |
+| `NEE` | 723 | 0.62 | −0.7 µmol m⁻² s⁻¹ | 12.7 |
 
-Two things this exposed:
+Median `r` for `Qle` by biome: GRA 0.83 (136 sites), DBF 0.81 (69), MF 0.80 (44),
+CRO 0.79 (147), WET 0.79 (106), ENF 0.78 (102), EBF 0.75 (46), OSH 0.69 (41).
 
-- **`Qh` is biased high at all three sites** (+2.8 to +42.2 W m⁻²), largest in the Amazon. Worth investigating before reading much into a 775-site benchmark; `NLOOP=2` may be too few spin-up loops.
-- **Cost scales with record length, steeply.** SN-Dhr (12 years, half-hourly) takes ~14 min per loop; a 29-year site takes over an hour. Across 5397 site-years at `NLOOP=2` that is roughly 290 CPU-hours (refitted on 358 completed sites at 193.6 s per site-year) — a few hours wall-clock in a job array, but not something to run interactively.
+`NEE` is scored at 723 of 775 sites: 50 towers report no `NEE` at all, and 2 more
+have no half-hour surviving the measured-only QC filter. Those sites show the
+variable as unavailable rather than being scored against absent QC flags.
 
-`ecland_create_namelist.py` needed one fix to get here: it read the scalar `zphista`/`zuv` from surfclim as `[0].data[0]`, which raises `IndexError` on current netCDF4 builds. Those variables are scalar in PLUMBER2's clim files too, so this was never specific to Shuttle-sourced sites.
+**`Qh` is biased high**, by +12.0 W m⁻² at the median across the whole pool. The
+same sign appeared in the earlier 3-site pilot (+2.8 to +42.2 W m⁻²), so it is a
+property of the configuration rather than a small-sample artefact. `NLOOP=2` may
+be too few spin-up loops; testing that means a run at `NLOOP=1` from an
+equilibrated restart, or more loops, and comparing the same metric.
+
+Cost of the run itself, for planning a repeat:
+
+| stage | wall clock | resources |
+|---|---|---|
+| ecLand, 775 sites | 1 h 13 min | 94.7 CPU-h, 711 GB raw output |
+| `postproc.py` → one file per site | 1 h 51 min | 40 workers, 18 GB |
+| `benchmark.py` → dashboard | 15 min | single process |
 
 ## Benchmarking
 
