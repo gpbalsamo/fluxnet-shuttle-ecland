@@ -44,10 +44,17 @@ PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." >/dev/null 2>&1 && pwd -P)"
 INPUT_DIR=""
 OUT_DIR="${PROJECT_ROOT}/postprocessed"
 EXPERIMENT=""
-WORKERS=48
+# 40 x 3G = 120G, which fits under the 128G that QoS nf allows per job. Memory
+# is what caps concurrency here, not CPUs: postproc.py peaks near 1.4 GB on a
+# long record, so -w 48 -M 4G (192G) is rejected outright with
+# QOSMaxMemoryPerJob. Raise -w only by lowering -M to match.
+WORKERS=40
 WALLTIME="02:00:00"
 QOS="nf"
-MEM_PER_CPU="4G"
+MEM_PER_CPU="3G"
+# QoS nf: MaxTRESPerJob mem=128G. Checked before submitting so the failure is a
+# sentence rather than a scheduler error code.
+MAX_JOB_MEM_GB=128
 OVERWRITE=""
 DRY_RUN=false
 
@@ -114,6 +121,15 @@ n_sites=$(wc -l < "${SITES}" | tr -d ' ')
 awk -v n="${WORKERS}" -v d="${CHUNK_DIR}" '{print > (d "/chunk_" (NR-1)%n ".txt")}' "${SITES}"
 
 n_done=$(find "${OUT_DIR}" -maxdepth 1 -name "ecLand_${EXPERIMENT}_*.nc" | wc -l | tr -d ' ')
+
+# Catch the memory ceiling here rather than as sbatch's QOSMaxMemoryPerJob.
+mem_gb="${MEM_PER_CPU%[Gg]}"
+if [[ "${mem_gb}" =~ ^[0-9]+$ ]] && [[ $((WORKERS * mem_gb)) -gt "${MAX_JOB_MEM_GB}" ]]; then
+  echo "ERROR: ${WORKERS} workers x ${MEM_PER_CPU} = $((WORKERS * mem_gb))G exceeds the" >&2
+  echo "       ${MAX_JOB_MEM_GB}G that QoS ${QOS} allows per job. Lower -w or -M:" >&2
+  echo "       -w $((MAX_JOB_MEM_GB / mem_gb)) at ${MEM_PER_CPU}, or -w ${WORKERS} at $((MAX_JOB_MEM_GB / WORKERS))G." >&2
+  exit 2
+fi
 
 JOB_SCRIPT="${WORK_DIR}/postproc.sbatch"
 cat > "${JOB_SCRIPT}" <<EOF
