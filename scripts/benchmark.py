@@ -78,7 +78,13 @@ def discover_pairs(flux_dir: Path, model_dir: Path, experiment_name: str) -> lis
     return [(site, period, flux_map[(site, period)], model_map[(site, period)]) for site, period in common]
 
 
-def decode_char_var(ds: xr.Dataset, name: str) -> str:
+def decode_char_var(ds: xr.Dataset, name: str, default: str = '') -> str:
+    # Optional by necessity: 10 of the 775 Shuttle towers carry no
+    # IGBP_veg_short and 2 no IGBP_veg_long. The dashboard groups sites by
+    # biome, so return a visible placeholder rather than '' -- an empty key
+    # would show up as an unlabelled biome group.
+    if name not in ds:
+        return default
     return ds[name].values.tobytes().decode(errors='ignore').strip('\x00').strip()
 
 
@@ -172,8 +178,8 @@ def process_site(site: str, period: str, flux_path: Path, model_path: Path) -> d
         'site': site,
         'site_name': obs_ds.attrs.get('site_name', site),
         'country': obs_ds.attrs.get('country', ''),
-        'igbp': decode_char_var(obs_ds, 'IGBP_veg_short'),
-        'igbp_long': decode_char_var(obs_ds, 'IGBP_veg_long'),
+        'igbp': decode_char_var(obs_ds, 'IGBP_veg_short', 'UNK'),
+        'igbp_long': decode_char_var(obs_ds, 'IGBP_veg_long', 'Unknown'),
         'lat': nanround(float(obs_ds['latitude'].values.squeeze()), 4),
         'lon': nanround(float(obs_ds['longitude'].values.squeeze()), 4),
         # Optional: PLUMBER2's FluxnetLSM output carries elevation, the FLUXNET
@@ -190,7 +196,12 @@ def process_site(site: str, period: str, flux_path: Path, model_path: Path) -> d
     }
 
     for var in VARIABLES:
-        if var not in mod_ds:
+        # A variable is unavailable if either side lacks it. The model side was
+        # always handled; the observation side matters here because 50 of the 775
+        # Shuttle towers report no NEE at all (and so no NEE_qc). Scoring needs
+        # the QC flags to keep measured, non-gapfilled half-hours only, so a
+        # missing pair is reported as unavailable rather than scored unfiltered.
+        if var not in mod_ds or var not in obs_ds or f'{var}_qc' not in obs_ds:
             record['metrics'][var] = {'n': 0, 'bias': None, 'rmse': None, 'r': None, 'nme': None,
                                        'std_obs': None, 'std_mod': None, 'pct_measured': None}
             record['monthly_clim'][var] = {'obs': [None] * 12, 'mod': [None] * 12}
