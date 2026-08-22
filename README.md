@@ -125,6 +125,7 @@ fluxnet-shuttle-ecland/
 │   ├── submit_ecland_slurm.sh      # NEW: run a whole group as one job array (see 6, the fast path)
 │   ├── ecland_run_queue.sh         # NEW: one worker draining the shared site queue, claims via mkdir
 │   ├── scratch_mirror.sh           # NEW: push inputs+build to $SCRATCH (Lustre), pull results back
+│   ├── submit_postproc_slurm.sh    # NEW: postproc.py split across a node's CPUs (~19 CPU-h serial)
 │   └── ecland_run_experiment.sh, ecland_run_model.sh, ecland_run_test.sh, ecland_retrieve.sh,
 │       ecland_retrieve_lfs.sh, ecland_parse_commandline.sh, ecland_runtime.sh, ecland_validate.sh,
 │       ecland_validate_stats.py, ecland_extract_stats.py, ecland_create_namelist.py, ecland-launch,
@@ -336,10 +337,29 @@ scripts/scratch_mirror.sh push -g shuttle-all775-era5   # ~14 GB for one group
 cd $SCRATCH/fluxnet-shuttle-ecland
 scripts/submit_ecland_slurm.sh -g shuttle-all775-era5 \
   -x $SCRATCH/fluxnet-shuttle-ecland/ecland-build/bin/ecland-master-dp
-python3 scripts/postproc.py --inputdir output --outdir postprocessed
-python3 scripts/benchmark.py
+scripts/submit_postproc_slurm.sh -I $SCRATCH/ecland_shuttle-all775-era5/output \
+  -e shuttle-all775-era5                                # ~30 min at 40 workers
+python3 scripts/benchmark.py --flux-dir flux/shuttle-all775-era5 \
+  --model-dir postprocessed --out-dir benchmark/dashboards \
+  --run-name shuttle-all775-era5 --experiment-name shuttle-all775-era5
 cd -; scripts/scratch_mirror.sh pull                    # results only
 ```
+
+**Post-process with the submitter, not `postproc.py` directly.** It is serial at
+~90 s per site, so 775 sites is ~19 CPU-hours — half a day, on a login node where
+it shouldn't run at all. `submit_postproc_slurm.sh` splits the sites across 40
+workers in one SLURM job and finishes in ~30 minutes. It's resumable for free,
+since `postproc.py` skips a site whose output already exists: after a wall kill,
+just submit again. Note that QoS `nf` caps a job at **128 GB**, and `postproc.py`
+peaks near 1.4 GB per worker, so `-w` × `-M` must stay under it — the script
+checks and tells you both ways out rather than letting sbatch return
+`QOSMaxMemoryPerJob`.
+
+Two flags `benchmark.py` needs here that its defaults get wrong, both inherited
+from the sibling repo: `--flux-dir flux/<group>` (it defaults to
+`flux/PLUMBER2_original`, which doesn't exist here) and an `--experiment-name`
+**identical** to the one given to the post-processing, or the postprocessed
+filenames won't resolve and every site is skipped as "no model output".
 
 The push carries everything a run *and* its benchmark need — `forcing/`, `clim/`,
 `flux/`, `namelists/`, `scripts/` and the ecLand build — so the mirror is
