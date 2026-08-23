@@ -15,6 +15,7 @@ JSON of climatology/diurnal/trend aggregates for the benchmark dashboard.
 from __future__ import annotations
 
 import argparse
+import html
 import json
 import re
 from pathlib import Path
@@ -50,6 +51,8 @@ FLUX_RE = re.compile(r'([A-Za-z0-9\-]+)_(\d{4}-\d{4})_')
 # Alternate per-site convention with no period in the filename, e.g.
 # local_AT-Neu_fluxnet2015_gl9.AT-Neu.nc -- site is whatever precedes ".nc".
 MODEL_RE_NOPERIOD = re.compile(r'.+\.([A-Za-z0-9\-]+)\.nc')
+# A line in a --sites-file subset list, with the period suffix optional.
+SITE_PERIOD_RE = re.compile(r'^(.+)_(\d{4}-\d{4})$')
 
 
 def discover_pairs(flux_dir: Path, model_dir: Path, experiment_name: str) -> list[tuple[str, str, Path, Path]]:
@@ -279,8 +282,13 @@ def parse_args() -> argparse.Namespace:
                          "stem if one is given, e.g. --sites-file best20.txt -> <out-dir>/best20/).")
     p.add_argument('--site', action='append', default=None, help='Optional site filter; repeatable.')
     p.add_argument('--sites-file', type=Path, default=None,
-                    help='Optional text file with one SITE_period per line (e.g. reference/best20.txt) '
-                         'to restrict the benchmark to a curated subset.')
+                    help='Optional text file restricting the benchmark to a curated subset, one '
+                         'entry per line: a bare site code (AT-Neu) takes whatever period this '
+                         'pool holds, or SITE_period (AT-Neu_2002-2012) pins one period. '
+                         'See reference/subset_*.txt.')
+    p.add_argument('--run-label', default=None,
+                    help='Human-readable pool name shown in the dashboard header and browser tab '
+                         '(default: --run-name).')
     p.add_argument('--experiment-name', default=DEFAULT_EXPERIMENT_NAME,
                     help=f'Must match --experiment-name passed to postproc.py, so postprocessed '
                          f'filenames (ecLand_<name>_<site>_<period>.nc) resolve correctly '
@@ -288,15 +296,26 @@ def parse_args() -> argparse.Namespace:
     return p.parse_args()
 
 
-def read_sites_file(path: Path) -> set[tuple[str, str]]:
-    wanted = set()
+def read_sites_file(path: Path) -> tuple[set[str], set[tuple[str, str]]]:
+    """Parse a curated subset list into (sites-any-period, pinned site/period pairs).
+
+    A line may pin one period (`AT-Neu_2002-2012`) or name a bare site (`AT-Neu`).
+    Bare sites are what let a PLUMBER2-era list select the same towers here:
+    FLUXNET-Shuttle usually offers more years per site, so the periods in the
+    original lists no longer match and pinning them would select nothing.
+    """
+    any_period: set[str] = set()
+    pinned: set[tuple[str, str]] = set()
     for line in path.read_text().splitlines():
-        line = line.strip()
-        if not line or line.startswith('#'):
+        line = line.split('#', 1)[0].strip()
+        if not line:
             continue
-        site, _, period = line.rpartition('_')
-        wanted.add((site, period))
-    return wanted
+        m = SITE_PERIOD_RE.match(line)
+        if m:
+            pinned.add((m.group(1), m.group(2)))
+        else:
+            any_period.add(line)
+    return any_period, pinned
 
 
 def main() -> None:
@@ -323,11 +342,15 @@ def main() -> None:
         wanted = set(args.site)
         pairs = [p for p in pairs if p[0] in wanted]
     if args.sites_file:
-        wanted_pairs = read_sites_file(args.sites_file)
-        missing = wanted_pairs - {(s, p) for s, p, _, _ in pairs}
+        any_period, pinned = read_sites_file(args.sites_file)
+        have_pairs = {(s, p) for s, p, _, _ in pairs}
+        have_sites = {s for s, _, _, _ in pairs}
+        missing = sorted((any_period - have_sites)
+                         | {f'{s}_{p}' for s, p in pinned - have_pairs})
         if missing:
-            print(f'Warning: {len(missing)} entries in {args.sites_file} not found among discovered pairs: {sorted(missing)}')
-        pairs = [p for p in pairs if (p[0], p[1]) in wanted_pairs]
+            print(f'Note: {len(missing)} of {len(any_period) + len(pinned)} entries in '
+                  f'{args.sites_file} are not in this pool: {" ".join(missing)}')
+        pairs = [p for p in pairs if p[0] in any_period or (p[0], p[1]) in pinned]
     print(f'Processing {len(pairs)} site/period pairs...')
 
     records = []
@@ -363,7 +386,9 @@ def main() -> None:
         template = DASHBOARD_TEMPLATE.read_text(encoding='utf-8')
         # data is embedded in a <script type="application/json"> tag; escape "</" so no
         # embedded string (e.g. a stray site name) can prematurely close that tag.
-        out = template.replace('__DATA_JSON__', data_str.replace('</', '<\\/'))
+        out = (template
+               .replace('__DATA_JSON__', data_str.replace('</', '<\\/'))
+               .replace('__RUN_LABEL__', html.escape(args.run_label or run_name)))
         dashboard_html.write_text(out, encoding='utf-8')
         print(f'Wrote {dashboard_html} ({dashboard_html.stat().st_size / 1e6:.2f} MB)')
     else:

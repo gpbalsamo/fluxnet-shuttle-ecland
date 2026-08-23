@@ -89,6 +89,8 @@ fluxnet-shuttle-ecland/
 ├── namelists/               # ecLand namelist configuration files (forked as-is from plumber2-ecland)
 ├── reference/                # Site-ID lists and site metadata
 │   ├── plumber2_170_site_ids.txt   # Copy of plumber2-ecland's 170-site list, used as the exclude-list
+│   ├── subset_plumber2_170.txt     # The same 170 towers as bare site codes, for benchmark --sites-file
+│   ├── subset_best42.txt           # The 42 curated PLUMBER2 benchmark sites, same convention
 │   ├── shuttle_pilot20_site_ids.txt # Current fire/vegetation-stress pilot shortlist (20 sites)
 │   ├── shuttle_pilot20_candidates.csv # The same shortlist with hub/coords/IGBP/record-length columns
 │   ├── site_metadata_merged.csv    # FluxnetLSM's Site_metadata.csv + the 2026-08-18 Shuttle sites
@@ -397,10 +399,19 @@ between runs by the submitter's sweep. Retry only the failures with
 ```bash
 scripts/submit_postproc_slurm.sh -I $SCRATCH/ecland_shuttle-all775-era5/output \
   -e shuttle-all775-era5
-python3 scripts/benchmark.py --flux-dir flux/shuttle-all775-era5 \
-  --model-dir postprocessed --out-dir benchmark/dashboards \
-  --run-name shuttle-all775-era5 --experiment-name shuttle-all775-era5
+BENCH=(python3 scripts/benchmark.py --flux-dir flux/shuttle-all775-era5
+       --model-dir postprocessed --out-dir benchmark/dashboards
+       --experiment-name shuttle-all775-era5)
+"${BENCH[@]}" --run-name shuttle-all775 --run-label 'all 775 sites'
+"${BENCH[@]}" --run-name plumber2-170 --run-label 'PLUMBER2 subset' \
+  --sites-file reference/subset_plumber2_170.txt
+"${BENCH[@]}" --run-name best42 --run-label 'best-42 subset' \
+  --sites-file reference/subset_best42.txt
 ```
+
+The last two restrict the same run to the PLUMBER2 site lists, so ecLand's skill
+here is directly comparable with `plumber2-ecland`'s dashboards — over
+FLUXNET-Shuttle's longer records rather than the PLUMBER2-era periods.
 
 `postproc.py` maps raw ecLand output onto the common variable schema, one
 `ecLand_<experiment>_<site>_<period>.nc` per site. It is serial at ~90 s per site,
@@ -441,7 +452,7 @@ automatically**, so anything not pulled back is eventually gone;
 
 The complete chain from tower CSV to benchmark scores, at `NLOOP=2` with tower
 forcing and O1280 physiography. Dashboard:
-[`benchmark/dashboards/shuttle-all775-era5/index.html`](benchmark/dashboards/shuttle-all775-era5/index.html).
+[`benchmark/dashboards/shuttle-all775/index.html`](benchmark/dashboards/shuttle-all775/index.html).
 
 | variable | sites scored | median r | median bias | median RMSE |
 |---|---|---|---|---|
@@ -468,13 +479,42 @@ Cost of the run itself, for planning a repeat:
 |---|---|---|
 | ecLand, 775 sites | 1 h 13 min | 94.7 CPU-h, 711 GB raw output |
 | `postproc.py` → one file per site | 1 h 51 min | 40 workers, 18 GB |
-| `benchmark.py` → dashboard | 15 min | single process |
+| `benchmark.py` → dashboard | 20 min | single process per pool |
+
+### 6.2 The PLUMBER2 subsets, over longer records
+
+The same run restricted to the two PLUMBER2 site lists, so the scores line up
+with `plumber2-ecland`'s dashboards while using FLUXNET-Shuttle's longer records.
+FLUXNET-Shuttle carries only part of the PLUMBER2 pool — 110 of the 170 towers and
+36 of the curated 42 — the rest being legacy sites it does not redistribute.
+
+| pool | dashboard | towers | site-years (was, in PLUMBER2) |
+|---|---|---|---|
+| PLUMBER2 170 | [`plumber2-170/`](benchmark/dashboards/plumber2-170/index.html) | 110 of 170 | 1551 (800) — **1.94×** |
+| curated best-42 | [`best42/`](benchmark/dashboards/best42/index.html) | 36 of 42 | 664 (408) — **1.63×** |
+
+Nearly every retained tower gains years: 88 of 110 are longer than their PLUMBER2
+period (11 the same, 11 shorter), and 29 of 36 in the best-42.
+
+| pool | `Qle` r / bias | `Qh` r / bias | `NEE` r / bias |
+|---|---|---|---|
+| all 775 | 0.79 / +5.1 | 0.82 / +12.0 | 0.62 / −0.7 |
+| PLUMBER2 170 | 0.80 / +2.3 | 0.86 / +12.9 | 0.65 / +0.1 |
+| best-42 | 0.79 / −0.1 | **0.88** / +7.0 | **0.71** / +0.3 |
+
+Medians; bias in W m⁻² for the heat fluxes and µmol m⁻² s⁻¹ for `NEE`. Skill rises
+as the pool narrows to the curated sites — `NEE` most of all, 0.62 → 0.71 — which
+is what those 42 were selected for, and a reminder that a headline score is only
+readable next to the pool it was computed on. The `Qh` high bias survives every
+subset.
 
 ## Benchmarking
 
 Curated site lists live in `reference/`: `shuttle_pilot20_site_ids.txt` (the
-20-site fire/vegetation-stress shortlist) and `plumber2_170_site_ids.txt` (the
-original PLUMBER2 pool, for like-for-like comparison with `plumber2-ecland`). To
+20-site fire/vegetation-stress shortlist), `plumber2_170_site_ids.txt` (the
+original PLUMBER2 pool, for like-for-like comparison with `plumber2-ecland`), and
+`subset_plumber2_170.txt` / `subset_best42.txt` (the same PLUMBER2 pools as bare
+site codes, for `benchmark.py --sites-file`). To
 run ecLand over a subset rather than the whole group, pass `-S` to the submitter:
 
 ```bash
@@ -510,13 +550,19 @@ python3 scripts/benchmark.py \
   --flux-dir flux/shuttle-all775-era5 \
   --model-dir benchmark/models/<model-name> \
   --out-dir benchmark/dashboards/<model-name> \
-  --run-name shuttle-all775-era5 \
+  --run-name shuttle-all775 \
   --experiment-name shuttle-all775-era5
 ```
 
 `--out-dir` is a base path: results go to `<out-dir>/<run-name>/`, defaulting to
-`all` when neither `--run-name` nor `--sites-file` is given. `--site` filters to
-one or more specific sites. Each run writes a metrics CSV, a JSON payload, and
+`all` when neither `--run-name` nor `--sites-file` is given. `--run-label` sets the
+pool name shown in the dashboard header and browser tab. `--site` filters to one
+or more specific sites, and `--sites-file` restricts the run to a curated subset —
+one entry per line, either a bare site code (`AT-Neu`, taking whatever period this
+pool holds) or `SITE_period` (`AT-Neu_2002-2012`, pinning one). Bare codes are what
+let the PLUMBER2-era lists in `reference/subset_*.txt` select the same towers over
+FLUXNET-Shuttle's longer records; entries absent from the pool are reported and
+skipped. Each run writes a metrics CSV, a JSON payload, and
 `index.html` (named so uploading the output folder to a static host opens the
 dashboard automatically) — open it directly in a browser, no server required.
 

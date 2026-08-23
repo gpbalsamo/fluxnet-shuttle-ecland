@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<title>ecLand × FLUXNET-Shuttle Flux Benchmark</title>
+<title>ecLand × FLUXNET-Shuttle — __RUN_LABEL__</title>
 <script>
 (function(){
   try{
@@ -90,6 +90,9 @@
     padding:14px 0 10px; border-bottom:1px solid var(--border);
   }
   .brand{display:flex; flex-direction:column; gap:2px; margin-right:auto;}
+  .pool-tag{display:inline-block; vertical-align:middle; margin-left:8px; padding:2px 8px;
+    border:1px solid var(--border); border-radius:999px; background:var(--surface-2);
+    color:var(--text-muted); font-size:12px; font-weight:600; letter-spacing:.02em;}
   .eyebrow{font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--text-muted); font-weight:600;}
   .brand h1{font-size:20px; font-weight:750; letter-spacing:-0.01em;}
   .var-toggle{display:flex; gap:4px; background:var(--surface-2); padding:4px; border-radius:10px; border:1px solid var(--border);}
@@ -277,7 +280,7 @@
   <header class="topbar">
     <div class="brand">
       <span class="eyebrow">ecLand → FLUXNET-Shuttle</span>
-      <h1>Flux Tower Benchmark</h1>
+      <h1>Flux Tower Benchmark <span class="pool-tag">__RUN_LABEL__</span></h1>
     </div>
     <div class="var-toggle" id="var-toggle" role="tablist" aria-label="Variable">
       <button class="var-btn" data-var="Qle" role="tab">Qle<span class="var-sub">Latent heat</span></button>

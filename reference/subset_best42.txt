@@ -1,0 +1,48 @@
+# The 42 curated PLUMBER2 benchmark sites (selected by Gab Abramowitz for good
+# spatial and biome diversity), as site codes with no period pinned.
+# Copied from plumber2-ecland's scripts/best_sites_to_benchmark.txt with the
+# PLUMBER2-era periods stripped.
+# 36 of these 42 towers are present in the shuttle-all775 pool; missing are
+# CN-Cha, US-Blo, US-FPe, US-Me2, US-PFa and US-UMB.
+AU-ASM
+AU-Ctr
+AU-Cum
+AU-GWW
+AU-How
+AU-Stp
+AU-Tum
+BR-Sa3
+CA-Qfo
+CH-Dav
+CN-Cha
+CN-Din
+DE-Geb
+DE-Gri
+DE-Hai
+DE-Tha
+DK-Sor
+FI-Hyy
+FR-Gri
+FR-Pue
+GF-Guy
+IT-Lav
+IT-MBo
+IT-Noe
+NL-Loo
+RU-Fyo
+US-Blo
+US-FPe
+US-GLE
+US-Ha1
+US-Me2
+US-MMS
+US-Myb
+US-NR1
+US-PFa
+US-SRG
+US-SRM
+US-Ton
+US-UMB
+US-Var
+US-Whs
+US-Wkg
