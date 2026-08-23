@@ -73,7 +73,7 @@ GROUP=""
 
 # Code and namelists always travel whole: the mirror is then self-contained and a
 # run there cannot silently use a stale script from a previous campaign.
-PUSH_PATHS=(scripts namelists)
+PUSH_PATHS=(scripts namelists reference)
 # Data directories, split by site group. With -g only that group's subdirectory
 # is pushed; without it, the whole directory.
 #

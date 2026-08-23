@@ -20,11 +20,29 @@ polygon is therefore matched to the nearest country within `--tolerance-km`
 (default 25) rather than dropped; the CSV records which sites needed that, so a
 questionable match can be checked rather than silently trusted.
 
-The derived value is written for every site, including those that already have a
-declared one, so the two can be compared -- `--report` prints the disagreements.
-Only sites with no declared country are filled by `benchmark.py`; the declared
-value always wins, even where it is inconsistently formatted (many read
-"Arizona, United States" rather than "United States").
+NORMALISATION. The declared values mix country with region -- 82 of them read
+"Arizona, United States" or "Ontario, Canada" -- which split the same country
+across several facets in the dashboard. The region is therefore separated into
+its own column, leaving `country` a country and nothing else: 53 distinct values
+where the raw strings gave 84.
+
+WHICH SOURCE WINS. All three sources are wrong somewhere in this group, so they
+arbitrate rather than rank:
+
+  - the coordinates decide by default, and agreed with the site code for all 475
+    sites that had no declared country;
+  - the SITE CODE overrules them where they conflict, since it is assigned by the
+    network and a tower near a border resolves to the wrong side -- DE-Lkb sits
+    0.9 km inside Germany and lands in the Czech Republic against a 10 m
+    coastline;
+  - the DECLARED value is kept where the site code names something Natural Earth
+    does not carry separately: GF-Guy is French Guiana, which NE folds into
+    France, and the declared value is the more specific of the two.
+
+One consequence worth knowing: this can now contradict the metadata. CG-Tch is
+declared "Congo - Kinshasa", but its coordinates and its CG prefix both place it
+in the Republic of the Congo, which is what the dashboard shows. `--report`
+prints every such case.
 
 Usage:
   python3 scripts/fill_site_country.py --flux-dir flux/<group> [--out reference/site_country.csv]
@@ -43,6 +61,7 @@ nor does it submit to any jurisdiction.
 from __future__ import annotations
 
 import argparse
+import collections
 import csv
 import re
 import sys
@@ -68,6 +87,13 @@ NAME_ALIASES = {
     'Republic of Serbia': 'Serbia',
     'Kingdom of the Netherlands': 'Netherlands',
 }
+
+# FLUXNET site IDs begin with an ISO-3166 alpha-2 code assigned by the network.
+# It is the strongest signal of the country there is -- stronger than either the
+# declared metadata or the coordinates, both of which are wrong somewhere in this
+# group -- so it arbitrates when the other two disagree. These are the codes that
+# are not the ISO one.
+PREFIX_ISO_ALIASES = {'UK': 'GB'}
 
 
 def parse_args() -> argparse.Namespace:
@@ -157,7 +183,14 @@ def main() -> int:
     # tolerance is never larger than intended at higher latitudes.
     tol_deg = args.tolerance_km / 111.0
 
-    rows, n_offshore, n_unresolved, n_border = [], 0, 0, 0
+    # ISO -> canonical country name, taken from the same boundaries as the
+    # derived names so the two can never disagree in spelling.
+    iso_to_name = {}
+    for name, iso, _ in countries:
+        if iso and iso != '-99':
+            iso_to_name.setdefault(iso, NAME_ALIASES.get(name, name))
+
+    rows, n_offshore, n_unresolved, n_border, n_arbitrated = [], 0, 0, 0, 0
     for site, period, lat, lon, declared in site_records(args.flux_dir):
         name, iso, dist, border = resolve(lon, lat, countries, tol_deg)
         name = NAME_ALIASES.get(name, name)
@@ -166,16 +199,50 @@ def main() -> int:
         elif dist > 0:
             n_offshore += 1
         border_km = border * 111.0 if border != float('inf') else float('inf')
-        if not declared and name and border_km < 5.0:
+        if name and border_km < 5.0:
             n_border += 1
+
+        # The declared value mixes country with region: "Arizona, United States".
+        # Split it, so the country facet is a country and the region survives.
+        region, declared_country = '', declared
+        if ',' in declared:
+            head, tail = declared.rsplit(',', 1)
+            region, declared_country = head.strip(), tail.strip()
+
+        prefix_iso = site.split('-')[0].upper()
+        prefix_iso = PREFIX_ISO_ALIASES.get(prefix_iso, prefix_iso)
+        prefix_name = iso_to_name.get(prefix_iso, '')
+
+        # Coordinates first, arbitrated by the site code where they conflict:
+        # a tower a few hundred metres over a border resolves to the wrong
+        # country (DE-Lkb), and a declared value can simply be wrong (CG-Tch).
+        if name and prefix_name and iso == prefix_iso:
+            country, source = name, 'coordinates'
+        elif prefix_name:
+            country, source = prefix_name, 'site-code'
+            if name and name != prefix_name:
+                n_arbitrated += 1
+        elif declared_country:
+            # The site code is not a country Natural Earth carries separately --
+            # GF-Guy is French Guiana, which NE folds into France. The declared
+            # value is the more specific of the two, so keep it.
+            country, source = declared_country, 'declared'
+        elif name:
+            country, source = name, 'coordinates'
+        else:
+            country, source = '', 'unresolved'
+
         rows.append({
             'site': site, 'period': period,
             'lat': f'{lat:.5f}', 'lon': f'{lon:.5f}',
-            'country': declared or name,
-            'source': 'declared' if declared else ('derived' if name else 'unresolved'),
-            'declared_country': declared,
+            'country': country,
+            'region': region,
+            'country_source': source,
+            'declared_country': declared_country,
+            'declared_raw': declared,
             'derived_country': name,
             'derived_iso_a2': iso,
+            'prefix_iso_a2': prefix_iso,
             'offshore_km': f'{dist * 111.0:.1f}' if dist > 0 else '0.0',
             # Only near-border distances are meaningful: the bounding-box reject
             # in resolve() means a large value is whatever survived the filter,
@@ -191,30 +258,37 @@ def main() -> int:
         w.writeheader()
         w.writerows(rows)
 
-    n_declared = sum(1 for r in rows if r['source'] == 'declared')
-    n_derived = sum(1 for r in rows if r['source'] == 'derived')
+    by_src = collections.Counter(r['country_source'] for r in rows)
+    n_region = sum(1 for r in rows if r['region'])
     print(f'{len(rows)} sites -> {args.out}')
-    print(f'  declared   : {n_declared}')
-    print(f'  derived    : {n_derived}  ({n_offshore} matched to the nearest coast)')
-    print(f'  unresolved : {n_unresolved}')
+    print(f'  country from coordinates : {by_src.get("coordinates", 0)}'
+          f'  ({n_offshore} matched to the nearest coast)')
+    print(f'  country from site code   : {by_src.get("site-code", 0)}'
+          f'  ({n_arbitrated} where the coordinates disagreed)')
+    print(f'  unresolved               : {n_unresolved}')
+    print(f'  region split out         : {n_region}')
+    print(f'  distinct countries       : {len({r["country"] for r in rows})}')
     if n_border:
         print(f'  within 5 km of a border (worth checking): {n_border}')
         for r in rows:
-            if r['source'] == 'derived' and r['border_km'] and float(r['border_km']) < 5.0:
-                print(f"    {r['site']:10s} {r['derived_country']:20s} "
-                      f"{r['border_km']} km from the nearest other country")
+            if r['border_km'] and float(r['border_km']) < 5.0:
+                flag = ' [site code overruled the coordinates]' \
+                       if r['country_source'] == 'site-code' else ''
+                print(f"    {r['site']:10s} {r['country']:20s} "
+                      f"{r['border_km']} km from the nearest other country{flag}")
 
     if args.report:
-        # Declared values are often "State, Country"; compare the country part.
-        def tail(s):
-            return s.split(',')[-1].strip().lower()
+        # The declared country is compared after its region has been split off,
+        # so "Arizona, United States" is judged against "United States".
+        n_dec = sum(1 for r in rows if r['declared_country'])
         dis = [r for r in rows if r['declared_country'] and r['derived_country']
-               and tail(r['declared_country']) != r['derived_country'].strip().lower()]
-        print(f'\nvalidation against {n_declared} declared countries: '
-              f'{n_declared - len(dis)} agree, {len(dis)} differ')
+               and r['declared_country'].strip().lower() != r['derived_country'].strip().lower()]
+        print(f'\nvalidation against {n_dec} declared countries: '
+              f'{n_dec - len(dis)} agree, {len(dis)} differ')
         for r in dis:
             print(f"  {r['site']:10s} declared={r['declared_country']:28s} "
-                  f"derived={r['derived_country']} ({r['lat']}, {r['lon']})")
+                  f"derived={r['derived_country']:26s} chosen={r['country']} "
+                  f"({r['country_source']})")
     return 0
 
 

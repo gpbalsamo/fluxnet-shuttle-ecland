@@ -33,6 +33,7 @@ DEFAULT_OUT_DIR = Path('benchmark')
 # coordinates by scripts/fill_site_country.py; the declared attribute always wins.
 DEFAULT_COUNTRY_CSV = Path('reference/site_country.csv')
 COUNTRY_BY_SITE: dict[str, str] = {}
+REGION_BY_SITE: dict[str, str] = {}
 DEFAULT_EXPERIMENT_NAME = 'ecland'
 DASHBOARD_TEMPLATE = Path(__file__).parent / 'dashboard_template.html'
 
@@ -183,7 +184,8 @@ def process_site(site: str, period: str, flux_path: Path, model_path: Path) -> d
     record = {
         'site': site,
         'site_name': obs_ds.attrs.get('site_name', site),
-        'country': (obs_ds.attrs.get('country', '') or '').strip() or COUNTRY_BY_SITE.get(site, ''),
+        'country': COUNTRY_BY_SITE.get(site) or (obs_ds.attrs.get('country', '') or '').strip(),
+        'region': REGION_BY_SITE.get(site, ''),
         'igbp': decode_char_var(obs_ds, 'IGBP_veg_short', 'UNK'),
         'igbp_long': decode_char_var(obs_ds, 'IGBP_veg_long', 'Unknown'),
         'lat': nanround(float(obs_ds['latitude'].values.squeeze()), 4),
@@ -312,6 +314,8 @@ def main() -> None:
             for row in _csv.DictReader(fh):
                 if row.get('country'):
                     COUNTRY_BY_SITE[row['site']] = row['country']
+                if row.get('region'):
+                    REGION_BY_SITE[row['site']] = row['region']
         print(f'Country lookup: {len(COUNTRY_BY_SITE)} sites from {args.country_csv}')
 
     pairs = discover_pairs(args.flux_dir, args.model_dir, args.experiment_name)
