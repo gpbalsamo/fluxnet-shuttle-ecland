@@ -102,6 +102,9 @@ def discover_pairs(flux_dir: Path, model_dir: Path, experiment_name: str) -> lis
         if len(candidates) == 1:
             mod_period, path = candidates[0]
             model_map[(site, period)] = path
+            # Drop the original key, or the same file is reported below as a
+            # model run with no observations -- it has some, under another period.
+            model_map.pop((site, mod_period), None)
             print(f'  pairing {site}: observations {period} against model '
                   f'{mod_period} (scored on their overlap)')
         elif len(candidates) > 1:
