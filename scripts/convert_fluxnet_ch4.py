@@ -81,6 +81,8 @@ QC_DESCRIPTION = ('Measured: 0, gap-filled with gap under two months: 1, '
 # FLX_US-Los_FLUXNET-CH4_HH_2014-2018_1-1.csv, and looser variants -- take the
 # first token that looks like a site code.
 SITE_RE = re.compile(r'([A-Z]{2}-[A-Za-z0-9]{3})')
+# The product's own period label, e.g. FLX_US-Los_FLUXNET-CH4_HH_2014-2018_1-1.csv
+FILE_PERIOD_RE = re.compile(r'_(\d{4})-(\d{4})_')
 
 
 def load_metadata(paths: tuple[Path, ...]) -> dict[str, dict]:
@@ -212,7 +214,16 @@ def convert(path: Path, meta: dict[str, dict], outdir: Path,
               f'(benchmark.py requires latitude/longitude)')
         return None
 
-    y1, y2 = full[0].year, full[-1].year
+    # Label the period from the source filename, not the data extent. Local-time
+    # timestamps spill a single half-hour into the preceding year at any site with
+    # a positive UTC offset (US-Los holds exactly one 2013 record in its 2014-2018
+    # file), and letting that rename the whole period is misleading. The stray
+    # record is kept -- scoring intersects it away -- only the label is corrected.
+    fm = FILE_PERIOD_RE.search(path.name)
+    if fm:
+        y1, y2 = int(fm.group(1)), int(fm.group(2))
+    else:
+        y1, y2 = full[0].year, full[-1].year
     out_path = outdir / f'{site}_{y1}-{y2}_FLUXNET2015_Flux.nc'
     if out_path.exists() and not overwrite:
         print(f'  {site}: {out_path.name} exists, skipped (use --overwrite)')
