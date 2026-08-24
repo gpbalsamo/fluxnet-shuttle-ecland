@@ -553,17 +553,30 @@ positive means emission to the atmosphere — the same rule already applied to
 observations need fetching. Over those 96, ecLand emits CH4 at 76 and returns
 identically zero at 20; across the emitting sites the mean flux has a median of
 3.6 nmol m⁻² s⁻¹ and a maximum of 238.8 (US-LA2), which is the right order for
-wetland towers.
+wetland towers. `fwet` is monthly (12 values per site) — read all of them, not
+just the first, or the zero count comes out far too high.
 
-**The scale mismatch will dominate any CH4 score, so read it first.** The
-wetland fraction `fwet` in the O1280 physiography is **0.000 at 33 of the 58
-wetland-class CH4 towers** (median `fwet` over WET sites: 0.000). These towers
-are sited *in* a wetland, but the ~9 km grid box containing them often is not
-one. `fwet = 0` does not by itself force zero emission — 31 sites with `fwet = 0`
-still emit, so other saturation pathways contribute — but a benchmark over this
-group measures how well the climate fields resolve small wetlands at least as
-much as it measures the CH4 scheme. Expect that to be the first-order term, and
-consider reporting scores split by `fwet > 0`.
+**`fwet` gates the emission, so read the physiography before the score.** The
+monthly wetland fraction `fwet` is a hard gate in this configuration: every one
+of the 19 sites whose `fwet` is zero in all 12 months emits exactly zero CH4, and
+no site with `fwet > 0` is silent (the one remaining zero, US-A10, has a small
+non-zero `fwet`). So the CH4 comparison is, in the first instance, a test of
+whether the climate fields put a wetland where the tower is.
+
+They mostly do, but faintly. Of the 58 wetland-class CH4 towers, 9 have `fwet = 0`
+year-round; across the rest the wetland fraction is small — median peak-month
+`fwet` of 0.065, median annual mean 0.019. A tower sited *in* a wetland sits in a
+~9 km grid box that is only a few percent wetland. Report scores split by
+`fwet > 0`, and treat the zero-`fwet` sites as a physiography result rather than a
+CH4-scheme result.
+
+Note what is and is not a modelling choice here. `landsea = 1` and `CLAKE = 0` at
+every site are hardcoded by `create_sites.py` under `-t land`, which is this
+repo's default (`WHICH_SURFACE=land` in `extract_physiography_batch.sh`) and the
+PLUMBER2 convention: tower sites are forced to be pure land points with no lake.
+`fwet` is **not** forced — it is the genuine nearest-gridpoint O1280 value from
+the `cldiff` climate field. Running `-u orig` would keep ERA5's own land/lake
+fractions instead, which changes `landsea`/`CLAKE` but not `fwet`.
 
 **One conversion is unverified.** `CH4flux` is documented as `kg m-2 s-1` with no
 species stated, and `FCH4_KG_TO_NMOL` assumes kg of CH4. If it is kg of carbon,
