@@ -58,12 +58,18 @@ SCHEMA: dict[str, dict[str, Any]] = {
     'SnowT': {'dims': ('time',), 'long_name': 'snow internal temperature', 'units': 'K'},
     'NEE': {'dims': ('time',), 'long_name': 'Net ecosystem exchange', 'units': 'kg m-2 s-1', 'comments': 'kg of carbon'},
     'GPP': {'dims': ('time',), 'long_name': 'Gross primary production', 'units': 'kg m-2 s-1', 'comments': 'kg of carbon'},
+    # Sign follows the observations, not ecLand: FLUXNET-CH4 reports FCH4
+    # positive upward (emission to atmosphere), while ecLand's o_co2.nc CH4flux
+    # is downward-positive like every other flux it writes, so it is negated
+    # here exactly as CO2flux -> NEE is.
+    'FCH4': {'dims': ('time',), 'long_name': 'Net methane flux', 'units': 'kg m-2 s-1', 'comments': 'kg of CH4, positive upward (emission)'},
     'lai_hv': {'dims': ('time',), 'long_name': 'Leaf Area Index HV', 'units': 'm2 m-2', 'comments': 'LAI disaggregated for high vegetation'},
     'lai_lv': {'dims': ('time',), 'long_name': 'Leaf Area Index LV', 'units': 'm2 m-2', 'comments': 'LAI disaggregated for low vegetation'},
 }
 
 MAPPINGS = (
     ('o_co2.nc', 'CO2flux', 'NEE', 'negate'), ('o_co2.nc', 'Ag', 'GPP', None),
+    ('o_co2.nc', 'CH4flux', 'FCH4', 'negate'),
     ('o_efl.nc', 'Qg', 'Qg', None), ('o_efl.nc', 'Qgsn', 'Qgs', None),
     ('o_efl.nc', 'Qle', 'Qle', 'negate'), ('o_efl.nc', 'Qfsn', 'Qfsn', None),
     ('o_efl.nc', 'Qh', 'Qh', 'negate'), ('o_efl.nc', 'LWup', 'LWup', 'negate'),

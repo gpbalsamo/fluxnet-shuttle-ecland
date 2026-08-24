@@ -1,0 +1,119 @@
+site,site_name,lat,lon,elevation,igbp,country,state,tower_start,tower_end,base_start,base_end,base_years,has_fch4,declares_ch4,networks
+BR-Npw,Northern Pantanal Wetland,-16.4980,-56.4120,120,WSA,Brazil,Mato Grosso,2013,,2013,2017,5,True,True,AmeriFlux
+BR-SM1,Cachoeira do Sul Rice Paddy,-30.2771,-53.1479,40.5,CRO,Brazil,,2015,2016,2015,2016,2,True,True,AmeriFlux
+BR-Xpw,XomanoFlux,-16.3730,-56.4610,124,GRA,Brazil,Mato Grosso,2017,2022,2017,2022,6,True,True,AmeriFlux
+CA-ARB,Attawapiskat River Bog,52.6950,-83.9452,90,WET,Canada,Ontario,2010,,2011,2024,14,True,True,AmeriFlux
+CA-ARF,Attawapiskat River Fen,52.7008,-83.9550,88,WET,Canada,Ontario,2010,,2011,2024,14,True,True,AmeriFlux
+CA-BCW,Big Creek Watershed,42.6206,-80.5516,201,WET,Canada,Ontario,2023,,2023,2025,3,True,True,AmeriFlux
+CA-BOU,Bouleau Peatland,50.5244,-63.2064,108,WET,Canada,Quebec,2018,2020,2018,2020,3,True,True,AmeriFlux
+CA-CF2,Churchill Fen Site 2,58.6658,-93.8300,16.5,WET,Canada,Manitoba,2008,2011,2008,2011,4,True,True,AmeriFlux
+CA-CF3,Churchill Fen Site 3,58.6658,-93.8304,25,WET,Canada,Manitoba,2022,,2022,2025,4,True,True,AmeriFlux
+CA-Cbo,"Ontario - Mixed Deciduous, Borden Forest Site",44.3184,-79.9341,210,DBF,Canada,,1995,,1994,2025,32,True,False,AmeriFlux;Fluxnet-Canada
+CA-DB2,Delta Burns Bog 2,49.1190,-122.9951,4,WET,Canada,British Columbia,2019,,2019,2024,6,True,True,AmeriFlux
+CA-DBB,Delta Burns Bog,49.1293,-122.9849,4,WET,Canada,British Columbia,2014,,2015,2024,10,True,True,AmeriFlux
+CA-DSM,Delta Salt Marsh,49.0887,-122.8954,,WET,Canada,British Columbia,2021,,2021,2024,4,True,True,AmeriFlux
+CA-EM1,Newdale Manitoba,50.3623,-100.2024,607.9,WET,Canada,Manitoba,2021,,2021,2023,3,True,True,AmeriFlux
+CA-EM2,Shoal Lake Manitoba,50.3706,-100.5339,554.3,WET,Canada,Manitoba,2021,,2021,2023,3,True,True,AmeriFlux
+CA-HPC,Havikpak Creek,68.3203,-133.5188,80,ENF,Canada,Northwest Territories,2013,,2018,2018,1,True,True,AmeriFlux
+CA-Mtk,Mittimatalik (Pond Inlet) Tundra,72.6695,-77.9981,15,GRA,Canada,Nunavut,2024,,2024,2024,1,True,True,AmeriFlux
+CA-PB1,Polar Bear 1 - Peat Plateau,54.9417,-83.4579,29,WET,Canada,Ontario,2016,2024,2016,2024,9,True,True,AmeriFlux
+CA-PB2,Polar Bear 2 - Fen,54.9389,-83.4736,26,WET,Canada,Ontario,2017,2024,2017,2024,8,True,True,AmeriFlux
+CA-RBM,Richmond Brackish Marsh,49.1313,-123.1964,,WET,Canada,British Columbia,2022,,2022,2024,3,True,True,AmeriFlux
+CA-RSB,Resolute Bay Polar Desert,74.7279,-94.8985,119,BSV,Canada,Nunavut,2024,,2024,2025,2,True,True,AmeriFlux
+CA-SCB,Scotty Creek Bog,61.3089,-121.2984,280,WET,Canada,Northwest Territories,2014,,2014,2019,6,True,True,AmeriFlux
+CA-SCC,Scotty Creek Landscape,61.3079,-121.2992,285,ENF,Canada,,2013,,2013,2024,12,True,False,AmeriFlux
+CA-SMC,Smith Creek,63.1534,-123.2522,150,ENF,Canada,Northwest Territories,2017,2022,2018,2018,1,True,True,AmeriFlux
+CA-TVC,Trail Valley Creek,68.7462,-133.5017,85,OSH,Canada,Northwest Territories,2013,,2017,2017,1,True,True,AmeriFlux
+CA-WRF,White River Fen,48.3513,-85.3571,485,WET,Canada,Ontario,2024,,2024,2025,2,True,True,AmeriFlux
+CL-SDP,Senda Darwin Peatland,-41.8790,-73.6660,50,WET,Chile,,2014,,2014,2024,11,True,True,AmeriFlux
+PE-QFR,Quistococha Forest Reserve,-3.8344,-73.3190,104,WET,Peru,Loreto,2018,,2018,2022,5,True,True,AmeriFlux
+US-A03,ARM-AMF3-Oliktok,70.4953,-149.8823,5,BSV,USA,AK,2014,,2014,2021,8,True,True,AmeriFlux
+US-A10,ARM-NSA-Barrow,71.3242,-156.6149,4,BSV,USA,AK,2012,,2011,2022,12,True,True,AmeriFlux
+US-ABa,Archbold grazed seminative pasture,27.1301,-81.2011,8.407258,GRA,USA,FL,2013,2015,2013,2015,3,True,True,AmeriFlux;LTAR
+US-ABb,Archbold ungrazed seminative pasture,27.1346,-81.2031,8.251645,GRA,USA,FL,2013,2015,2013,2015,3,True,True,AmeriFlux;LTAR
+US-ABc,Archbold grazed improved pasture,27.1633,-81.1873,9.34224,GRA,USA,FL,2013,2015,2013,2015,3,True,True,AmeriFlux
+US-ABd,Archbold ungrazed improved pasture,27.1699,-81.2152,10.66159,GRA,USA,FL,2013,2015,2013,2015,3,True,True,AmeriFlux;LTAR
+US-ABe,Archbold Ungrazed Wetland,27.1656,-81.2161,9.05302,WET,USA,FL,2013,2015,2013,2015,3,True,True,AmeriFlux;LTAR
+US-ALQ,Allequash Creek Site,46.0308,-89.6067,,WET,USA,WI,2015,,2015,2025,11,True,True,AmeriFlux;AmeriFlux
+US-AMS,Argonne Testbed for Multiscale Observational Science (ATMOS),41.7018,-87.9963,232,GRA,USA,IL,2021,,2022,2023,2,True,True,AmeriFlux
+US-Act,Acton Lake Flux Tower Site,39.5820,-84.7550,263,WAT,USA,OH,2017,2019,2017,2018,2,True,True,AmeriFlux
+US-BZB,Bonanza Creek Thermokarst Bog,64.6955,-148.3208,100,WET,USA,AK,2011,,2011,2025,15,True,True,AmeriFlux
+US-BZF,Bonanza Creek Rich Fen,64.7013,-148.3121,95,WET,USA,AK,2011,,2011,2025,15,True,True,AmeriFlux
+US-BZS,Bonanza Creek Black Spruce,64.6963,-148.3235,100,ENF,USA,AK,2010,,2010,2025,16,True,True,AmeriFlux
+US-BZo,Bonanza Creek Old Thermokarst Bog,64.6936,-148.3300,100,WET,USA,AK,2018,,2018,2025,8,True,True,AmeriFlux
+US-Bi1,Bouldin Island Alfalfa,38.0992,-121.4993,-2.7,CRO,USA,CA,2016,,2016,2025,10,True,True,AmeriFlux;Phenocam
+US-Bi2,Bouldin Island corn,38.1091,-121.5351,-5,CRO,USA,CA,2017,,2017,2025,9,True,True,AmeriFlux;Phenocam
+US-CAK,Council Alaska Tundra,64.8618,-163.7002,35,GRA,USA,AK,2024,,2024,2025,2,True,True,AmeriFlux
+US-CRT,Curtice Walter-Berger cropland,41.6285,-83.3471,180,CRO,USA,OH,2011,2013,2011,2013,3,True,True,AmeriFlux;Phenocam
+US-Cms,Central Marsh,71.3202,-156.6223,6,WET,USA,AK,1999,2005,1999,2005,7,True,True,AmeriFlux
+US-DBk,Berkeley Way West,37.8736,-122.2684,,URB,USA,CA,2022,,2022,2024,3,True,True,AmeriFlux
+US-DFC,"US Dairy Forage Research Center, Prairie du Sac",43.3448,-89.7117,264.9,CRO,USA,WI,2018,,2018,2024,7,True,True,AmeriFlux
+US-DPW,Disney Wilderness Preserve Wetland,28.0521,-81.4361,23,WET,USA,FL,2013,2017,2013,2017,5,True,True,AmeriFlux
+US-DUF,Denver Urban Field Station,40.5678,-105.0809,1527,URB,USA,CO,2024,,2024,2025,2,True,True,AmeriFlux
+US-Dmg,Dutch Slough Marsh Gilbert Tract,38.0015,-121.6691,1,WET,USA,CA,2021,,2021,2025,5,True,True,AmeriFlux;Phenocam
+US-EDN,Eden Landing Ecological Reserve,37.6156,-122.1140,,WET,USA,CA,2018,,2018,2024,7,True,True,AmeriFlux
+US-EKH,Elkhorn Slough Hester Marsh,36.8094,-121.7523,0.5,WET,USA,CA,2022,,2022,2025,4,True,True,AmeriFlux;Phenocam
+US-EKN,Elkhorn Slough North Marsh,36.8357,-121.7328,0,WET,USA,CA,2023,,2023,2026,4,True,True,AmeriFlux
+US-EKP,Elkhorn Slough Porter Marsh,36.8558,-121.7488,0,WET,USA,CA,2022,,2022,2026,5,True,True,AmeriFlux
+US-EKY,Elkhorn Slough Yampah Marsh,36.8105,-121.7487,0,WET,USA,CA,2022,,2022,2026,5,True,True,AmeriFlux
+US-EML,"Eight Mile Lake Permafrost thaw gradient, Healy Alaska.",63.8784,-149.2536,662,OSH,USA,AK,2008,,2008,2023,16,True,True,AmeriFlux;LTER
+US-Elm,Everglades (long hydroperiod marsh),25.5519,-80.7826,0.77,WET,USA,FL,2007,,2008,2025,18,True,False,AmeriFlux;LTER
+US-Esm,Everglades (short hydroperiod marsh),25.4379,-80.5946,1.07,WET,USA,FL,2007,,2008,2024,17,True,False,AmeriFlux;LTER
+US-EvM,Everglades Saltwater intrusion marsh,25.3539,-80.3810,0.332,WET,USA,FL,2020,,2020,2023,4,True,True,AmeriFlux;LTER
+US-Fo1,Flux Observations of Carbon from an Airborne Laboratory (FOCAL) Campaign Site 1,70.0850,-148.5671,28.00,WET,USA,AK,,,2013,2024,12,True,True,AmeriFlux
+US-Fo2,Flux Observations of Carbon from an Airborne Laboratory (FOCAL) Campaign Site 2,70.0229,-148.6598,41,WET,USA,AK,,,2022,2024,3,True,True,AmeriFlux
+US-HB1,North Inlet Crab Haul Creek,33.3455,-79.1957,0.1,WET,USA,SC,2017,,2018,2024,7,True,True,AmeriFlux;Phenocam
+US-HB4,Minim Creek Brackish Impoundment,33.2015,-79.2975,1,WET,USA,SC,2020,,2020,2024,5,True,True,AmeriFlux;Phenocam
+US-HRA,Humnoke Farm Rice Field – Field A,34.5852,-91.7517,,CRO,USA,AR,2015,2017,2015,2024,10,True,True,AmeriFlux;Phenocam
+US-HRC,Humnoke Farm Rice Field – Field C,34.5888,-91.7517,,CRO,USA,AR,2015,,2015,2024,10,True,True,AmeriFlux;Phenocam
+US-Ha3,Harvard Forest Beaver Swamp,42.5390,-72.1740,340,WET,USA,MA,2024,2025,2024,2024,1,True,True,AmeriFlux;LTER
+US-Ho1,Howland Forest (main tower),45.2040,-68.7402,60,ENF,USA,ME,1996,,1996,2025,30,True,True,AmeriFlux;Phenocam
+US-Hsm,Hill Slough Marsh,38.2368,-122.0212,1.113,WET,USA,CA,2021,,2021,2025,5,True,True,AmeriFlux;Phenocam
+US-ICh,Imnavait Creek Watershed Heath Tundra,68.6068,-149.2958,940,OSH,USA,AK,2007,,2007,2025,19,True,False,AmeriFlux;Phenocam
+US-ICs,Imnavait Creek Watershed Wet Sedge Tundra,68.6058,-149.3110,920,WET,USA,AK,2007,,2007,2025,19,True,True,AmeriFlux;Phenocam
+US-ICt,Imnavait Creek Watershed Tussock Tundra,68.6063,-149.3041,930,OSH,USA,AK,2007,,2007,2025,19,True,False,AmeriFlux;Phenocam
+US-Ivo,Ivotuk,68.4865,-155.7503,568.00,WET,USA,AK,2003,,2003,2016,14,True,True,AmeriFlux;Phenocam
+US-JRn,WV Jacks Run,39.6789,-80.1646,384.048,GRA,USA,WV,2017,2018,2017,2019,3,True,True,AmeriFlux
+US-Jo1,Jornada Experimental Range Bajada Site,32.5820,-106.6350,1188,OSH,USA,NM,2010,,2010,2022,13,True,False,AmeriFlux;LTER
+US-KPL,Lily Lake Fen,60.5382,-150.5061,100.6,WET,USA,AK,2021,,2021,2024,4,True,True,AmeriFlux
+US-LA1,Pointe-aux-Chenes Brackish Marsh,29.5013,-90.4449,0,WET,USA,LA,2011,2012,2011,2012,2,True,True,AmeriFlux
+US-LA2,Salvador WMA Freshwater Marsh,29.8587,-90.2869,0,WET,USA,LA,2011,,2011,2023,13,True,True,AmeriFlux
+US-LA3,Barataria Bay Saline Marsh,29.4936,-89.9153,0.2,WET,USA,LA,2019,,2019,2023,5,True,True,AmeriFlux
+US-Los,Lost Creek,46.0827,-89.9786,480.00,WET,USA,WI,2001,,2000,2026,27,True,True,AmeriFlux;Phenocam
+US-MBP,Marcell Bog Lake Peatland,47.5051,-93.4893,416,WET,USA,MN,2007,,2009,2024,16,True,True,AmeriFlux;Phenocam
+US-MCP,"Moro Cojo Slough, PG&E Treatment Wetland",36.7830,-121.7690,0,WET,USA,CA,2023,,2023,2026,4,True,True,AmeriFlux
+US-MZA,"Hidden Marsh, Montezuma NWR",43.0441,-76.7897,124,WET,USA,NY,2024,2024,2024,2025,2,True,True,AmeriFlux
+US-Myb,Mayberry Wetland,38.0499,-121.7650,-4,WET,USA,CA,2010,,2010,2025,16,True,True,AmeriFlux;Phenocam
+US-NC2,NC_Loblolly Plantation,35.8030,-76.6685,5,ENF,USA,NC,2005,,2005,2026,22,True,False,AmeriFlux;Phenocam;USCCC
+US-NC4,NC_AlligatorRiver,35.7817,-75.9135,1,WET,USA,NC,2009,,2009,2026,18,True,True,AmeriFlux;Phenocam
+US-NC5,NC Butner Farm,36.1565,-78.7878,122,ENF,USA,,2025,,2025,2025,1,True,True,AmeriFlux
+US-NGB,NGEE Arctic Barrow,71.2800,-156.6092,5.273,SNO,USA,AK,2012,2023,2012,2023,12,True,True,AmeriFlux;Phenocam
+US-NGC,NGEE Arctic Council,64.8618,-163.7002,35,GRA,USA,AK,2017,2023,2017,2023,7,True,True,AmeriFlux
+US-ONA,Florida pine flatwoods,27.3836,-81.9509,25,GRA,USA,FL,2016,,2016,2025,10,True,True,AmeriFlux;LTAR
+US-ORv,Olentangy River Wetland Research Park,40.0201,-83.0183,221,WET,USA,OH,2011,2016,2011,2016,6,True,True,AmeriFlux
+US-OWC,Old Woman Creek,41.3793,-82.5124,174.00,WET,USA,OH,2015,,2015,2025,11,True,True,AmeriFlux
+US-PAS,"Florida, Paspalum notatum pasture",27.3944,-81.9510,27.1,GRA,USA,FL,2021,,2021,2022,2,True,True,AmeriFlux;LTAR
+US-PFa,Park Falls/WLEF,45.9451,-90.2732,470.00,MF,USA,WI,1996,,1995,2026,32,True,True,AmeriFlux
+US-PLo,Plum Island Oligohaline Marsh,42.7496,-70.9157,1.4,WET,USA,MA,2022,,2022,2023,2,True,True,AmeriFlux
+US-RRC,Rice Rivers Center Marsh,37.3344,-77.2065,0.1,WET,USA,VA,2017,,2022,2026,5,True,True,AmeriFlux;Phenocam
+US-Sag,Sag River,69.5131,-148.5676,170,WET,USA,AK,1996,1996,1996,1996,1,True,True,AmeriFlux
+US-Skr,Shark River Slough (Tower SRS-6)  Everglades,25.3629,-81.0776,0,EBF,USA,FL,2004,,2004,2023,20,True,True,AmeriFlux;LTER
+US-Sne,Sherman Island Restored Wetland,38.0369,-121.7547,-5,GRA,USA,CA,2016,2021,2016,2020,5,True,True,AmeriFlux;Phenocam
+US-Snf,Sherman Barn,38.0402,-121.7272,-4,GRA,USA,CA,2018,2020,2018,2020,3,True,True,AmeriFlux;Phenocam
+US-Srr,Suisun marsh - Rush Ranch,38.2006,-122.0264,8,WET,USA,CA,2014,,2014,2017,4,True,True,AmeriFlux
+US-StJ,St Jones Reserve,39.0882,-75.4372,6.7,WET,USA,DE,2015,,2015,2020,6,True,True,AmeriFlux;Phenocam
+US-TLR,Timberlake Observatory for Wetland Restoration (TOWeR),35.9168,-76.1463,1,MF,USA,NC,2024,2024,2024,2025,2,True,True,AmeriFlux
+US-TrB,Trout Bog,46.0412,-89.6862,499,WAT,USA,WI,2020,2020,2020,2020,1,True,True,AmeriFlux
+US-TrS,Trout Lake Area South Sparkling Bog,46.0034,-89.7053,495,WAT,USA,WI,2020,2020,2020,2020,1,True,True,AmeriFlux
+US-Tur,Turner Ranch,45.5571,-111.2286,1530,GRA,USA,MT,2017,2018,2017,2018,2,True,True,AmeriFlux
+US-Tw1,Twitchell Wetland West Pond,38.1074,-121.6469,-5,WET,USA,CA,2012,2023,2011,2023,13,True,True,AmeriFlux;Phenocam
+US-Tw3,Twitchell Alfalfa,38.1152,-121.6469,-4,CRO,USA,CA,2013,2018,2013,2018,6,True,True,AmeriFlux;Phenocam
+US-Tw4,Twitchell East End Wetland,38.1027,-121.6413,-5,WET,USA,CA,2013,,2013,2025,13,True,True,AmeriFlux;Phenocam
+US-Tw5,East Pond Wetland,38.1072,-121.6426,-5,WET,USA,CA,2018,2020,2018,2020,3,True,True,AmeriFlux;Phenocam
+US-Twt,Twitchell Island,38.1087,-121.6531,-7,CRO,USA,CA,2009,2017,2009,2017,9,True,True,AmeriFlux;Phenocam
+US-UTP,UFLUX Great Salt Lake Phragmites,41.0604,-112.1013,1281,WET,USA,UT,2024,,2024,2025,2,True,False,AmeriFlux;UFLUX
+US-Uaf,"University of Alaska, Fairbanks",64.8663,-147.8555,155,ENF,USA,AK,2002,,2003,2025,23,True,True,AmeriFlux
+US-WPT,Winous Point North Marsh,41.4646,-82.9962,175,WET,USA,OH,2011,2013,2011,2013,3,True,True,AmeriFlux
+US-YK1,"Yukon-Kuskokwim Delta, Izaviknek-Kingaglia uplands, Burned 2015",61.2723,-163.2228,15,WET,USA,AK,2019,,2019,2025,7,True,True,AmeriFlux
+US-YK2,"Yukon-Kuskokwim Delta, Izaviknek-Kingaglia uplands, Unburned",61.2548,-163.2590,15,WET,USA,AK,2019,,2019,2025,7,True,True,AmeriFlux
+US-YNS,North Star Yedoma,64.8939,-147.6374,186.9,GRA,USA,AK,2021,,2021,2023,3,True,True,AmeriFlux

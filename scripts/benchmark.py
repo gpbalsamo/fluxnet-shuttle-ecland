@@ -38,9 +38,17 @@ REGION_BY_SITE: dict[str, str] = {}
 DEFAULT_EXPERIMENT_NAME = 'ecland'
 DASHBOARD_TEMPLATE = Path(__file__).parent / 'dashboard_template.html'
 
-VARIABLES = ('Qle', 'Qh', 'NEE')
+VARIABLES = ('Qle', 'Qh', 'NEE', 'FCH4')
 # kg of carbon m-2 s-1 -> umol CO2 m-2 s-1 (molar mass of carbon = 12.011 g/mol)
 NEE_KGC_TO_UMOL = 1e6 / 12.011e-3
+# kg of CH4 m-2 s-1 -> nmol CH4 m-2 s-1, the FLUXNET-CH4 unit for FCH4
+# (molar mass of methane = 16.043 g/mol). ecLand's CH4flux is documented as a
+# mass flux with no species stated; if it turns out to be kg of carbon rather
+# than kg of CH4, this constant is the single place to correct -- the factor is
+# 16.043/12.011 = 1.34 and it moves bias only, never correlation.
+FCH4_KG_TO_NMOL = 1e9 / 16.043e-3
+# Per-variable model-side unit conversion onto the observation units.
+MODEL_UNIT_SCALE = {'NEE': NEE_KGC_TO_UMOL, 'FCH4': FCH4_KG_TO_NMOL}
 MIN_BIN_N = 20  # minimum valid half-hours to trust a monthly/diurnal bin
 SEASONS = {'DJF': (12, 1, 2), 'MAM': (3, 4, 5), 'JJA': (6, 7, 8), 'SON': (9, 10, 11)}
 
@@ -209,7 +217,9 @@ def process_site(site: str, period: str, flux_path: Path, model_path: Path) -> d
     for var in VARIABLES:
         # A variable is unavailable if either side lacks it. The model side was
         # always handled; the observation side matters here because 50 of the 775
-        # Shuttle towers report no NEE at all (and so no NEE_qc). Scoring needs
+        # Shuttle towers report no NEE at all (and so no NEE_qc), and FCH4 is
+        # absent from every ONEFlux-derived flux file -- only the FLUXNET-CH4
+        # group carries it. Scoring needs
         # the QC flags to keep measured, non-gapfilled half-hours only, so a
         # missing pair is reported as unavailable rather than scored unfiltered.
         if var not in mod_ds or var not in obs_ds or f'{var}_qc' not in obs_ds:
@@ -222,8 +232,8 @@ def process_site(site: str, period: str, flux_path: Path, model_path: Path) -> d
         qc = obs_ds[f'{var}_qc'].values.squeeze()[obs_idx]
         obs_raw = obs_ds[var].values.squeeze()[obs_idx].astype(np.float64)
         mod_raw = mod_ds[var].values.squeeze()[mod_idx].astype(np.float64)
-        if var == 'NEE':
-            mod_raw = mod_raw * NEE_KGC_TO_UMOL
+        if var in MODEL_UNIT_SCALE:
+            mod_raw = mod_raw * MODEL_UNIT_SCALE[var]
 
         good = (qc == 0) & np.isfinite(obs_raw) & np.isfinite(mod_raw)
         pct_measured = nanround(100.0 * good.sum() / good.size, 1) if good.size else 0.0
@@ -374,7 +384,8 @@ def main() -> None:
     data_str = json.dumps({
         'generated': pd.Timestamp.now('UTC').strftime('%Y-%m-%dT%H:%M:%SZ'),
         'variables': list(VARIABLES),
-        'units': {'Qle': 'W m-2', 'Qh': 'W m-2', 'NEE': 'umol m-2 s-1'},
+        'units': {'Qle': 'W m-2', 'Qh': 'W m-2', 'NEE': 'umol m-2 s-1',
+                  'FCH4': 'nmol m-2 s-1'},
         'sites': records,
     }, separators=(',', ':'))
     data_json.write_text(data_str)

@@ -91,6 +91,8 @@ fluxnet-shuttle-ecland/
 │   ├── plumber2_170_site_ids.txt   # Copy of plumber2-ecland's 170-site list, used as the exclude-list
 │   ├── subset_plumber2_170.txt     # The same 170 towers as bare site codes, for benchmark --sites-file
 │   ├── subset_best42.txt           # The 42 curated PLUMBER2 benchmark sites, same convention
+│   ├── subset_fluxnet_ch4.txt      # AmeriFlux sites publishing FCH4, from fetch_fluxnet_ch4.py
+│   ├── fluxnet_ch4_sites.csv       # The same sites with coords/IGBP/published-year columns
 │   ├── shuttle_pilot20_site_ids.txt # Current fire/vegetation-stress pilot shortlist (20 sites)
 │   ├── shuttle_pilot20_candidates.csv # The same shortlist with hub/coords/IGBP/record-length columns
 │   ├── site_metadata_merged.csv    # FluxnetLSM's Site_metadata.csv + the 2026-08-18 Shuttle sites
@@ -507,6 +509,48 @@ as the pool narrows to the curated sites — `NEE` most of all, 0.62 → 0.71 �
 is what those 42 were selected for, and a reminder that a headline score is only
 readable next to the pool it was computed on. The `Qh` high bias survives every
 subset.
+
+### 7. The FLUXNET-CH4 site group
+
+ecLand writes a methane flux (`CH4flux` in `o_co2.nc`, alongside `CO2flux`), so it
+can be evaluated against tower CH4 — but none of the 775 shuttle-sourced flux
+files carry `FCH4`. The Shuttle federates one product, ONEFlux-processed FLUXNET
+FULLSET, and ONEFlux has no CH4 branch. CH4 observations need their own fetch
+path, which is `scripts/fetch_fluxnet_ch4.py`.
+
+```bash
+# 1. Discover which AmeriFlux sites publish FCH4 (public endpoint, no account).
+#    Writes reference/fluxnet_ch4_sites.csv + reference/subset_fluxnet_ch4.txt.
+scripts/fetch_fluxnet_ch4.py discover
+
+# 2. Request the data. Logged against YOUR AmeriFlux account and governed by the
+#    CC-BY-4.0 data policy, hence the explicit flag; --dry-run prints the body.
+scripts/fetch_fluxnet_ch4.py download \
+  --user-id <id> --user-email <mail> --intended-use model --accept-policy
+
+# 3. Or ingest the FLUXNET-CH4 Community Product, downloaded from the portal.
+scripts/fetch_fluxnet_ch4.py ingest --from-dir <dir>
+```
+
+**Two sources, and they answer different questions.** AmeriFlux BASE gives the
+live, growing set — **118 sites publishing `FCH4`** as of 2026-08-24, against the
+45–46 in the 2021/2023 papers — but as submitted by each tower team, ungapfilled
+and not standardised across networks. The [FLUXNET-CH4 Community
+Product](https://fluxnet.org/data/fluxnet-ch4-community-product/) v1.0 (Delwiche
+et al. 2021) is the standardised, gap-filled, citable one at 79 sites. It is not
+served by AmeriFlux's download API — that API accepts only `BASE-BADM` and
+`FLUXNET` — so it arrives through the portal and `ingest`, not `download`. ORNL
+DAAC hosts the derived UpCH4 *gridded* product, not the tower data.
+
+**Sign convention.** ecLand is downward-positive throughout, so `CH4flux < 0` is
+emission. `postproc.py` negates it into `FCH4` to match FLUXNET-CH4, where
+positive means emission to the atmosphere — the same rule already applied to
+`CO2flux` → `NEE`. `benchmark.py` converts kg m⁻² s⁻¹ to nmol m⁻² s⁻¹ via
+`FCH4_KG_TO_NMOL`; see the note there about the species assumption.
+
+**96 of the 118 sites already have a completed run** in `shuttle-all775-era5`
+(58 WET, 12 GRA, 9 CRO), so the model side of the comparison exists — only the
+observations need fetching.
 
 ## Benchmarking
 
