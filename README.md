@@ -550,7 +550,26 @@ positive means emission to the atmosphere — the same rule already applied to
 
 **96 of the 118 sites already have a completed run** in `shuttle-all775-era5`
 (58 WET, 12 GRA, 9 CRO), so the model side of the comparison exists — only the
-observations need fetching.
+observations need fetching. Over those 96, ecLand emits CH4 at 76 and returns
+identically zero at 20; across the emitting sites the mean flux has a median of
+3.6 nmol m⁻² s⁻¹ and a maximum of 238.8 (US-LA2), which is the right order for
+wetland towers.
+
+**The scale mismatch will dominate any CH4 score, so read it first.** The
+wetland fraction `fwet` in the O1280 physiography is **0.000 at 33 of the 58
+wetland-class CH4 towers** (median `fwet` over WET sites: 0.000). These towers
+are sited *in* a wetland, but the ~9 km grid box containing them often is not
+one. `fwet = 0` does not by itself force zero emission — 31 sites with `fwet = 0`
+still emit, so other saturation pathways contribute — but a benchmark over this
+group measures how well the climate fields resolve small wetlands at least as
+much as it measures the CH4 scheme. Expect that to be the first-order term, and
+consider reporting scores split by `fwet > 0`.
+
+**One conversion is unverified.** `CH4flux` is documented as `kg m-2 s-1` with no
+species stated, and `FCH4_KG_TO_NMOL` assumes kg of CH4. If it is kg of carbon,
+as `CO2flux` appears to be, every CH4 magnitude here is 1.34× low. It is a single
+constant in `benchmark.py`, and it moves bias only, never correlation — but it
+should be settled against the ecLand source before a bias figure is published.
 
 ## Benchmarking
 
