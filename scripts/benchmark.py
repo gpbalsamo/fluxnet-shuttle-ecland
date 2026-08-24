@@ -86,6 +86,27 @@ def discover_pairs(flux_dir: Path, model_dir: Path, experiment_name: str) -> lis
     for (site, period) in list(flux_map):
         if site in site_only_map and (site, period) not in model_map:
             model_map[(site, period)] = site_only_map[site]
+    # Fall back to pairing on the site alone when the periods differ. The model
+    # run covers whatever the forcing offered, which need not be the period the
+    # observations cover -- FLUXNET-CH4 records rarely match the shuttle run
+    # exactly (e.g. obs US-Los 2015-2016 against a model 2001-2024). Scoring
+    # intersects the two time axes anyway, so a period mismatch is only a naming
+    # problem; requiring equality here would silently find zero pairs. Only
+    # unambiguous cases are paired: exactly one unmatched model file for the site.
+    unmatched = [k for k in flux_map if k not in model_map]
+    by_site: dict[str, list[tuple[str, Path]]] = {}
+    for (site, period), path in model_map.items():
+        by_site.setdefault(site, []).append((period, path))
+    for (site, period) in unmatched:
+        candidates = by_site.get(site, [])
+        if len(candidates) == 1:
+            mod_period, path = candidates[0]
+            model_map[(site, period)] = path
+            print(f'  pairing {site}: observations {period} against model '
+                  f'{mod_period} (scored on their overlap)')
+        elif len(candidates) > 1:
+            print(f'  {site}: {len(candidates)} model periods and no exact match '
+                  f'for observations {period}, skipped')
     common = sorted(set(flux_map) & set(model_map))
     missing_model = sorted(set(flux_map) - set(model_map))
     missing_flux = sorted(set(model_map) - set(flux_map))

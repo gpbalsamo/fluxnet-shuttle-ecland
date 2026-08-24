@@ -530,7 +530,34 @@ scripts/fetch_fluxnet_ch4.py download \
 
 # 3. Or ingest the FLUXNET-CH4 Community Product, downloaded from the portal.
 scripts/fetch_fluxnet_ch4.py ingest --from-dir <dir>
+
+# 4. Convert the FLUXNET-CH4 CSVs to the FLUXNET2015 NetCDF schema.
+scripts/convert_fluxnet_ch4.py --from-dir raw/fluxnet-ch4 --outdir flux/fluxnet-ch4
+
+# 5. Post-process the model side, then benchmark. FCH4 is a variable like any
+#    other from here on, so the dashboard picks it up with no extra flags.
+scripts/submit_postproc_slurm.sh -I $SCRATCH/ecland_shuttle-all775-era5/output \
+  -e shuttle-all775-era5
+python3 scripts/benchmark.py --flux-dir flux/fluxnet-ch4 \
+  --model-dir postprocessed --out-dir benchmark/dashboards \
+  --run-name fluxnet-ch4 --run-label 'FLUXNET-CH4' \
+  --experiment-name shuttle-all775-era5
 ```
+
+`convert_fluxnet_ch4.py` exists because FluxnetLSM cannot do this job — its
+variable table targets the ALMA/FLUXNET2015 set, which has no methane flux. The
+output is schema-compatible with `convert_fluxnetlsm.R`'s, so nothing downstream
+special-cases it.
+
+**It rebuilds the QC flag, and that matters.** FLUXNET-CH4's own `_QC` is not
+FLUXNET2015's: it flags gap *length* on the gap-filled series (1 = gap under two
+months, 3 = over) and says nothing about which half-hours were measured, while
+`benchmark.py` scores `qc == 0` meaning measured. The converter therefore derives
+the flag from the raw/gap-filled variable pair — 0 where raw `FCH4` has a value,
+1/3 from the product's flag where it was filled from `FCH4_F_ANNOPTLM`, 2 where
+filled with no gap-length flag. Measured-only scoring then works exactly as it
+already does for `Qle`, `Qh` and `NEE`, and the gap-filled values stay in the file
+for anyone who wants them.
 
 **Two sources, and they answer different questions.** AmeriFlux BASE gives the
 live, growing set — **118 sites publishing `FCH4`** as of 2026-08-24, against the
