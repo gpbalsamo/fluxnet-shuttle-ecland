@@ -53,7 +53,8 @@ DEFAULT_OUTDIR = Path('flux/fluxnet-ch4')
 # Metadata sources, richest first. site_metadata_merged.csv is FluxnetLSM's own
 # table plus the Shuttle snapshot (1349 sites); fluxnet_ch4_sites.csv is what
 # fetch_fluxnet_ch4.py discovers and covers the AmeriFlux members of the pool.
-DEFAULT_METADATA = (Path('reference/site_metadata_merged.csv'),
+DEFAULT_METADATA = (Path('reference/fluxnet_ch4_meta.csv'),
+                    Path('reference/site_metadata_merged.csv'),
                     Path('reference/fluxnet_ch4_sites.csv'))
 
 # FLUXNET-CH4 name -> (our name, units, long_name, CF standard_name)
@@ -88,21 +89,34 @@ def load_metadata(paths: tuple[Path, ...]) -> dict[str, dict]:
     for path in paths:
         if not path.is_file():
             continue
-        with path.open() as fh:
+        # utf-8-sig: the product's CH4-META file carries a BOM, which would
+        # otherwise turn its first column into '\ufeffSITE_ID' and silently
+        # lose every site.
+        with path.open(encoding='utf-8-sig') as fh:
             for row in csv.DictReader(fh):
-                site = (row.get('SiteCode') or row.get('site') or '').strip()
+                # Three schemas share this loader: the FLUXNET-CH4 product's own
+                # CH4-META file (SITE_ID/LAT/LON/...), FluxnetLSM's merged table
+                # (SiteCode/SiteLatitude/...) and fetch_fluxnet_ch4.py's
+                # inventory (site/lat/lon/...).
+                site = (row.get('SITE_ID') or row.get('SiteCode')
+                        or row.get('site') or '').strip()
                 if not site:
                     continue
                 rec = out.setdefault(site, {})
                 pick = {
-                    'site_name': row.get('Fullname') or row.get('site_name'),
-                    'lat': row.get('SiteLatitude') or row.get('lat'),
-                    'lon': row.get('SiteLongitude') or row.get('lon'),
+                    'site_name': (row.get('SITE_NAME') or row.get('Fullname')
+                                  or row.get('site_name')),
+                    'lat': row.get('LAT') or row.get('SiteLatitude') or row.get('lat'),
+                    'lon': row.get('LON') or row.get('SiteLongitude') or row.get('lon'),
                     'elevation': row.get('SiteElevation') or row.get('elevation'),
-                    'igbp': row.get('IGBP_vegetation_short') or row.get('igbp'),
+                    'igbp': (row.get('IGBP') or row.get('IGBP_vegetation_short')
+                             or row.get('igbp')),
                     'igbp_long': row.get('IGBP_vegetation_long'),
-                    'country': row.get('Country') or row.get('country'),
+                    'country': (row.get('COUNTRY') or row.get('Country')
+                                or row.get('country')),
                     'tower_height': row.get('TowerHeight') or row.get('MeasurementHeight'),
+                    # FLUXNET-CH4's own split of the pool: Upland, Wetland, Rice, Lake.
+                    'site_classification': row.get('SITE_CLASSIFICATION'),
                 }
                 for k, v in pick.items():
                     if v not in (None, '', 'NA') and not rec.get(k):
@@ -176,6 +190,15 @@ def convert(path: Path, meta: dict[str, dict], outdir: Path,
         print(f'  {path.name}: no site code in filename, skipped')
         return None
     site = m.group(1)
+    # The product is not self-consistent about case: US-PFa is delivered as
+    # FLX_US-Pfa_... while its own CH4-META row, and AmeriFlux, spell it US-PFa.
+    # The metadata table is authoritative, so adopt its spelling -- otherwise the
+    # site silently loses its coordinates and is dropped.
+    if site not in meta:
+        canonical = {k.lower(): k for k in meta}.get(site.lower())
+        if canonical:
+            print(f'  {site}: metadata lists this site as {canonical}, using that')
+            site = canonical
     df = read_csv(path)
     full, step = regular_axis(df)
     df = df.set_index('time').reindex(full)
@@ -252,6 +275,7 @@ def convert(path: Path, meta: dict[str, dict], outdir: Path,
         'Fluxnet_dataset_version': 'FLUXNET-CH4 Community Product v1.0',
         'Fluxnet_dataset_doi': '10.5194/essd-13-3607-2021',
         'Source_file': path.name,
+        'site_classification': info.get('site_classification', ''),
         'Timestep_seconds': step,
         'QC_flag_descriptions': QC_DESCRIPTION,
     }

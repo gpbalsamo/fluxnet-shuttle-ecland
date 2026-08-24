@@ -112,7 +112,10 @@ mkdir -p "${CHUNK_DIR}" "${OUT_DIR}"
 # ends up with all the 30-year sites. Cost tracks record length here just as it
 # does in the model run.
 SITES="${WORK_DIR}/sites.txt"
-find "${INPUT_DIR}" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' \
+# -xtype d, not -type d: it matches real directories and symlinks pointing at
+# one, so a curated subset can be assembled by symlinking site dirs from a
+# larger run rather than copying them.
+find "${INPUT_DIR}" -mindepth 1 -maxdepth 1 -xtype d -printf '%f\n' \
   | awk -F'[_-]' '{print $NF-$(NF-1), $0}' | sort -k1,1n | cut -d' ' -f2- > "${SITES}"
 n_sites=$(wc -l < "${SITES}" | tr -d ' ')
 [[ "${n_sites}" -gt 0 ]] || { echo "ERROR: no site directories under ${INPUT_DIR}" >&2; exit 1; }

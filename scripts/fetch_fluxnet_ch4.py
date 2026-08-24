@@ -256,22 +256,54 @@ def cmd_ingest(args: argparse.Namespace) -> int:
         return 2
     out = args.raw_dir or Path(f'raw/{args.group}')
     out.mkdir(parents=True, exist_ok=True)
-    zips = sorted(src.glob('*.zip'))
-    csvs = sorted(src.glob('*.csv'))
-    print(f'{len(zips)} archives, {len(csvs)} loose CSVs in {src}')
+    # The portal ships one outer zip holding a per-site zip each, and each of
+    # those holds a directory with the half-hourly (_HH_) and daily (_DD_) CSV.
+    # Recurse one level and keep the sub-daily files only: the model is scored
+    # at its own timestep, so the daily aggregates would just double the volume.
+    zips = sorted(src.rglob('*.zip'))
+    csvs = sorted(src.rglob('*.csv'))
+    print(f'{len(zips)} archives, {len(csvs)} loose CSVs under {src}')
     n = 0
+
+    def wanted(name: str) -> bool:
+        base = Path(name).name
+        if not base.lower().endswith('.csv'):
+            return False
+        return '_HH_' in base or '_HR_' in base or 'META' in base
+
+    def extract(zf: zipfile.ZipFile, label: str) -> int:
+        taken = 0
+        for m in zf.namelist():
+            if not wanted(m):
+                continue
+            dest = out / Path(m).name
+            if dest.exists():
+                continue
+            with zf.open(m) as fh, dest.open('wb') as o:
+                o.write(fh.read())
+            taken += 1
+        return taken
+
     for z in zips:
         with zipfile.ZipFile(z) as zf:
-            members = [m for m in zf.namelist() if m.lower().endswith('.csv')]
-            for m in members:
-                dest = out / Path(m).name
-                if dest.exists():
-                    continue
-                with zf.open(m) as fh, dest.open('wb') as o:
+            taken = extract(zf, z.name)
+            # A zip of zips: pull the inner archives out through a temp file,
+            # since ZipFile needs a seekable handle.
+            inner = [m for m in zf.namelist() if m.lower().endswith('.zip')]
+            for m in inner:
+                tmp = out / ('.inner_' + Path(m).name)
+                with zf.open(m) as fh, tmp.open('wb') as o:
                     o.write(fh.read())
-                n += 1
-        print(f'  {z.name}: {len(members)} CSV')
+                try:
+                    with zipfile.ZipFile(tmp) as izf:
+                        taken += extract(izf, m)
+                finally:
+                    tmp.unlink(missing_ok=True)
+        n += taken
+        print(f'  {z.name}: {taken} CSV')
     for c in csvs:
+        if not wanted(c.name):
+            continue
         dest = out / c.name
         if not dest.exists():
             dest.write_bytes(c.read_bytes())

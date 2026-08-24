@@ -1,0 +1,82 @@
+SITE_ID,SITE_NAME,COUNTRY,LAT,LON,SITE_CLASSIFICATION,UPLAND_CLASS,IGBP,KOPPEN,ORIGINAL_DATA_SOURCE,FLUXNET-CH4_DATA_POLICY,YEAR_START,YEAR_END,UTC_OFFSET,SOIL_TEMP_PROBE_DEPTHS,MOSS_BROWN,MOSS_SPHAGNUM,AERENCHYMATOUS,ERI_SHRUB,TREE,DOM_VEG
+AT-Neu,Neustift,Austria,47.11667,11.3175,Upland,Alpine meadow,GRA,Dfb,EuroFlux,CCBY4.0,2010,2012,1,TS_1 = -0.05cm; TS_2 = -0.1cm; TS_3 = -0.2cm;,0,0,1,0,0,aerenchymatous
+BR-Npw,Northern Pantanal Wetland,Brazil,-16.4980,-56.4120,Swamp,,WSA,Aw,AmeriFlux,CCBY4.0,2013,2016,-4,,0,0,1,0,1,tree
+BW-Gum,Guma,Botswana,-18.96472222,22.37111111,Swamp,,WET,Bsh,EuroFlux,CCBY4.0,2018,2018,2,,0,0,1,0,1,aerenchymatous
+BW-Nxr,Nxaraga,Botswana,-19.54805556,23.17916667,Swamp,,GRA,Bsh,EuroFlux,CCBY4.0,2018,2018,2,,0,0,1,0,1,aerenchymatous
+CA-SCB,Scotty Creek Bog,Canada,61.3089,-121.2984,Bog,,WET,Dfc,AmeriFlux,CCBY4.0,2014,2017,-7,TS_1 = 0cm; TS_2 = -0.02cm; TS_3 = -0.04cm; TS_4 = -0.08cm; TS_5 = -0.16cm; TS_6 = -0.32cm; TS_7 = -0.64cm ;TS_8 = -1.28cm;,0,1,1,1,0,moss_sphagnum
+CA-SCC,Scotty Creek Landscape,Canada,61.3079,-121.2992,Upland,Needleleaf forest,ENF,Dfc,AmeriFlux,CCBY4.0,2013,2016,-7,TS_1 = -0.1cm; TS_2 = -0.15cm; TS_3 = -0.2cm; TS_4 = -0.25cm; TS_5 = -0.3cm; TS_6 = -0.5cm; TS_7 = -0.6cm; TS_8 = -0.7cm;,0,1,0,1,1,tree
+CH-Cha,Chamau,Switzerland,47.21022,8.41044,Upland,Grassland,GRA,Cfb,EuroFlux,CCBY4.0,2012,2016,1,TS_1 = -0.01cm; TS_2 = -0.02cm; TS_3 = -0.04cm; TS_4 = -0.07cm; TS_5 = -0.1cm; TS_6 = -0.15cm; TS_7 = -0.25cm; TS_8 = -0.4cm; TS_9 = -0.95cm;,0,0,1,0,0,aerenchymatous
+CH-Dav,Davos,Switzerland,46.81533,9.85591,Upland,Needleleaf forest,ENF,ET,EuroFlux,CCBY4.0,2016,2017,1,TS_1 = -0.05cm; TS_2 = -0.15cm; TS_3 = -0.5cm;,1,0,0,1,1,tree
+CH-Oe2,Oensingen crop,Switzerland,47.28642,7.73375,Upland,Crop - wheat,CRO,Cfb,EuroFlux,CCBY4.0,2018,2018,1,TS_1 = -0.05cm; TS_2 = -0.1cm; TS_3 = -0.15cm;  TS_5 = -0.3cm; TS_6 = -0.5cm;,0,0,1,0,0,aerenchymatous
+CN-Hgu,Hongyuan,China,32.845278,102.590000,Upland,Alpine meadow,GRA,Cwc,EuroFlux,CCBY4.0,2015,2017,8,,0,0,1,0,0,aerenchymatous
+DE-Dgw,Dagowsee,Germany,53.1514092,13.0542746,Lake,,WAT,Cfb,EuroFlux,CCBY4.0,2015,2018,1,,0,0,0,0,0,no vegetation
+DE-Hte,Huetelmoor,Germany,54.210278,12.176111,Fen,,WET,Dfb,EuroFlux,CCBY4.0,2011,2018,1,TS_1 = 0cm; TS_2 = -0.1cm; TS_3 = -0.2cm;,0,0,1,0,0,aerenchymatous
+DE-SfN,Schechenfilz Nord,Germany,47.80639,11.3275,Bog,,WET,Cfb,EuroFlux,CCBY4.0,2012,2014,1,TS_1 = -0.02cm; TS_3 = -0.1cm; TS_4 = -0.2cm; TS_5 = -0.5cm;,0,1,1,1,1,tree
+DE-Zrk,Zarnekow,Germany,53.87594,12.88901,Fen,,WET,Dfb,EuroFlux,CCBY4.0,2013,2018,1,TS_1 = -0.05cm; TS_2 = -0.1cm; TS_3 = -0.2cm; TS_4 = -0.3cm; TS_5 = -0.5cm;,0,0,1,0,0,aerenchymatous
+FI-Hyy,Hyytiala,Finland,61.84741,24.29477,Upland,Needleleaf forest,ENF,Dfc,EuroFlux,CCBY4.0,2016,2016,2,TS_1 = -0.02cm; TS_2 = -0.04cm; TS_3 = -0.12cm; TS_4 = -0.25cm; TS_5 = -0.5cm;,1,1,0,1,1,tree
+FI-Lom,Lompolojankka,Finland,67.99724,24.20918,Fen,,WET,Dfc,EuroFlux,CCBY4.0,2006,2010,2,TS_1 = -0.07cm; TS_2 = -0.3cm; TS_3 = -0.5cm;,1,1,1,1,0,aerenchymatous
+FI-Si2,Siikaneva-2 Bog,Finland,61.8372,24.1967,Bog,,WET,Dfc,EuroFlux,CCBY4.0,2012,2016,2,TS_1 = -0.05cm; TS_2 = -0.2cm; TS_3 = -0.35cm; TS_4 = -0.5cm;    TS_1 = -0.05cm; TS_2 = -0.2cm; TS_3 = -0.35cm; TS_4 = -0.5cm;,0,1,1,1,1,moss_sphagnum
+FI-Sii,Siikaneva,Finland,61.83265,24.19285,Fen,,WET,Dfc,EuroFlux,CCBY4.0,2013,2018,2,before 2016(TS_1 = -0.05cm; TS_2 = -0.2cm; TS_3 = -0.35cm; TS_4 = -0.5cm;    TS_2 = -0.2cm; TS_3 = -0.35cm; TS_4 = -0.5cm) after 2017 (TS_1 = 0cm; TS_2 = -0.5cm; TS_3 = -0.1cm; TS_4 = -0.15cm; TS_5 = -0.25cm; TS_6 = -0.45cm; TS_7 = -0.95cm),0,1,1,0,0,moss_sphagnum
+FR-LGt,La Guette,France,47.322917,2.284102,Fen,,WET,Cfb,EuroFlux,CCBY4.0,2017,2018,1,TS_1 = -0.02cm; TS_2 = -0.05cm; TS_3 = -0.1cm; TS_4 = -0.2cm; TS_5 = -0.4cm;,0,1,1,1,0,aerenchymatous
+HK-MPM,Mai Po Mangrove,Hong Kong,22.498167,114.0292358,Mangrove,,EBF,Cfa,EuroFlux,CCBY4.0,2016,2018,8,,0,0,1,0,1,aerenchymatous
+ID-Pag,Palangkaraya undrained forest,Indonesia,-2.3200,113.9000,Swamp,,EBF,Af,EuroFlux,CCBY4.0,2016,2017,7,TS_1 = -0.05cm;,0,0,1,0,1,tree
+IT-BCi,Borgo Cioffi,Italy,40.52375,14.95744,Upland,Crop - corn,CRO,Csa,EuroFlux,CCBY4.0,2017,2018,1,TS_1 = -0.05cm; TS_2 = -0.1cm; TS_3 = -0.3cm; TS_4 = -0.5cm; TS_5 = -1cm;,0,0,1,0,0,aerenchymatous
+IT-Cas,Castellaro,Italy,45.07004722,8.717522222,Rice,,CRO,Cfa,EuroFlux,CCBY4.0,2009,2010,1,TS_1 = -0.05cm; TS_2 = -0.3cm; TS_3 = -0.5cm;,0,0,1,0,0,aerenchymatous
+JP-BBY,Bibai bog,Japan,43.32300556,141.8106972,Bog,,WET,Dfb,AsiaFlux,CCBY4.0,2015,2018,9,TS_1 = -0.183cm; TS_2 = -0.233cm; TS_3 = -0.283cm; TS_4 = -0.383cm; TS_5 = -0.483cm;,0,1,1,1,0,aerenchymatous
+JP-Mse,Mase rice paddy field,Japan,36.05393,140.02693,Rice,,CRO,Cfa,AsiaFlux,CCBY4.0,2012,2012,9,TS_1 = -0.01cm; TS_2 = -0.025cm; TS_3 = -0.05cm; TS_4 = -0.1cm; TS_5 = -0.2cm; TS_6 = -0.4cm;,0,0,1,0,0,aerenchymatous
+JP-SwL,Suwa Lake,Japan,36.046572,138.108353,Lake,,WAT,Dfb,AsiaFlux,CCBY4.0,2016,2016,9,,0,0,1,0,0,aerenchymatous
+KR-CRK,Cheorwon Rice paddy,Korea,38.2013,127.2506,Rice,,CRO,Dwa,AsiaFlux,CCBY4.0,2015,2018,9,TS_1 = -0.05cm; TS_2 = -0.15cm;,0,0,1,0,0,aerenchymatous
+MY-MLM,Maludam National Park,Malaysia,1.453575,111.149492,Swamp,,EBF,Af,AsiaFlux,CCBY4.0,2014,2015,8,TS_1 = -0.05cm;,0,0,0,0,1,tree
+NL-Hor,Horstermeer,Netherlands,52.24035,5.0713,Drained,Grassland,GRA,Cfb,EuroFlux,CCBY4.0,2007,2009,1,TS_1 = -0.01cm; TS_2 = -0.02cm; TS_3 = -0.04cm; TS_4 = -0.05cm; TS_5 = -0.1cm; TS_6 = -0.15cm; TS_7 = -0.25cm; TS_8 = -0.4cm; TS_9 = -0.6cm;,0,0,1,0,0,aerenchymatous
+NZ-Kop,Kopuatai,New Zealand,-37.3879,175.5539,Bog,,EBF,Cfb,OzFlux,CCBY4.0,2012,2015,13,TS_1 = -0.5cm; TS_2 = -0.1cm; TS_3 = -0.2cm;,0,1,1,0,0,aerenchymatous
+PH-RiF,Philippines Rice Institute flooded,Philippines,14.14119,121.26526,Rice,,CRO,Am,EuroFlux,CCBY4.0,2012,2014,8,,0,0,1,0,0,aerenchymatous
+RU-Ch2,Chersky reference,Russia,68.61689,161.35089,Wet tundra,,WET,Dfc,EuroFlux,CCBY4.0,2014,2016,11,TS_1 = -0.04cm; TS_2 = -0.08cm; TS_3 = -0.16cm;,0,0,1,1,0,aerenchymatous
+RU-Che,Cherski,Russia,68.61304,161.34143,Drained,,WET,Dfc,EuroFlux,CCBY4.0,2014,2016,11,TS_1 = -0.04cm; TS_2 = -0.08cm; TS_3 = -0.16cm;,0,0,1,1,0,aerenchymatous
+RU-Cok,Chokurdakh,Russia,70.82914,147.49428,Wet tundra,,OSH,Dfc,EuroFlux,CCBY4.0,2008,2016,11,,0,1,1,1,0,moss_sphagnum
+RU-Fy2,Fyodorovskoye dry spruce,Russia,56.4476,32.9019,Upland,Needleleaf forest,ENF,Dfb,EuroFlux,CCBY4.0,2015,2018,3,,0,1,0,1,1,tree
+RU-Vrk,Seida/Vorkuta,Russia,67.0546798706055,62.9404678344727,Wet tundra,,CSH,Dfc,EuroFlux,TIER2,2008,2008,3,,0,1,1,1,0,aerenchymatous
+SE-Deg,Degero,Sweden,64.182029,19.556539,Fen,,GRA,Dfc,EuroFlux,CCBY4.0,2014,2018,1,TS_1 = -0.02cm; TS_2 = -0.05cm; TS_3 = -0.1cm; TS_4 = -0.15cm; TS_5 = -0.3cm; TS_6 = -0.5cm;,0,1,1,1,0,moss_sphagnum
+SE-St1,Stordalen grassland,Sweden,68.3541488,19.050333,Fen,,WET,Dfc,EuroFlux,TIER2,2012,2014,1,TS_1 = -0.05cm; TS_2 = -0.1cm; TS_3 = -0.25cm; TS_4 = -0.5cm;,1,1,1,1,0,aerenchymatous
+UK-LBT,London_BT,United Kingdom,51.5215,-0.1389,Upland,Urban,URB,Cfb,EuroFlux,CCBY4.0,2011,2014,0,,0,0,0,0,0,no vegetation
+US-A03,ARM-AMF3-Oliktok,USA,70.495328,-149.882297,Wet tundra,,BSV,ET,AmeriFlux,CCBY4.0,2015,2018,-9,TS_1 = -0.025cm; TS_2 = -0.1cm; TS_3 = -0.3cm;,0,1,1,0,0,moss_sphagnum
+US-A10,ARM-NSA-Barrow,USA,71.3242,-156.6149,Wet tundra,,BSV,ET,AmeriFlux,CCBY4.0,2012,2018,-9,TS_1 = -0.025cm; TS_2 = -0.1cm; TS_3 = -0.3cm;,0,1,1,0,0,moss_sphagnum
+US-Atq,Atqasuk,USA,70.4696,-157.4089,Wet tundra,,WET,ET,AmeriFlux,CCBY4.0,2013,2016,-9,,1,0,1,1,0,aerenchymatous
+US-Beo,Barrow Environmental Observatory (BEO) tower,USA,71.2810,-156.6123,Wet tundra,,WET,ET,AmeriFlux,CCBY4.0,2013,2014,-8,,1,1,1,0,0,aerenchymatous
+US-Bes,Barrow-Bes (Biocomplexity Experiment South tower),USA,71.2809,-156.5965,Wet tundra,,WET,ET,AmeriFlux,CCBY4.0,2013,2015,-8,,0,1,1,0,0,aerenchymatous
+US-Bi1,Bouldin Island Alfalfa,USA,38.0991538,-121.49933,Drained,Crop - alfalfa,CRO,Csa,AmeriFlux,CCBY4.0,2016,2018,-8,TS_1 = -0.02cm; TS_2 = -0.04cm; TS_3 = -0.08cm; TS_4 = -0.16cm; TS_5 = -0.32cm;,0,0,1,0,0,aerenchymatous
+US-Bi2,Bouldin Island corn,USA,38.1090,-121.5350,Drained,Crop - corn,CRO,Csa,AmeriFlux,CCBY4.0,2017,2018,-8,TS_1 = -0.02cm; TS_2 = -0.04cm; TS_3 = -0.08cm; TS_4 = -0.16cm; TS_5 = -0.32cm;,0,0,1,0,0,aerenchymatous
+US-BZB,Bonanza Creek Thermokarst Bog,USA,64.695547,-148.320836,Bog,,WET,Dfd,AmeriFlux,CCBY4.0,2014,2016,-9,TS_1 = -0.075cm; TS_2 = -0.05cm;,0,1,1,1,0,eri_shrub
+US-BZF,Bonanza Creek Rich Fen,USA,64.703733,-148.313333,Fen,,WET,Dfd,AmeriFlux,CCBY4.0,2014,2016,-9,TS_1 = -0.075cm; TS_2 = -0.05cm;,1,1,1,0,0,aerenchymatous
+US-BZS,Bonanza Creek Black Spruce,USA,64.69635,-148.323525,Upland,Needleleaf forest,ENF,Dfd,AmeriFlux,CCBY4.0,2015,2016,-9,,1,0,0,0,1,tree
+US-CRT,Curtice Walter-Berger cropland,USA,41.628495,-83.347086,Upland,Crop - soy,CRO,Dfa,AmeriFlux,CCBY4.0,2011,2012,-5,,0,0,1,0,0,aerenchymatous
+US-DPW,Disney Wilderness Preserve Wetland,USA,28.05206,-81.43611,Marsh,,WET,Cwa,AmeriFlux,CCBY4.0,2013,2017,-5,,0,0,1,0,0,aerenchymatous
+US-EDN,Eden Landing Ecological Reserve,USA,37.61562,-122.1140,Salt marsh,,WET,Csa,AmeriFlux,CCBY4.0,2018,2018,-8,TS_1 = -0.25cm; TS_2 = -0.15cm; TS_3 = -0.05cm; TS_4 = 0cm; TS_5 = 0.05cm; TS_6 = 0.1cm; TS_7 = 0.2cm; TS_8 = 0.3cm;,0,0,1,0,0,aerenchymatous
+US-EML,"Eight Mile Lake Permafrost thaw gradient, Healy Alaska.",USA,63.8784,-149.2536,Upland,Tundra,OSH,ET,AmeriFlux,CCBY4.0,2015,2018,-9,TS_1 = -0.05cm; TS_2 = -0.1cm; TS_3 = -0.2cm; TS_4 = -0.4cm;,1,0,1,1,0,aerenchymatous
+US-Ho1,Howland Forest (main tower),USA,45.2041,-68.7402,Upland,Needleleaf forest,ENF,Dfb,AmeriFlux,CCBY4.0,2012,2018,-5,TS_1 = -0.05cm; TS_2 = -0.1cm;,0,0,0,0,1,tree
+US-HRA,Humnoke Farm Rice Field – Field A,USA,34.585208,-91.751735,Rice,,CRO,Cfa,AmeriFlux,CCBY4.0,2017,2017,-6,,0,0,1,0,0,aerenchymatous
+US-HRC,Humnoke Farm Rice Field – Field C,USA,34.588830,-91.751658,Rice,,CRO,Cfa,AmeriFlux,CCBY4.0,2017,2017,-6,,0,0,1,0,0,aerenchymatous
+US-ICs,Imnavait Creek Watershed Wet Sedge Tundra,USA,68.6058,-149.3110,Wet tundra,,WET,ET,AmeriFlux,CCBY4.0,2014,2016,-9,TS_1 = -0.075cm; TS_2 = -0.05cm;,0,0,1,1,0,aerenchymatous
+US-Ivo,Ivotuk,USA,68.4865,-155.7503,Wet tundra,,WET,ET,AmeriFlux,CCBY4.0,2013,2016,-9,TS_1 = -0.05cm; TS_2 = -0.1cm; TS_3 = -0.15cm; TS_4 = -0.3cm; TS_5 = -0.4cm;,1,0,1,1,0,aerenchymatous
+US-LA1,Pointe-aux-Chenes Brackish Marsh,USA,29.5013,-90.4449,Salt marsh,,WET,Cfa,AmeriFlux,CCBY4.0,2011,2012,-6,TS  = -0.1cm;,0,0,1,0,0,aerenchymatous
+US-LA2,Salvador WMA Freshwater Marsh,USA,29.8587,-90.2869,Marsh,,WET,Cfa,AmeriFlux,CCBY4.0,2011,2013,-6,TS = -0.1cm;,0,0,1,0,0,aerenchymatous
+US-Los,Lost Creek,USA,46.0827,-89.9792,Fen,,WET,Dfb,AmeriFlux,CCBY4.0,2014,2018,-6,TS_1 = 0cm; TS_2 = -0.05cm; TS_3 = -0.1cm; TS_4 = -0.2cm; TS_5 = -0.5cm;,0,0,1,1,1,eri_shrub
+US-MAC,MacArthur Agro-Ecology,USA,27.163200,-81.187302,Drained,Grassland,WET,Cwa,AmeriFlux,CCBY4.0,2013,2015,-5,,0,0,1,0,0,aerenchymatous
+US-MRM,Marsh Resource Meadowlands Mitigation Bank,USA,40.8164,-74.0435,Salt marsh,,WET,Cfa,AmeriFlux,CCBY4.0,2012,2013,5,,0,0,1,0,0,aerenchymatous
+US-Myb,Mayberry Wetland,USA,38.049861,-121.76498,Marsh,,WET,Csa,AmeriFlux,CCBY4.0,2010,2018,-8,TS_1 = -0.02cm; TS_2 = -0.04cm; TS_3 = -0.08cm; TS_4 = -0.16cm; TS_5 = -0.32cm;,0,0,1,0,0,aerenchymatous
+US-NC4,NC_AlligatorRiver,USA,35.7879,-75.9038,Swamp,,WET,Cfa,AmeriFlux,CCBY4.0,2012,2016,-5,TS_1 = -0.05cm; TS_2 = -0.2cm;,0,0,1,0,1,aerenchymatous
+US-NGB,NGEE Arctic Barrow,USA,71.280044,-156.609181,Wet tundra,,SNO,ET,AmeriFlux,CCBY4.0,2012,2018,-9,,0,1,1,0,0,moss_sphagnum
+US-NGC,NGEE Arctic Council,USA,64.8614,-163.7008,Wet tundra,,GRA,ET,AmeriFlux,CCBY4.0,2017,2018,-9,,0,1,1,1,0,eri_shrub
+US-ORv,Olentangy River Wetland Research Park,USA,40.0201,-83.0183,Marsh,,WET,Cfa,AmeriFlux,CCBY4.0,2011,2015,-5,TS_1 = -0.08cm;,0,0,1,0,0,aerenchymatous
+US-OWC,Old Woman Creek,USA,41.37951667,-82.5124667,Marsh,,WET,Dfb,AmeriFlux,CCBY4.0,2015,2016,-5,TS_1 = -0.05cm; TS_2 = -0.3cm;,0,0,1,0,0,aerenchymatous
+US-PFa,Park Falls/WLEF,USA,45.9459,-90.2723,Upland,Mixed forest,MF,Dfb,AmeriFlux,CCBY4.0,2010,2018,-6,,0,0,0,0,1,tree
+US-Snd,Sherman Island,USA,38.0373,-121.7537,Drained,Grassland,GRA,Csa,Ameriflux,CCBY4.0,2010,2015,-8,TS_1 = -0.08cm; TS_2 = -0.16cm; TS_3 = nancm; TS_4 = nancm; TS_5 = nancm; TS_6 = nancm;,0,0,1,0,0,aerenchymatous
+US-Sne,Sherman Island Restored Wetland,USA,38.0369,-121.7547,Marsh,,GRA,Csa,AmeriFlux,CCBY4.0,2016,2018,-8,TS_1 = -0.01cm; TS_2 = -0.02cm; TS_3 = -0.08cm; TS_4 = -0.16cm; TS_5 = -0.32cm;,0,0,1,0,0,aerenchymatous
+US-Srr,Suisun marsh - Rush Ranch,USA,38.200556,-122.026358,Salt marsh,,WET,Csa,AmeriFlux,CCBY4.0,2014,2017,-8,,0,0,1,0,0,aerenchymatous
+US-StJ,St Jones Reserve,USA,39.08821106,-75.43722534,Salt marsh,,WET,Cfa,AmeriFlux,CCBY4.0,2016,2016,-5,TS_2 = -0.05cm; TS_3 = -0.1cm;,0,0,1,0,0,aerenchymatous
+US-Tw1,Twitchell Wetland West Pond,USA,38.1074,-121.6469,Marsh,,WET,Csa,AmeriFlux,CCBY4.0,2011,2018,-8,TS_1 = -0.02cm; TS_2 = -0.04cm; TS_3 = -0.08cm; TS_4 = -0.16cm; TS_5 = -0.32cm;,0,0,1,0,0,aerenchymatous
+US-Tw3,Twitchell Alfalfa,USA,38.1159,-121.6467,Drained,Crop - alfalfa,CRO,Csa,AmeriFlux,CCBY4.0,2013,2014,-8,TS_1 = -0.02cm; TS_2 = -0.04cm; TS_3 = -0.08cm; TS_4 = -0.16cm; TS_5 = -0.32cm;,0,0,1,0,0,aerenchymatous
+US-Tw4,Twitchell East End Wetland,USA,38.10274361,-121.6413286,Marsh,,WET,Csa,AmeriFlux,CCBY4.0,2013,2018,-8,TS_1 = -0.02cm; TS_2 = -0.04cm; TS_3 = -0.08cm; TS_4 = -0.16cm; TS_5 = -0.32cm;,0,0,1,0,0,aerenchymatous
+US-Tw5,East Pond Wetland,USA,38.107192,-121.642576,Marsh,,WET,Csa,AmeriFlux,CCBY4.0,2018,2018,-8,TS_1 = -0.02cm; TS_2 = -0.1cm; TS_3 = -0.02cm; TS_4 = -0.08cm; TS_5 = -0.16cm;,0,0,1,0,0,aerenchymatous
+US-Twt,Twitchell Island,USA,38.1087204,-121.65310,Rice,,CRO,Csa,AmeriFlux,CCBY4.0,2009,2017,-8,TS_1 = -0.02cm; TS_2 = -0.04cm; TS_3 = -0.08cm; TS_4 = -0.16cm; TS_5 = -0.32cm;,0,0,1,0,0,aerenchymatous
+US-Uaf,"University of Alaska, Fairbanks",USA,64.86627,-147.85553,Bog,,ENF,Dwc,AmeriFlux,CCBY4.0,2011,2018,-9,TS_1 = -0.09cm; TS_2 = -0.183cm; TS_3 = -0.283cm; TS_4 = -0.367cm; TS_5 = -0.5cm; TS_6 = -0.6cm; TS_7 = -0.75cm; TS_8 = -0.925cm; TS_9 = -1cm;,1,1,1,1,1,moss_sphagnum
+US-WPT,Winous Point North Marsh,USA,41.464639,-82.996157,Marsh,,WET,Dfa,AmeriFlux,CCBY4.0,2011,2013,-5,TS_1 = -0.1cm; TS_2 = -0.3cm;,0,0,1,0,0,aerenchymatous
