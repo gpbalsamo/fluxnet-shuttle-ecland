@@ -17,6 +17,10 @@ slurm-*.out
 downloads/
 fluxnetlsm_out/
 fluxnet_shuttle_snapshot_*.csv
+# fetch_fluxnet_ch4.py's raw per-site CSVs before convert_fluxnet_ch4.py runs
+# (regenerable from the source zip/portal download); flux/fluxnet-ch4/ is the
+# tracked product, same raw-vs-converted split as downloads/ above.
+raw/
 
 # clim/, forcing/, flux/ NetCDF content IS tracked (via Git LFS -- see
 # .gitattributes and "Git LFS" in README.md), matching plumber2-ecland's

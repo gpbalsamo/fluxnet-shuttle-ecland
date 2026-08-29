@@ -28,6 +28,7 @@ import xarray as xr
 DEFAULT_FLUX_DIR = Path('flux/PLUMBER2_original')
 DEFAULT_MODEL_DIR = Path('postprocessed')
 DEFAULT_SOIL_DIR = Path('soil/PLUMBER2_original')
+DEFAULT_CH4_DIR = Path('flux/fluxnet-ch4')
 DEFAULT_OUT_DIR = Path('benchmark')
 # Country per site, for the towers whose flux file carries no `country`
 # attribute -- FluxnetLSM only supplies one for the ~874 sites in its bundled
@@ -46,7 +47,13 @@ DASHBOARD_TEMPLATE = Path(__file__).parent / 'dashboard_template.html'
 # level 1 (0-7 cm) without guessing at a real-world depth. See soil/<group>/
 # and reference/soil_coverage_<group>.csv.
 SOIL_VARIABLES = ('SWC', 'TS')
-VARIABLES = ('Qle', 'Qh', 'NEE', 'FCH4') + SOIL_VARIABLES
+# FCH4 does not reach this repo through the usual route -- FLUXNET-Shuttle's
+# flux files are ONEFlux-derived and ONEFlux has no CH4 branch, so it needs
+# its own observation source (scripts/fetch_fluxnet_ch4.py + convert_fluxnet_
+# ch4.py -> flux/fluxnet-ch4/), scored the same way as SWC/TS: a separate
+# file with its own independent time axis, intersected against the model's.
+CH4_VARIABLES = ('FCH4',)
+VARIABLES = ('Qle', 'Qh', 'NEE') + CH4_VARIABLES + SOIL_VARIABLES
 # kg of carbon m-2 s-1 -> umol CO2 m-2 s-1 (molar mass of carbon = 12.011 g/mol)
 NEE_KGC_TO_UMOL = 1e6 / 12.011e-3
 # kg of CH4 m-2 s-1 -> nmol CH4 m-2 s-1, the FLUXNET-CH4 unit for FCH4
@@ -95,6 +102,27 @@ def discover_soil_map(soil_dir: Path) -> dict[str, Path]:
     out: dict[str, Path] = {}
     for f in sorted(soil_dir.glob('*.nc')):
         m = SOIL_RE.match(f.name)
+        if m:
+            out[m.group(1)] = f
+    return out
+
+
+def discover_ch4_map(ch4_dir: Path) -> dict[str, Path]:
+    """Site -> its <site>_<Y1>-<Y2>_FLUXNET2015_Flux.nc under flux/fluxnet-ch4/.
+
+    Same FLUX_RE naming as the main flux pool (convert_fluxnet_ch4.py writes
+    the identical convention on purpose, so benchmark.py needs no special-
+    casing to read it) -- but a different, usually shorter, period: the
+    FLUXNET-CH4 Community Product only covers each site's CH4 deployment,
+    not its full FLUXNET record. Keyed by site alone for the same reason as
+    discover_soil_map: process_site() intersects this file's own time axis
+    against the model's independently, so the period need not match.
+    """
+    if not ch4_dir.is_dir():
+        return {}
+    out: dict[str, Path] = {}
+    for f in sorted(ch4_dir.glob('*.nc')):
+        m = FLUX_RE.match(f.name)
         if m:
             out[m.group(1)] = f
     return out
@@ -300,7 +328,7 @@ def pick_depth_var(soil_ds: xr.Dataset, prefix: str, target_depth_m: float) -> t
 
 
 def process_site(site: str, period: str, flux_path: Path, model_path: Path,
-                  soil_path: Path | None = None) -> dict[str, Any] | None:
+                  soil_path: Path | None = None, ch4_path: Path | None = None) -> dict[str, Any] | None:
     obs_ds = xr.open_dataset(flux_path)
     mod_ds = xr.open_dataset(model_path)
 
@@ -345,13 +373,11 @@ def process_site(site: str, period: str, flux_path: Path, model_path: Path,
     }
 
     for var in VARIABLES:
-        if var in SOIL_VARIABLES:
+        if var in SOIL_VARIABLES or var in CH4_VARIABLES:
             continue
         # A variable is unavailable if either side lacks it. The model side was
         # always handled; the observation side matters here because 50 of the 775
-        # Shuttle towers report no NEE at all (and so no NEE_qc), and FCH4 is
-        # absent from every ONEFlux-derived flux file -- only the FLUXNET-CH4
-        # group carries it. Scoring needs
+        # Shuttle towers report no NEE at all (and so no NEE_qc). Scoring needs
         # the QC flags to keep measured, non-gapfilled half-hours only, so a
         # missing pair is reported as unavailable rather than scored unfiltered.
         if var not in mod_ds or var not in obs_ds or f'{var}_qc' not in obs_ds:
@@ -421,6 +447,40 @@ def process_site(site: str, period: str, flux_path: Path, model_path: Path,
 
     if soil_ds is not None:
         soil_ds.close()
+
+    # FCH4: same independent-time-axis pattern as SWC/TS, from flux/fluxnet-ch4/
+    # (scripts/fetch_fluxnet_ch4.py + convert_fluxnet_ch4.py) rather than the
+    # main flux file, since no ONEFlux-derived FLUXNET2015 file carries FCH4
+    # at all. That converter already rebuilds its QC onto FLUXNET2015
+    # semantics (0 = measured), so scoring here is identical to Qle/Qh/NEE.
+    ch4_ds = None
+    if ch4_path is not None:
+        try:
+            cand = xr.open_dataset(ch4_path)
+            ch4_time = clean_time_axis(cand['time'].values)
+            c_common, c_obs_idx, c_mod_idx = np.intersect1d(ch4_time, mod_time, return_indices=True)
+            if c_common.size >= MIN_BIN_N:
+                ch4_ds = cand
+            else:
+                cand.close()
+        except Exception:
+            ch4_ds = None
+
+    if ch4_ds is None or 'FCH4' not in ch4_ds or 'FCH4_qc' not in ch4_ds or 'FCH4' not in mod_ds:
+        r = empty_var_record()
+        record['metrics']['FCH4'], record['monthly_clim']['FCH4'] = r['metrics'], r['monthly_clim']
+        record['diurnal']['FCH4'], record['trend']['FCH4'] = r['diurnal'], r['trend']
+    else:
+        qc = ch4_ds['FCH4_qc'].values.squeeze()[c_obs_idx]
+        obs_raw = ch4_ds['FCH4'].values.squeeze()[c_obs_idx].astype(np.float64)
+        mod_raw = mod_ds['FCH4'].values.squeeze()[c_mod_idx].astype(np.float64) * MODEL_UNIT_SCALE['FCH4']
+        c_ts = pd.DatetimeIndex(c_common)
+        r = score_series(obs_raw, mod_raw, qc, c_ts, season_of_month)
+        record['metrics']['FCH4'], record['monthly_clim']['FCH4'] = r['metrics'], r['monthly_clim']
+        record['diurnal']['FCH4'], record['trend']['FCH4'] = r['diurnal'], r['trend']
+
+    if ch4_ds is not None:
+        ch4_ds.close()
     obs_ds.close()
     mod_ds.close()
     return record
@@ -433,6 +493,10 @@ def parse_args() -> argparse.Namespace:
                     help='Directory of soil_<site>_<Y1>-<Y2>.nc from scripts/extract_soil_ancillary.py, '
                          'scored as SWC/TS against ecLand level 1. Optional -- a site missing here '
                          'just reports SWC/TS as unavailable, same as a flux variable a tower lacks.')
+    p.add_argument('--ch4-dir', type=Path, default=DEFAULT_CH4_DIR,
+                    help='Directory of <site>_<Y1>-<Y2>_FLUXNET2015_Flux.nc from '
+                         'scripts/convert_fluxnet_ch4.py, scored as FCH4 (default: %(default)s). '
+                         'Optional -- a site missing here just reports FCH4 as unavailable.')
     p.add_argument('--country-csv', type=Path, default=DEFAULT_COUNTRY_CSV,
                     help=f'Per-site country lookup, used only where the flux file has no '
                          f'country attribute (default: {DEFAULT_COUNTRY_CSV}). Build it with '
@@ -505,6 +569,10 @@ def main() -> None:
     print(f'Soil observations: {len(soil_map)} sites from {args.soil_dir}'
           if soil_map else f'Soil observations: none found under {args.soil_dir} '
                             f'(SWC/TS will report as unavailable for every site)')
+    ch4_map = discover_ch4_map(args.ch4_dir)
+    print(f'CH4 observations: {len(ch4_map)} sites from {args.ch4_dir}'
+          if ch4_map else f'CH4 observations: none found under {args.ch4_dir} '
+                           f'(FCH4 will report as unavailable for every site)')
     if args.site:
         wanted = set(args.site)
         pairs = [p for p in pairs if p[0] in wanted]
@@ -524,7 +592,7 @@ def main() -> None:
     rows = []
     for i, (site, period, flux_path, model_path) in enumerate(pairs, 1):
         try:
-            rec = process_site(site, period, flux_path, model_path, soil_map.get(site))
+            rec = process_site(site, period, flux_path, model_path, soil_map.get(site), ch4_map.get(site))
         except Exception as exc:
             # One malformed input (e.g. a stale postprocessed file missing a
             # variable the current schema always writes) must cost one site,

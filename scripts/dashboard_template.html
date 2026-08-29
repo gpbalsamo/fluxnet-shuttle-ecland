@@ -393,6 +393,14 @@
     SWC:{label:'SWC', full:'Soil water content, depth 1 vs. ecLand level 1 (0–7 cm)', unit:'%', accentVar:'--var-SWC'},
     TS: {label:'TS',  full:'Soil temperature, depth 1 vs. ecLand level 1 (0–7 cm)', unit:'°C', accentVar:'--var-TS'},
   };
+  // Physically non-negative: soil water content is a volumetric fraction,
+  // and FCH4 here is scored only at wetland-dominated CH4 towers (fwet gates
+  // ecLand's emission to those sites), where observed/modelled flux stays
+  // net-emitting. Chart axes below floor these at 0 rather than letting the
+  // cosmetic 8-10% padding push the low end negative for a quantity that
+  // cannot be. Qle/Qh/NEE/TS are not included -- night-time flux sign flips
+  // and sub-zero Celsius are real, not padding artefacts.
+  const NONNEG_VARS = new Set(['SWC','FCH4']);
   const SEASON_ORDER = ['DJF','MAM','JJA','SON'];
   const STATUS_ORDER = ['good','warning','serious','critical'];
   const STATUS_LABEL = {good:'Strong', warning:'Fair', serious:'Weak', critical:'Poor', none:'No data'};
@@ -878,6 +886,7 @@
     if(lo>0 && opts.zeroBase!==false) lo = Math.min(0,lo);
     const pad = (hi-lo)*0.08 || 1;
     lo -= pad; hi += pad;
+    if(opts.nonNeg) lo = Math.max(0, lo);
     const n = xLabels.length;
     const x = i => padL + (n<=1?0:i/(n-1))*(W-padL-padR);
     const y = v => padT + (1-(v-lo)/(hi-lo))*(H-padT-padB);
@@ -941,7 +950,7 @@
     svg.appendChild(hitRect);
   }
 
-  function scatterChart(svgId, obsArr, modArr){
+  function scatterChart(svgId, obsArr, modArr, nonNeg){
     const svg = document.getElementById(svgId);
     clear(svg);
     const W=220,H=220, pad=30;
@@ -950,6 +959,7 @@
     const all = pts.flat();
     let lo = Math.min(...all), hi = Math.max(...all);
     const padv = (hi-lo)*0.1 || 1; lo-=padv; hi+=padv;
+    if(nonNeg) lo = Math.max(0, lo);
     const sc = v => pad + (v-lo)/(hi-lo)*(W-2*pad);
     const scY = v => H-pad - (v-lo)/(hi-lo)*(H-2*pad);
     svg.appendChild(el('line',{x1:sc(lo),y1:scY(lo),x2:sc(hi),y2:scY(hi), class:'ref-line'}));
@@ -1033,20 +1043,21 @@
       renderTable(state.varName, document.getElementById('site-search').value);
     });
 
+    const nonNeg = NONNEG_VARS.has(vname);
     const mc = site.monthly_clim[vname];
     const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    lineChart('insp-clim', mc.obs, mc.mod, months, {w:920,h:170});
+    lineChart('insp-clim', mc.obs, mc.mod, months, {w:920,h:170,nonNeg});
 
     SEASON_ORDER.forEach(s=>{
       const d = site.diurnal[vname][s];
       const hours = Array.from({length:24},(_,i)=>i+'h');
-      lineChart('insp-diurnal-'+s, d.obs, d.mod, hours, {w:440,h:140});
+      lineChart('insp-diurnal-'+s, d.obs, d.mod, hours, {w:440,h:140,nonNeg});
     });
 
-    scatterChart('insp-scatter', mc.obs, mc.mod);
+    scatterChart('insp-scatter', mc.obs, mc.mod, nonNeg);
 
     const tr = site.trend[vname];
-    lineChart('insp-trend', tr.obs, tr.mod, tr.labels, {w:460,h:170});
+    lineChart('insp-trend', tr.obs, tr.mod, tr.labels, {w:460,h:170,nonNeg});
   }
 
   /* ================= wiring ================= */
