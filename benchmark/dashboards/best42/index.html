@@ -181,6 +181,23 @@
   .swatch.line{width:14px; height:2px; border-radius:1px;}
   .swatch.dot{border-radius:50%;}
 
+  /* export controls: subtle on screen, absent from print and from the figures
+     themselves (the export serialises the <svg>, never the surrounding HTML) */
+  .export-bar{display:flex; align-items:center; gap:4px; flex:none;}
+  .export-lbl{font-size:9.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); font-weight:650;}
+  .export-btn{
+    font-family:var(--font-sans); font-size:10.5px; font-weight:650; letter-spacing:normal; text-transform:none;
+    padding:3px 7px; border-radius:5px; cursor:pointer; line-height:1.3;
+    border:1px solid var(--border); background:var(--surface-2); color:var(--text-muted);
+    transition:color .15s, border-color .15s;
+  }
+  .export-btn:hover{color:var(--accent); border-color:var(--accent);}
+  .chart-box h4{display:flex; align-items:center; justify-content:space-between; gap:10px;}
+  @media print{
+    .export-bar, .theme-toggle, .var-toggle, .strip-controls, .map-controls, #tooltip{display:none !important;}
+    .panel{break-inside:avoid;}
+  }
+
   /* site dots + status colors as classes */
   .st-good{fill:var(--status-good);}
   .st-warning{fill:var(--status-warning);}
@@ -1058,6 +1075,410 @@
 
     const tr = site.trend[vname];
     lineChart('insp-trend', tr.obs, tr.mod, tr.labels, {w:460,h:170,nonNeg});
+
+    // the inspector is rebuilt from scratch on every open, so its export bars
+    // (removed along with the old markup) need re-attaching every time too.
+    attachInspectorExports(site);
+  }
+
+  /* ================= figure export (PNG / SVG / print-to-PDF) =================
+     Every panel here is hand-drawn SVG, so a publication figure is one
+     serialisation away -- no plotting library, no server, no network. Three
+     things have to be handled for the exported file to look like the screen:
+
+       - STYLE. The drawing code sets `class` and `var(--...)`, both of which
+         live in the page stylesheet; a detached <svg> carries neither. Every
+         element's computed style is therefore inlined before serialising,
+         which also resolves the custom properties to literal colours.
+       - THEME. Figures are exported in the light palette whatever the page is
+         showing, since a dark-background figure is unusable in a paper. The
+         root theme attribute is flipped for the duration of the (synchronous)
+         serialisation and restored immediately.
+       - CONTEXT. A bare panel loses the title, the variable it is showing and
+         the legend sitting in HTML next to it. All three are drawn into the
+         exported figure so the file stands on its own once it is out of here.
+
+     Ported from plumber2-ecland's dashboard_template.html (same figure-export
+     design, same helper names) -- only the stamp text and filename tag below
+     are FLUXNET-Shuttle-specific. */
+
+  const EXPORT_PX_WIDTH = 2400;   /* ~300 dpi across a 8 in / 20 cm figure */
+  const EXPORT_STYLE_PROPS = ['fill','fill-opacity','fill-rule','stroke','stroke-opacity',
+    'stroke-width','stroke-linecap','stroke-linejoin','stroke-dasharray','opacity','overflow',
+    'font-family','font-size','font-weight','font-style','letter-spacing','text-anchor',
+    'dominant-baseline','paint-order','display','visibility'];
+  const SER = new XMLSerializer();
+
+  const escXml = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
+                               .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+  function cssVar(name){
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  }
+
+  /* The palette lives on :root, so light values cannot be read while the page
+     is dark without touching the root attribute. getComputedStyle flushes
+     pending style, so the swap is observed by everything inside fn(). */
+  function withLightTheme(fn){
+    const root = document.documentElement;
+    const prev = root.getAttribute('data-theme');
+    root.setAttribute('data-theme','light');
+    try{ return fn(); }
+    finally{ if(prev === null) root.removeAttribute('data-theme'); else root.setAttribute('data-theme', prev); }
+  }
+
+  function viewBoxOf(svg){
+    const v = (svg.getAttribute('viewBox') || '0 0 100 100').split(/[\s,]+/).map(Number);
+    return {w: v[2], h: v[3]};
+  }
+
+  function inlineStyles(svg){
+    const clone = svg.cloneNode(true);
+    const src = [svg].concat(Array.from(svg.querySelectorAll('*')));
+    const dst = [clone].concat(Array.from(clone.querySelectorAll('*')));
+    for(let i=0; i<src.length; i++){
+      const cs = getComputedStyle(src[i]);
+      let css = '';
+      for(const p of EXPORT_STYLE_PROPS){
+        const v = cs.getPropertyValue(p);
+        if(v) css += p + ':' + v + ';';
+      }
+      dst[i].setAttribute('style', css);
+      dst[i].removeAttribute('class');
+      // presentation attributes written as fill="var(--accent)" would survive
+      // into the file unresolved; the inlined style already carries the literal
+      // colour and outranks them, so drop them rather than ship dead references
+      for(const a of Array.from(dst[i].attributes)){
+        if(a.value.indexOf('var(') !== -1) dst[i].removeAttribute(a.name);
+      }
+    }
+    return clone;
+  }
+
+  function wrapText(str, maxChars, maxLines){
+    const words = String(str).split(/\s+/);
+    const lines = []; let cur = '';
+    for(const w of words){
+      if(!cur) cur = w;
+      else if((cur + ' ' + w).length <= maxChars) cur += ' ' + w;
+      else { lines.push(cur); cur = w; }
+    }
+    if(cur) lines.push(cur);
+    if(lines.length > maxLines){
+      lines.length = maxLines;
+      lines[maxLines-1] = lines[maxLines-1].slice(0, maxChars-1) + '…';
+    }
+    return lines;
+  }
+
+  /* Read an HTML legend next to a panel back out as drawable items, so the
+     exported figure keeps the key the screen shows below the chart. */
+  function legendItems(legendEl){
+    if(!legendEl) return [];
+    return Array.from(legendEl.querySelectorAll('.legend-item')).map(item=>{
+      const sw = item.querySelector('.swatch');
+      const cs = sw ? getComputedStyle(sw) : null;
+      return {
+        label: item.textContent.trim(),
+        fill:   cs ? cs.backgroundColor : null,
+        stroke: cs ? cs.borderTopColor : null,
+        hasStroke: cs ? parseFloat(cs.borderTopWidth) > 0 : false,
+        round:  cs ? parseFloat(cs.borderTopLeftRadius) > 4 : false,
+        line:   sw ? sw.classList.contains('line') : false
+      };
+    });
+  }
+
+  /* spec: {parts:[{el,label}], cols, title, sub, legend, filename} */
+  function buildFigure(spec){
+    const parts = spec.parts;
+    const cols  = spec.cols || 1;
+    const rows  = Math.ceil(parts.length / cols);
+    const cell  = viewBoxOf(parts[0].el);
+    const gap     = parts.length > 1 ? Math.round(cell.w * 0.05) : 0;
+    const labelH  = parts[0].label ? Math.round(cell.h * 0.15) : 0;
+    const bodyW = cols * cell.w + (cols - 1) * gap;
+    const bodyH = rows * (cell.h + labelH) + (rows - 1) * gap;
+
+    // Type is sized in user units, NOT as a fraction of the panel width. Every
+    // panel labels its axes at ~9.5 user units whatever its viewBox is, so a
+    // width-proportional title ends up smaller than the axis ticks on the
+    // narrow panels and oversized on the wide ones. Fixed units keep the
+    // heading a consistent step above the chart's own text in every figure.
+    // A narrow panel (the 220-unit scatter) laid out at its own width turns into
+    // a tall column of wrapped heading over a small square. Give the page a
+    // minimum layout width and centre the panel in it instead: the heading gets
+    // its line, and the figure keeps a sane aspect ratio.
+    const layoutW = Math.max(bodyW, 460);
+    const xOff    = (layoutW - bodyW) / 2;
+    const pad     = Math.max(10, Math.round(layoutW * 0.025));
+    const tSize = 14, sSize = 10, fSize = 9;
+    const narrow = layoutW < 420;
+
+    const cText  = cssVar('--text-primary')  || '#0b0b0b';
+    const cMuted = cssVar('--text-muted')    || '#6b6b6b';
+    const cBg    = '#ffffff';
+
+    const titleLines = wrapText(spec.title, Math.floor(layoutW / (tSize * 0.52)), narrow ? 3 : 2);
+    const subLines   = spec.sub ? wrapText(spec.sub, Math.floor(layoutW / (sSize * 0.52)), narrow ? 3 : 2) : [];
+    const legend     = spec.legend || [];
+    // A figure whose axis is a set of codes has to carry what the codes mean:
+    // the biome glossary sits in HTML beside the panel, so it is pulled into
+    // the file as a footnote rather than left behind on the page.
+    const noteLines  = spec.notes ? wrapText(spec.notes, Math.floor(layoutW / (fSize * 0.5)), 4) : [];
+    const stamp = `ecLand × FLUXNET-Shuttle benchmark · ${SITES.length} sites · quality-checked (QC = measured) observations only · generated ${DATA.generated.slice(0,10)}`;
+    const stampLines = wrapText(stamp, Math.floor(layoutW / (fSize * 0.5)), 3);
+
+    let head = pad + titleLines.length * tSize * 1.28;
+    if(subLines.length) head += subLines.length * sSize * 1.35 + sSize * 0.4;
+    head += pad * 0.7;
+
+    /* legend rows, wrapped to the figure width */
+    const legPerRow = Math.max(1, Math.floor(layoutW / (fSize * 17)));
+    const legRows   = legend.length ? Math.ceil(legend.length / legPerRow) : 0;
+    const legH      = legRows ? legRows * fSize * 2.0 + pad * 0.3 : 0;
+    const noteH     = noteLines.length ? noteLines.length * fSize * 1.35 + pad * 0.5 : 0;
+    const footH     = pad * 0.5 + stampLines.length * fSize * 1.35 + pad * 0.8;
+    const W = layoutW + 2 * pad;
+    const H = head + bodyH + legH + noteH + footH;
+
+    // the sans stack quotes its multi-word faces ("Segoe UI"); those quotes would
+    // close the style="..." attribute the stack is written into, so swap them for
+    // single quotes -- equally valid CSS, and harmless inside an XML attribute
+    const fontSans = (cssVar('--font-sans') || 'Arial, sans-serif').replace(/"/g, "'");
+    const tStyle = `font-family:${fontSans};`;
+
+    let s = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" `
+          + `width="${W.toFixed(1)}" height="${H.toFixed(1)}" viewBox="0 0 ${W.toFixed(1)} ${H.toFixed(1)}">`
+          + `<rect x="0" y="0" width="${W.toFixed(1)}" height="${H.toFixed(1)}" fill="${cBg}"/>`;
+
+    let ty = pad + tSize;
+    titleLines.forEach(l=>{
+      s += `<text x="${pad}" y="${ty.toFixed(1)}" style="${tStyle}font-size:${tSize.toFixed(2)}px;font-weight:700;fill:${cText}">${escXml(l)}</text>`;
+      ty += tSize * 1.28;
+    });
+    if(subLines.length){
+      ty += sSize * 0.2;
+      subLines.forEach(l=>{
+        s += `<text x="${pad}" y="${ty.toFixed(1)}" style="${tStyle}font-size:${sSize.toFixed(2)}px;fill:${cMuted}">${escXml(l)}</text>`;
+        ty += sSize * 1.35;
+      });
+    }
+
+    parts.forEach((p, i)=>{
+      const col = i % cols, row = Math.floor(i / cols);
+      const x = pad + xOff + col * (cell.w + gap);
+      const y = head + row * (cell.h + labelH + gap);
+      const c = inlineStyles(p.el);
+      c.setAttribute('width', cell.w);
+      c.setAttribute('height', cell.h);
+      c.removeAttribute('id');
+      s += `<g transform="translate(${x.toFixed(1)},${y.toFixed(1)})">` + SER.serializeToString(c);
+      if(p.label){
+        s += `<text x="${(cell.w/2).toFixed(1)}" y="${(cell.h + labelH * 0.75).toFixed(1)}" text-anchor="middle" `
+           + `style="${tStyle}font-size:${fSize.toFixed(2)}px;font-weight:650;fill:${cMuted}">${escXml(p.label)}</text>`;
+      }
+      s += `</g>`;
+    });
+
+    if(legRows){
+      const colW = layoutW / legPerRow;
+      legend.forEach((it, i)=>{
+        const x = pad + (i % legPerRow) * colW;
+        const y = head + bodyH + pad * 0.3 + Math.floor(i / legPerRow) * fSize * 2.0 + fSize;
+        const r = fSize * 0.42;
+        if(it.fill && it.fill !== 'rgba(0, 0, 0, 0)'){
+          s += it.round || it.line
+            ? `<circle cx="${(x+r).toFixed(1)}" cy="${(y-fSize*0.32).toFixed(1)}" r="${r.toFixed(1)}" fill="${it.fill}"/>`
+            : `<rect x="${x.toFixed(1)}" y="${(y-fSize*0.32-r).toFixed(1)}" width="${(2*r).toFixed(1)}" height="${(2*r).toFixed(1)}" rx="${(r*0.4).toFixed(1)}" fill="${it.fill}"/>`;
+        }else if(it.hasStroke){
+          s += `<circle cx="${(x+r).toFixed(1)}" cy="${(y-fSize*0.32).toFixed(1)}" r="${r.toFixed(1)}" fill="none" stroke="${it.stroke}" stroke-width="${(r*0.35).toFixed(2)}"/>`;
+        }
+        s += `<text x="${(x + 2.8*r).toFixed(1)}" y="${y.toFixed(1)}" style="${tStyle}font-size:${fSize.toFixed(2)}px;fill:${cMuted}">${escXml(it.label)}</text>`;
+      });
+    }
+
+    let ny = head + bodyH + legH + pad * 0.5 + fSize;
+    noteLines.forEach(l=>{
+      s += `<text x="${pad}" y="${ny.toFixed(1)}" style="${tStyle}font-size:${fSize.toFixed(2)}px;fill:${cMuted}">${escXml(l)}</text>`;
+      ny += fSize * 1.35;
+    });
+
+    let fy = H - pad * 0.8 - (stampLines.length - 1) * fSize * 1.35;
+    stampLines.forEach(l=>{
+      s += `<text x="${pad}" y="${fy.toFixed(1)}" style="${tStyle}font-size:${fSize.toFixed(2)}px;fill:${cMuted}">${escXml(l)}</text>`;
+      fy += fSize * 1.35;
+    });
+    s += `</svg>`;
+
+    return {svgText: s, W, H};
+  }
+
+  function downloadBlob(blob, filename){
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=> URL.revokeObjectURL(url), 5000);
+  }
+
+  function exportSVG(spec){
+    const {svgText} = buildFigure(spec);
+    downloadBlob(new Blob(['<?xml version="1.0" encoding="UTF-8"?>\n' + svgText],
+      {type:'image/svg+xml;charset=utf-8'}), spec.filename + '.svg');
+  }
+
+  function exportPNG(spec){
+    const {svgText, W, H} = buildFigure(spec);
+    const scale = Math.max(1, EXPORT_PX_WIDTH / W);
+    const img = new Image();
+    img.onload = ()=>{
+      const cv = document.createElement('canvas');
+      cv.width = Math.round(W * scale);
+      cv.height = Math.round(H * scale);
+      const ctx = cv.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, cv.width, cv.height);
+      ctx.drawImage(img, 0, 0, cv.width, cv.height);
+      cv.toBlob(b=> downloadBlob(b, spec.filename + '.png'), 'image/png');
+    };
+    img.onerror = ()=> window.alert('PNG rasterisation failed in this browser. The SVG export is vector and works everywhere — convert it with Inkscape, Illustrator or `rsvg-convert`.');
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgText);
+  }
+
+  /* No PDF writer is bundled: the browser already has one. The figure is put
+     into an off-screen iframe sized to the page and printed, so "Save as PDF"
+     yields a true vector PDF with selectable text. */
+  function exportPDF(spec){
+    const {svgText, W, H} = buildFigure(spec);
+    const landscape = W >= H;
+    const frame = document.createElement('iframe');
+    frame.setAttribute('aria-hidden','true');
+    frame.style.cssText = 'position:fixed; right:0; bottom:0; width:1px; height:1px; opacity:0; border:0;';
+    document.body.appendChild(frame);
+    const doc = frame.contentDocument;
+    doc.open();
+    doc.write('<!doctype html><html><head><meta charset="utf-8"><title>' + escXml(spec.filename) + '</title>'
+      + '<style>@page{size:A4 ' + (landscape ? 'landscape' : 'portrait') + '; margin:14mm;}'
+      + 'html,body{margin:0;padding:0;background:#fff;}'
+      + ' svg{width:100%;height:auto;max-height:95vh;}</style>'   // keep a tall figure on one page
+      + '</head><body>' + svgText + '</body></html>');
+    doc.close();
+    const go = ()=>{
+      try{ frame.contentWindow.focus(); frame.contentWindow.print(); }
+      catch(e){ window.alert('Could not open the print dialog; use the SVG or PNG export instead.'); }
+      setTimeout(()=> frame.remove(), 60000);
+    };
+    if(doc.readyState === 'complete') setTimeout(go, 80);
+    else frame.onload = ()=> setTimeout(go, 80);
+  }
+
+  const EXPORT_FORMATS = [
+    ['PNG', exportPNG, 'Download as a ' + EXPORT_PX_WIDTH + ' px PNG (300 dpi at 20 cm wide)'],
+    ['SVG', exportSVG, 'Download as vector SVG — opens in Inkscape, Illustrator, or converts to EPS/PDF'],
+    ['PDF', exportPDF, 'Open the print dialog for this figure alone — choose “Save as PDF” for a vector PDF']
+  ];
+
+  /* specFn is evaluated at click time so the figure carries whatever variable
+     and site are selected then, not whatever was selected when it was wired. */
+  function exportBar(specFn){
+    const bar = document.createElement('div');
+    bar.className = 'export-bar';
+    const lbl = document.createElement('span');
+    lbl.className = 'export-lbl';
+    lbl.textContent = 'export';
+    bar.appendChild(lbl);
+    EXPORT_FORMATS.forEach(([label, fn, tip])=>{
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'export-btn'; b.textContent = label; b.title = tip;
+      b.addEventListener('click', ()=>{
+        const spec = withLightTheme(specFn);
+        withLightTheme(()=> fn(spec));
+      });
+      bar.appendChild(b);
+    });
+    return bar;
+  }
+
+  function slug(s){ return String(s).replace(/[^A-Za-z0-9._-]+/g,'-').replace(/^-|-$/g,''); }
+  // Distinguishes filenames across this repo's three dashboards (all-775,
+  // plumber2-170, best42), which all share this one template: the pool name
+  // rendered into .pool-tag (from benchmark.py's --run-label) rather than a
+  // hardcoded tag, since unlike plumber2-ecland this template serves more
+  // than one site pool.
+  const runTag = 'ecland_fluxnet-shuttle_' + slug(document.querySelector('.pool-tag')?.textContent || 'run')
+               + '_' + DATA.generated.slice(0,10);
+
+  function attachStaticExports(){
+    const defs = [
+      {id:'map-svg', legend:'map-legend', spec:()=>({
+        title: 'Site network',
+        sub: `${SITES.length} FLUXNET-Shuttle towers · dot size ∝ record length · colour = ${VAR_META[state.varName].full} (${state.varName}) skill quartile`,
+        name: 'site-map'})},
+      {id:'taylor-svg', spec:()=>({
+        title: `Taylor diagram — ${VAR_META[state.varName].full} (${state.varName})`,
+        sub: 'angle = correlation with observations · radius = normalised variability σ_model / σ_obs',
+        name: 'taylor'})},
+      {id:'biome-svg', notes: ()=> 'IGBP classes — ' + Array.from(document.querySelectorAll('#biome-glossary .gloss-item'))
+                                        // keep the class name, drop the full IGBP definition some entries carry
+                                        .map(g=> g.textContent.trim().split(':')[0]).join(' · '), spec:()=>({
+        title: `Skill by land cover — ${VAR_META[state.varName].full} (${state.varName})`,
+        sub: 'NME distribution per IGBP biome, box = interquartile range (lower is better)',
+        name: 'biome-nme'})},
+      {id:'strip-svg', spec:()=>({
+        title: `All sites ranked — ${VAR_META[state.varName].full} (${state.varName})`,
+        sub: 'sorted by NME, best to worst',
+        name: 'site-rank'})}
+    ];
+    defs.forEach(d=>{
+      const svg = document.getElementById(d.id);
+      if(!svg) return;
+      const head = svg.closest('.panel').querySelector('.panel-head');
+      if(!head) return;
+      head.appendChild(exportBar(()=>{
+        const s = d.spec();
+        return {
+          parts: [{el: svg}],
+          cols: 1,
+          title: s.title,
+          sub: s.sub,
+          legend: d.legend ? legendItems(document.getElementById(d.legend)) : [],
+          notes: d.notes ? d.notes() : null,
+          filename: `${runTag}_${s.name}_${state.varName}`
+        };
+      }));
+    });
+  }
+
+  function attachInspectorExports(site){
+    const vname = state.varName;
+    const base = `${runTag}_${slug(site.site)}_${vname}`;
+    const biome = String(site.igbp_long).split(':')[0];   // some entries carry a full IGBP definition after the colon
+    const where = `${site.site} — ${site.site_name}, ${site.country} · ${biome} · ${site.period}`;
+    const unit = `${VAR_META[vname].full} (${VAR_META[vname].unit})`;
+    const legend = legendItems(document.querySelector('#inspector .legend'));
+    const defs = [
+      {ids:['insp-clim'], cols:1, title:`Monthly climatology — ${unit}`, sub:where, name:'monthly-clim'},
+      {ids:SEASON_ORDER.map(s=>'insp-diurnal-'+s), labels:SEASON_ORDER, cols:2,
+       title:`Diurnal cycle by season — ${unit}`, sub:where, name:'diurnal'},
+      {ids:['insp-scatter'], cols:1, title:`Monthly means, observed vs modelled — ${unit}`, sub:where, name:'obs-vs-mod'},
+      {ids:['insp-trend'], cols:1, title:`Long-term monthly mean — ${unit}`, sub:where, name:'trend'}
+    ];
+    defs.forEach(d=>{
+      const els = d.ids.map(id=> document.getElementById(id)).filter(Boolean);
+      if(els.length !== d.ids.length) return;
+      const box = els[0].closest('.chart-box');
+      const h4 = box && box.querySelector('h4');
+      if(!h4) return;
+      h4.appendChild(exportBar(()=>({
+        parts: els.map((el, i)=> ({el, label: d.labels ? d.labels[i] : null})),
+        cols: d.cols,
+        title: d.title,
+        sub: d.sub,
+        legend: legend,
+        filename: `${base}_${d.name}`
+      })));
+    });
   }
 
   /* ================= wiring ================= */
@@ -1113,6 +1534,7 @@
   });
 
   document.querySelectorAll('.var-btn')[0].classList.add('active');
+  attachStaticExports();
   renderAll();
 })();
 </script>
