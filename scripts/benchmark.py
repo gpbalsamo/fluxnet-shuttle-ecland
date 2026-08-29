@@ -27,6 +27,7 @@ import xarray as xr
 
 DEFAULT_FLUX_DIR = Path('flux/PLUMBER2_original')
 DEFAULT_MODEL_DIR = Path('postprocessed')
+DEFAULT_SOIL_DIR = Path('soil/PLUMBER2_original')
 DEFAULT_OUT_DIR = Path('benchmark')
 # Country per site, for the towers whose flux file carries no `country`
 # attribute -- FluxnetLSM only supplies one for the ~874 sites in its bundled
@@ -38,7 +39,14 @@ REGION_BY_SITE: dict[str, str] = {}
 DEFAULT_EXPERIMENT_NAME = 'ecland'
 DASHBOARD_TEMPLATE = Path(__file__).parent / 'dashboard_template.html'
 
-VARIABLES = ('Qle', 'Qh', 'NEE', 'FCH4')
+# Depth-index-1 (shallowest sensor) only: FLUXNET2015's raw SWC_F_MDS_*/
+# TS_F_MDS_* columns carry a depth *index*, not a depth in cm (that lives in
+# each site's BADM/BIF metadata, which scripts/extract_soil_ancillary.py does
+# not parse), so index 1 is the one depth that can be matched to ecLand's
+# level 1 (0-7 cm) without guessing at a real-world depth. See soil/<group>/
+# and reference/soil_coverage_<group>.csv.
+SOIL_VARIABLES = ('SWC', 'TS')
+VARIABLES = ('Qle', 'Qh', 'NEE', 'FCH4') + SOIL_VARIABLES
 # kg of carbon m-2 s-1 -> umol CO2 m-2 s-1 (molar mass of carbon = 12.011 g/mol)
 NEE_KGC_TO_UMOL = 1e6 / 12.011e-3
 # kg of CH4 m-2 s-1 -> nmol CH4 m-2 s-1, the FLUXNET-CH4 unit for FCH4
@@ -49,6 +57,15 @@ NEE_KGC_TO_UMOL = 1e6 / 12.011e-3
 FCH4_KG_TO_NMOL = 1e9 / 16.043e-3
 # Per-variable model-side unit conversion onto the observation units.
 MODEL_UNIT_SCALE = {'NEE': NEE_KGC_TO_UMOL, 'FCH4': FCH4_KG_TO_NMOL}
+KELVIN_TO_C = 273.15
+SOIL_RE = re.compile(r'soil_([A-Za-z0-9\-]+)_(\d{4}-\d{4})\.nc$')
+# ecLand's level-1 layer bottom (0-7 cm) -- a fixed property of the model's
+# soil scheme, not a per-site quantity, so it's hardcoded here to match
+# postproc.py's own SOIL_LAYER_BOTTOMS[0] rather than read from each
+# postprocessed file's optional SoilLev variable (one of 775 lacks it: a
+# stale file predating that field being added to the schema, which crashed
+# the whole 775-site run on an unguarded ['SoilLev'] lookup).
+SOIL_LEVEL1_THICKNESS_M = 0.07
 MIN_BIN_N = 20  # minimum valid half-hours to trust a monthly/diurnal bin
 SEASONS = {'DJF': (12, 1, 2), 'MAM': (3, 4, 5), 'JJA': (6, 7, 8), 'SON': (9, 10, 11)}
 
@@ -61,6 +78,26 @@ FLUX_RE = re.compile(r'([A-Za-z0-9\-]+)_(\d{4}-\d{4})_')
 MODEL_RE_NOPERIOD = re.compile(r'.+\.([A-Za-z0-9\-]+)\.nc')
 # A line in a --sites-file subset list, with the period suffix optional.
 SITE_PERIOD_RE = re.compile(r'^(.+)_(\d{4}-\d{4})$')
+
+
+def discover_soil_map(soil_dir: Path) -> dict[str, Path]:
+    """Site -> its soil_<site>_<Y1>-<Y2>.nc, keyed by site alone.
+
+    Not paired on period like the flux/model match: extract_soil_ancillary.py
+    keeps every row with no acceptance filtering, so a site's soil period is
+    routinely longer than (and never identical to) its FLUXNET2015 flux
+    period from the same tower. process_site() intersects each obs source's
+    own time axis against the model's independently, so a period mismatch
+    here is not a problem -- only one soil file per site exists anyway.
+    """
+    if not soil_dir.is_dir():
+        return {}
+    out: dict[str, Path] = {}
+    for f in sorted(soil_dir.glob('*.nc')):
+        m = SOIL_RE.match(f.name)
+        if m:
+            out[m.group(1)] = f
+    return out
 
 
 def discover_pairs(flux_dir: Path, model_dir: Path, experiment_name: str) -> list[tuple[str, str, Path, Path]]:
@@ -190,7 +227,80 @@ def clean_time_axis(times: np.ndarray) -> np.ndarray:
     return (t0_ns + step_ns * np.arange(ns.size, dtype=np.int64)).astype('datetime64[ns]')
 
 
-def process_site(site: str, period: str, flux_path: Path, model_path: Path) -> dict[str, Any] | None:
+def time_keys(ts: pd.DatetimeIndex, season_of_month: dict[int, str]) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    month_key = ts.month.values - 1
+    hour_key = np.round(ts.hour.values + ts.minute.values / 60.0).astype(int) % 24
+    season_key = np.array([season_of_month[m] for m in ts.month.values])
+    year_month = ts.strftime('%Y-%m').values
+    return month_key, hour_key, season_key, year_month
+
+
+def empty_var_record() -> dict[str, Any]:
+    return {
+        'metrics': {'n': 0, 'bias': None, 'rmse': None, 'r': None, 'nme': None,
+                    'std_obs': None, 'std_mod': None, 'pct_measured': None},
+        'monthly_clim': {'obs': [None] * 12, 'mod': [None] * 12},
+        'diurnal': {s: {'obs': [None] * 24, 'mod': [None] * 24} for s in SEASONS},
+        'trend': {'labels': [], 'obs': [], 'mod': []},
+    }
+
+
+def score_series(obs_raw: np.ndarray, mod_raw: np.ndarray, qc: np.ndarray,
+                  ts: pd.DatetimeIndex, season_of_month: dict[int, str]) -> dict[str, Any]:
+    """Shared scoring path for one variable's already-aligned obs/mod arrays."""
+    good = (qc == 0) & np.isfinite(obs_raw) & np.isfinite(mod_raw)
+    pct_measured = nanround(100.0 * good.sum() / good.size, 1) if good.size else 0.0
+    obs_g, mod_g = obs_raw[good], mod_raw[good]
+    metrics = compute_metrics(obs_g, mod_g)
+    metrics['pct_measured'] = pct_measured
+    out: dict[str, Any] = {'metrics': {k: (nanround(v, 4) if isinstance(v, float) else v)
+                                        for k, v in metrics.items()}}
+
+    mk, hk, sk, ym = time_keys(ts, season_of_month)
+    mk, hk, sk, ym = mk[good], hk[good], sk[good], ym[good]
+
+    obs_month, mod_month = binned_mean(obs_g, mk, 12), binned_mean(mod_g, mk, 12)
+    out['monthly_clim'] = {'obs': [nanround(v, 3) for v in obs_month],
+                            'mod': [nanround(v, 3) for v in mod_month]}
+
+    diurnal = {}
+    for season in SEASONS:
+        smask = sk == season
+        obs_h = binned_mean(obs_g[smask], hk[smask], 24)
+        mod_h = binned_mean(mod_g[smask], hk[smask], 24)
+        diurnal[season] = {'obs': [nanround(v, 3) for v in obs_h], 'mod': [nanround(v, 3) for v in mod_h]}
+    out['diurnal'] = diurnal
+
+    uniq_ym, ym_idx = np.unique(ym, return_inverse=True)
+    obs_ym = binned_mean(obs_g, ym_idx, uniq_ym.size, min_n=10)
+    mod_ym = binned_mean(mod_g, ym_idx, uniq_ym.size, min_n=10)
+    out['trend'] = {'labels': uniq_ym.tolist(),
+                     'obs': [nanround(v, 3) for v in obs_ym], 'mod': [nanround(v, 3) for v in mod_ym]}
+    return out
+
+
+def pick_depth_var(soil_ds: xr.Dataset, prefix: str, target_depth_m: float) -> tuple[str | None, float | None]:
+    """The soil_ds column of the given prefix ('SWC'/'TS') closest in depth to target_depth_m.
+
+    extract_soil_ancillary.py tags each column with a depth_m attribute read
+    from the tower's own BADM metadata (VAR_INFO_HEIGHT) -- not always index 1:
+    e.g. US-Ton's SWC_1 is 0.001 m but SWC_2..4 are 0.2/0.25/0.5 m, and its
+    TS_1..5 span 0.02-0.32 m, crossing all four of ecLand's soil layers. Falls
+    back to index 1 only if no column carries depth metadata at all (an older
+    extraction, or a hub BADM export missing VAR_INFO_HEIGHT).
+    """
+    candidates = []
+    for name, da in soil_ds.data_vars.items():
+        if name.startswith(f'{prefix}_') and not name.endswith('_qc') and 'depth_m' in da.attrs:
+            candidates.append((name, float(da.attrs['depth_m'])))
+    if not candidates:
+        fallback = f'{prefix}_1'
+        return (fallback, None) if fallback in soil_ds else (None, None)
+    return min(candidates, key=lambda t: abs(t[1] - target_depth_m))
+
+
+def process_site(site: str, period: str, flux_path: Path, model_path: Path,
+                  soil_path: Path | None = None) -> dict[str, Any] | None:
     obs_ds = xr.open_dataset(flux_path)
     mod_ds = xr.open_dataset(model_path)
 
@@ -210,11 +320,7 @@ def process_site(site: str, period: str, flux_path: Path, model_path: Path) -> d
         steps_per_day = 86400.0 / step_s if step_s > 0 else 48.0
     else:
         steps_per_day = 48.0
-    month_key = ts.month.values - 1
-    hour_key = np.round(ts.hour.values + ts.minute.values / 60.0).astype(int) % 24
     season_of_month = {m: s for s, months in SEASONS.items() for m in months}
-    season_key = np.array([season_of_month[m] for m in ts.month.values])
-    year_month = ts.strftime('%Y-%m').values
 
     record = {
         'site': site,
@@ -239,6 +345,8 @@ def process_site(site: str, period: str, flux_path: Path, model_path: Path) -> d
     }
 
     for var in VARIABLES:
+        if var in SOIL_VARIABLES:
+            continue
         # A variable is unavailable if either side lacks it. The model side was
         # always handled; the observation side matters here because 50 of the 775
         # Shuttle towers report no NEE at all (and so no NEE_qc), and FCH4 is
@@ -247,11 +355,9 @@ def process_site(site: str, period: str, flux_path: Path, model_path: Path) -> d
         # the QC flags to keep measured, non-gapfilled half-hours only, so a
         # missing pair is reported as unavailable rather than scored unfiltered.
         if var not in mod_ds or var not in obs_ds or f'{var}_qc' not in obs_ds:
-            record['metrics'][var] = {'n': 0, 'bias': None, 'rmse': None, 'r': None, 'nme': None,
-                                       'std_obs': None, 'std_mod': None, 'pct_measured': None}
-            record['monthly_clim'][var] = {'obs': [None] * 12, 'mod': [None] * 12}
-            record['diurnal'][var] = {s: {'obs': [None] * 24, 'mod': [None] * 24} for s in SEASONS}
-            record['trend'][var] = {'labels': [], 'obs': [], 'mod': []}
+            r = empty_var_record()
+            record['metrics'][var], record['monthly_clim'][var] = r['metrics'], r['monthly_clim']
+            record['diurnal'][var], record['trend'][var] = r['diurnal'], r['trend']
             continue
         qc = obs_ds[f'{var}_qc'].values.squeeze()[obs_idx]
         obs_raw = obs_ds[var].values.squeeze()[obs_idx].astype(np.float64)
@@ -259,43 +365,62 @@ def process_site(site: str, period: str, flux_path: Path, model_path: Path) -> d
         if var in MODEL_UNIT_SCALE:
             mod_raw = mod_raw * MODEL_UNIT_SCALE[var]
 
-        good = (qc == 0) & np.isfinite(obs_raw) & np.isfinite(mod_raw)
-        pct_measured = nanround(100.0 * good.sum() / good.size, 1) if good.size else 0.0
+        r = score_series(obs_raw, mod_raw, qc, ts, season_of_month)
+        record['metrics'][var], record['monthly_clim'][var] = r['metrics'], r['monthly_clim']
+        record['diurnal'][var], record['trend'][var] = r['diurnal'], r['trend']
 
-        obs_g, mod_g = obs_raw[good], mod_raw[good]
-        metrics = compute_metrics(obs_g, mod_g)
-        metrics['pct_measured'] = pct_measured
-        record['metrics'][var] = {k: (nanround(v, 4) if isinstance(v, float) else v) for k, v in metrics.items()}
+    # SWC/TS: a separate observation file with its own independent time axis
+    # (extract_soil_ancillary.py keeps every row, no acceptance filtering, so
+    # its period is routinely longer than the flux file's from the same
+    # tower), scored against ecLand's shallowest soil layer (0-7 cm).
+    soil_ds = None
+    if soil_path is not None:
+        try:
+            cand = xr.open_dataset(soil_path)
+            soil_time = clean_time_axis(cand['time'].values)
+            s_common, s_obs_idx, s_mod_idx = np.intersect1d(soil_time, mod_time, return_indices=True)
+            if s_common.size >= MIN_BIN_N:
+                soil_ds = cand
+            else:
+                cand.close()
+        except Exception:
+            soil_ds = None
 
-        mk, hk, sk, ym = month_key[good], hour_key[good], season_key[good], year_month[good]
+    for var in SOIL_VARIABLES:
+        mod_var = 'SoilMoist' if var == 'SWC' else 'SoilTemp'
+        obs_col = obs_depth_m = None
+        if soil_ds is not None:
+            # Target the middle of ecLand's level-1 band (0-7 cm), not its
+            # top or bottom, so a depth just past 7 cm isn't penalised
+            # against an equally-close shallower one.
+            obs_col, obs_depth_m = pick_depth_var(soil_ds, var, SOIL_LEVEL1_THICKNESS_M / 2)
+        qc_col = f'{obs_col}_qc' if obs_col else None
+        if (soil_ds is None or obs_col is None or obs_col not in soil_ds
+                or qc_col not in soil_ds or mod_var not in mod_ds):
+            r = empty_var_record()
+            record['metrics'][var], record['monthly_clim'][var] = r['metrics'], r['monthly_clim']
+            record['diurnal'][var], record['trend'][var] = r['diurnal'], r['trend']
+            continue
+        qc = soil_ds[qc_col].values.squeeze()[s_obs_idx]
+        obs_raw = soil_ds[obs_col].values.squeeze()[s_obs_idx].astype(np.float64)
+        mod_raw = mod_ds[mod_var].isel(level=0).values.squeeze()[s_mod_idx].astype(np.float64)
+        if var == 'SWC':
+            # kg m-2 in a 0-7 cm layer -> volumetric % (water density 1000 kg m-3).
+            mod_raw = mod_raw / (SOIL_LEVEL1_THICKNESS_M * 1000.0) * 100.0
+        else:
+            mod_raw = mod_raw - KELVIN_TO_C
 
-        obs_month = binned_mean(obs_g, mk, 12)
-        mod_month = binned_mean(mod_g, mk, 12)
-        record['monthly_clim'][var] = {
-            'obs': [nanround(v, 3) for v in obs_month],
-            'mod': [nanround(v, 3) for v in mod_month],
-        }
+        s_ts = pd.DatetimeIndex(s_common)
+        r = score_series(obs_raw, mod_raw, qc, s_ts, season_of_month)
+        # Auditable: which column and real-world depth were actually used,
+        # since it is not always index 1 -- see pick_depth_var.
+        r['metrics']['obs_depth_m'] = nanround(obs_depth_m, 4) if obs_depth_m is not None else None
+        r['metrics']['obs_col'] = obs_col
+        record['metrics'][var], record['monthly_clim'][var] = r['metrics'], r['monthly_clim']
+        record['diurnal'][var], record['trend'][var] = r['diurnal'], r['trend']
 
-        diurnal = {}
-        for season in SEASONS:
-            smask = sk == season
-            obs_h = binned_mean(obs_g[smask], hk[smask], 24)
-            mod_h = binned_mean(mod_g[smask], hk[smask], 24)
-            diurnal[season] = {
-                'obs': [nanround(v, 3) for v in obs_h],
-                'mod': [nanround(v, 3) for v in mod_h],
-            }
-        record['diurnal'][var] = diurnal
-
-        uniq_ym, ym_idx = np.unique(ym, return_inverse=True)
-        obs_ym = binned_mean(obs_g, ym_idx, uniq_ym.size, min_n=10)
-        mod_ym = binned_mean(mod_g, ym_idx, uniq_ym.size, min_n=10)
-        record['trend'][var] = {
-            'labels': uniq_ym.tolist(),
-            'obs': [nanround(v, 3) for v in obs_ym],
-            'mod': [nanround(v, 3) for v in mod_ym],
-        }
-
+    if soil_ds is not None:
+        soil_ds.close()
     obs_ds.close()
     mod_ds.close()
     return record
@@ -304,6 +429,10 @@ def process_site(site: str, period: str, flux_path: Path, model_path: Path) -> d
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--flux-dir', type=Path, default=DEFAULT_FLUX_DIR)
+    p.add_argument('--soil-dir', type=Path, default=DEFAULT_SOIL_DIR,
+                    help='Directory of soil_<site>_<Y1>-<Y2>.nc from scripts/extract_soil_ancillary.py, '
+                         'scored as SWC/TS against ecLand level 1. Optional -- a site missing here '
+                         'just reports SWC/TS as unavailable, same as a flux variable a tower lacks.')
     p.add_argument('--country-csv', type=Path, default=DEFAULT_COUNTRY_CSV,
                     help=f'Per-site country lookup, used only where the flux file has no '
                          f'country attribute (default: {DEFAULT_COUNTRY_CSV}). Build it with '
@@ -372,6 +501,10 @@ def main() -> None:
         print(f'Country lookup: {len(COUNTRY_BY_SITE)} sites from {args.country_csv}')
 
     pairs = discover_pairs(args.flux_dir, args.model_dir, args.experiment_name)
+    soil_map = discover_soil_map(args.soil_dir)
+    print(f'Soil observations: {len(soil_map)} sites from {args.soil_dir}'
+          if soil_map else f'Soil observations: none found under {args.soil_dir} '
+                            f'(SWC/TS will report as unavailable for every site)')
     if args.site:
         wanted = set(args.site)
         pairs = [p for p in pairs if p[0] in wanted]
@@ -390,7 +523,15 @@ def main() -> None:
     records = []
     rows = []
     for i, (site, period, flux_path, model_path) in enumerate(pairs, 1):
-        rec = process_site(site, period, flux_path, model_path)
+        try:
+            rec = process_site(site, period, flux_path, model_path, soil_map.get(site))
+        except Exception as exc:
+            # One malformed input (e.g. a stale postprocessed file missing a
+            # variable the current schema always writes) must cost one site,
+            # not the whole run -- see SOIL_LEVEL1_THICKNESS_M's note on the
+            # one 775-site file this has already happened with.
+            print(f'  [{i}/{len(pairs)}] {site} {period}: ERROR ({type(exc).__name__}: {exc})')
+            continue
         if rec is None:
             print(f'  [{i}/{len(pairs)}] {site} {period}: SKIPPED (insufficient overlapping time steps)')
             continue
@@ -409,7 +550,7 @@ def main() -> None:
         'generated': pd.Timestamp.now('UTC').strftime('%Y-%m-%dT%H:%M:%SZ'),
         'variables': list(VARIABLES),
         'units': {'Qle': 'W m-2', 'Qh': 'W m-2', 'NEE': 'umol m-2 s-1',
-                  'FCH4': 'nmol m-2 s-1'},
+                  'FCH4': 'nmol m-2 s-1', 'SWC': '%', 'TS': 'degC'},
         'sites': records,
     }, separators=(',', ':'))
     data_json.write_text(data_str)

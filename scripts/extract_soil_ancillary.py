@@ -78,6 +78,46 @@ def site_coords(site_csv: Path, site: str) -> tuple[float | None, float | None]:
         return None, None
 
 
+def parse_var_depths(zf: zipfile.ZipFile, resolution: str) -> dict[str, float]:
+    """Column -> depth below surface in metres, from the zip's BIFVARINFO member.
+
+    FLUXNET2015's FLUXMET file only gives depth as an index (SWC_F_MDS_1,
+    _2, ... "1 is shallowest") -- the real depth lives in per-column BADM
+    metadata shipped alongside it, keyed by VAR_INFO_HEIGHT: metres, positive
+    above ground, so a soil sensor's is negative and depth_m = -HEIGHT.
+    Confirmed present with this exact field name across ICOS, AmeriFlux (AMF)
+    and TERN hubs. Returns {} (not an error) if the member or field is
+    missing for a given site -- the caller falls back to index order.
+    """
+    candidates = [n for n in zf.namelist() if f"BIFVARINFO_{resolution}" in n]
+    if not candidates:
+        return {}
+    try:
+        with zf.open(candidates[0]) as f:
+            reader = csv.DictReader(line.decode("utf-8", "replace") for line in f)
+            groups: dict[str, dict[str, str]] = {}
+            for row in reader:
+                groups.setdefault(row["GROUP_ID"], {})[row["VARIABLE"]] = row["DATAVALUE"]
+    except Exception:
+        return {}
+
+    depths: dict[str, float] = {}
+    for attrs in groups.values():
+        varname = attrs.get("VAR_INFO_VARNAME", "")
+        height = attrs.get("VAR_INFO_HEIGHT")
+        if height is None:
+            continue
+        if not (varname.startswith("SWC_F_MDS_") or varname.startswith("TS_F_MDS_")):
+            continue
+        if varname.endswith("_QC"):
+            continue
+        try:
+            depths[varname] = -float(height)
+        except ValueError:
+            continue
+    return depths
+
+
 def extract_site(site: str, snapshot: str, workdir: Path, out_dir: Path,
                   site_csv: Path) -> dict:
     site_dir = workdir / site
@@ -129,6 +169,8 @@ def extract_site(site: str, snapshot: str, workdir: Path, out_dir: Path,
             with zf.open(hh_name) as f:
                 df = pd.read_csv(f, usecols=usecols, na_values=[-9999, -9999.0])
 
+            var_depths = parse_var_depths(zf, resolution)
+
         row["n_rows"] = len(df)
         time = pd.to_datetime(df["TIMESTAMP_START"], format="%Y%m%d%H%M")
         y1, y2 = time.dt.year.min(), time.dt.year.max()
@@ -143,11 +185,15 @@ def extract_site(site: str, snapshot: str, workdir: Path, out_dir: Path,
             for c in val_cols:
                 depth = c.rsplit("_", 1)[-1]
                 ds[f"{prefix}_{depth}"] = ("time", df[c].values.astype("float32"))
+                depth_m = var_depths.get(c)
                 ds[f"{prefix}_{depth}"].attrs.update(
                     long_name=f"{'Volumetric soil water content' if prefix=='SWC' else 'Soil temperature'}, "
-                              f"depth index {depth} (raw {c})",
+                              f"depth index {depth} (raw {c})"
+                              + (f", {depth_m:.3f} m below surface" if depth_m is not None else ""),
                     units=units,
                 )
+                if depth_m is not None:
+                    ds[f"{prefix}_{depth}"].attrs["depth_m"] = round(depth_m, 4)
                 qc_col = c + "_QC"
                 if qc_col in df.columns:
                     # QC in {0,1,2,3}; NaN (no obs at all that half-hour) needs a

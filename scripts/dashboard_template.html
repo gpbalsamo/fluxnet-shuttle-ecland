@@ -24,6 +24,8 @@
     --var-Qh:  #eb6834;
     --var-NEE: #1baf7a;
     --var-FCH4:#9333a8;
+    --var-SWC: #0e9488;
+    --var-TS:  #b3801e;
     --status-good:     #0ca30c;
     --status-warning:  #fab219;
     --status-serious:  #ec835a;
@@ -50,6 +52,8 @@
       --var-Qh:  #d95926;
       --var-NEE: #199e70;
       --var-FCH4:#c07ae0;
+      --var-SWC: #14b8a6;
+      --var-TS:  #d9a441;
       --map-ocean: #101c22;
       --map-land: #1c221c;
       --map-land-stroke: #2a3128;
@@ -70,6 +74,8 @@
     --var-Qh:  #d95926;
     --var-NEE: #199e70;
       --var-FCH4:#c07ae0;
+    --var-SWC: #14b8a6;
+    --var-TS:  #d9a441;
     --map-ocean: #101c22;
     --map-land: #1c221c;
     --map-land-stroke: #2a3128;
@@ -290,6 +296,8 @@
       <button class="var-btn" data-var="Qh" role="tab">Qh<span class="var-sub">Sensible heat</span></button>
       <button class="var-btn" data-var="NEE" role="tab">NEE<span class="var-sub">CO₂ exchange</span></button>
       <button class="var-btn" data-var="FCH4" role="tab">FCH4<span class="var-sub">CH₄ flux</span></button>
+      <button class="var-btn" data-var="SWC" role="tab">SWC<span class="var-sub">Soil moisture</span></button>
+      <button class="var-btn" data-var="TS" role="tab">TS<span class="var-sub">Soil temp</span></button>
     </div>
     <div class="meta" id="meta-note"><span id="n-sites-meta"></span> sites · generated <span id="gen-date"></span></div>
     <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Toggle light/dark theme" title="Toggle light/dark theme">
@@ -382,6 +390,8 @@
     Qh: {label:'Qh',  full:'Sensible heat flux', unit:'W m⁻²', accentVar:'--var-Qh'},
     NEE:{label:'NEE', full:'Net ecosystem CO₂ exchange', unit:'µmol m⁻² s⁻¹', accentVar:'--var-NEE'},
     FCH4:{label:'FCH4', full:'Net methane flux', unit:'nmol m⁻² s⁻¹', accentVar:'--var-FCH4'},
+    SWC:{label:'SWC', full:'Soil water content, depth 1 vs. ecLand level 1 (0–7 cm)', unit:'%', accentVar:'--var-SWC'},
+    TS: {label:'TS',  full:'Soil temperature, depth 1 vs. ecLand level 1 (0–7 cm)', unit:'°C', accentVar:'--var-TS'},
   };
   const SEASON_ORDER = ['DJF','MAM','JJA','SON'];
   const STATUS_ORDER = ['good','warning','serious','critical'];
